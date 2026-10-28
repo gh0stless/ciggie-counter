@@ -1,0 +1,188 @@
+# Version: 1.0.0
+# - Erstversion: Erinnerungen des Nextcloud-Zigarettenzählers (Webhook) per TTS und Telegram.
+#   Standard-Input-Pattern (Nachtruhe, Bitte-nicht-stören, Personen, enable_tts/telegram,
+#   konfigurierbare TTS-Engine/Player, Telegram per repeat/for_each).
+# - Abweichung vom Standard (bewusst, abschaltbar): telegram_night_mute – die
+#   "Hast du alle gezählt?"-Erinnerung kommt im Minutentakt und soll nachts nicht aufs Handy.
+blueprint:
+  name: "🚬 Zigarettenzähler – TTS & Telegram"
+  description: >
+    Sagt Erinnerungen des Nextcloud-Zigarettenzählers per TTS an und schickt sie
+    parallel per Telegram. Die Nextcloud-App ruft dazu einen Webhook auf und
+    übergibt den Text als JSON-Feld "message".
+    Unterstützt Nachtruhe, Bitte-nicht-stören und Personen-zu-Hause-Check.
+  domain: automation
+  author: Andreas
+  homeassistant:
+    min_version: "2024.10.0"
+
+  input:
+
+    # ══════════════════════════════════════════════════
+    # WEBHOOK
+    # ══════════════════════════════════════════════════
+    webhook_id:
+      name: "🔗 Webhook-ID"
+      description: >
+        Geheime ID, die auch in der Zigarettenzähler-App (Einstellungen →
+        Home-Assistant-Webhook) als Teil der URL eingetragen ist:
+        http://<HA-IP>:8123/api/webhook/<ID>  (IP statt Namen: .local geht im Docker-Container nie, fritz.box nicht zuverlässig)
+      selector:
+        text: {}
+
+    # ══════════════════════════════════════════════════
+    # TTS
+    # ══════════════════════════════════════════════════
+    enable_tts:
+      name: "🔊 TTS aktivieren"
+      default: true
+      selector:
+        boolean: {}
+
+    tts_engine:
+      name: "🔊 TTS-Engine"
+      default: tts.piper
+      selector:
+        entity:
+          domain: tts
+
+    tts_media_player:
+      name: "📻 Media Player für TTS"
+      selector:
+        entity:
+          domain: media_player
+
+    # ══════════════════════════════════════════════════
+    # TELEGRAM
+    # ══════════════════════════════════════════════════
+    enable_telegram:
+      name: "📲 Telegram aktivieren"
+      default: true
+      selector:
+        boolean: {}
+
+    telegram_targets:
+      name: "📲 Telegram Empfänger"
+      description: "Einer oder mehrere notify-Dienste. Leer lassen um zu deaktivieren."
+      default: []
+      selector:
+        entity:
+          domain: notify
+          multiple: true
+
+    telegram_night_mute:
+      name: "🌙 Telegram bei Nachtruhe stumm"
+      description: >
+        Abweichung vom Standard: Die "Hast du alle gezählt?"-Erinnerung kommt
+        im Minutentakt – an = nachts auch kein Telegram. Aus = Telegram läuft
+        wie bei den anderen Blueprints auch nachts weiter.
+      default: true
+      selector:
+        boolean: {}
+
+    # ══════════════════════════════════════════════════
+    # NACHTRUHE
+    # ══════════════════════════════════════════════════
+    night_schedule:
+      name: "🌙 Nachtruhe Zeitplan"
+      description: "Schedule-Helfer der die Nachtruhe definiert. Leer lassen = kein Nachtmodus."
+      default: ""
+      selector:
+        entity:
+          domain: schedule
+
+    # ══════════════════════════════════════════════════
+    # ANWESENHEIT & BITTE-NICHT-STÖREN
+    # ══════════════════════════════════════════════════
+    person_trackers:
+      name: "👥 Personen (TTS nur wenn jemand zu Hause)"
+      description: "Leer lassen = TTS immer ansagen."
+      default: []
+      selector:
+        entity:
+          domain: person
+          multiple: true
+
+    do_not_disturb:
+      name: "🌙 Bitte-nicht-stören Schalter"
+      description: "Wenn 'on' → kein TTS. Leer lassen um zu deaktivieren."
+      default: ""
+      selector:
+        entity:
+          domain:
+            - input_boolean
+            - switch
+            - binary_sensor
+
+# ══════════════════════════════════════════════════════
+mode: queued
+max: 10
+
+# ── Trigger ───────────────────────────────────────────
+triggers:
+  - trigger: webhook
+    webhook_id: !input webhook_id
+    allowed_methods:
+      - POST
+    local_only: true
+
+# ── Variablen ─────────────────────────────────────────
+# Kein Zugriff auf Sensor-Attribute im globalen variables-Block (Regel 1).
+variables:
+  v_enable_tts:      !input enable_tts
+  v_enable_telegram: !input enable_telegram
+  v_tts_engine:      !input tts_engine
+  v_tts_player:      !input tts_media_player
+  v_telegram_tgts:   !input telegram_targets
+  v_tg_night_mute:   !input telegram_night_mute
+  v_night_schedule:  !input night_schedule
+  v_persons:         !input person_trackers
+  v_dnd:             !input do_not_disturb
+
+  # trigger.json existiert nur bei Content-Type application/json – Fallback statt Templatefehler.
+  msg: "{{ (trigger.json.message if trigger.json is defined and trigger.json else '') | default('Erinnerung vom Zigarettenzähler', true) }}"
+
+  is_night: "{{ v_night_schedule != '' and is_state(v_night_schedule, 'on') }}"
+
+  someone_home: >
+    {{ v_persons | length == 0
+       or v_persons | select('is_state', 'home') | list | length > 0 }}
+
+  tts_allowed: >
+    {% set dnd = v_dnd != '' and is_state(v_dnd, 'on') %}
+    {{ v_enable_tts and not is_night and not dnd and someone_home }}
+
+  telegram_allowed: >
+    {{ v_enable_telegram and v_telegram_tgts | length > 0
+       and not (v_tg_night_mute and is_night) }}
+
+# ── Aktionen ──────────────────────────────────────────
+actions:
+
+  # TTS – fällt der Player aus, soll Telegram trotzdem rausgehen.
+  - if:
+      - condition: template
+        value_template: "{{ tts_allowed }}"
+    then:
+      - action: tts.speak
+        continue_on_error: true
+        target:
+          entity_id: "{{ v_tts_engine }}"
+        data:
+          cache: false
+          media_player_entity_id: "{{ v_tts_player }}"
+          message: "{{ msg }}"
+
+  # Telegram
+  - if:
+      - condition: template
+        value_template: "{{ telegram_allowed }}"
+    then:
+      - repeat:
+          for_each: "{{ v_telegram_tgts }}"
+          sequence:
+            - action: notify.send_message
+              target:
+                entity_id: "{{ repeat.item }}"
+              data:
+                message: "🚬 {{ msg }}"

@@ -1,0 +1,18 @@
+<p>Ciggie Counter helps you keep track of how much you smoke – one tap per cigarette.</p>
+<ul>
+<li><b>Counter:</b> big +1 button, today and yesterday at a glance, add a cigarette later or delete a wrong entry</li>
+<li><b>Statistics:</b> this month, this year, 7- and 30-day averages, bar charts per day, per month and by time of day</li>
+<li><b>Breaks:</b> set a daily target and the app spreads the rest over your waking hours, or use a fixed break</li>
+<li><b>Reminders:</b> “You may smoke again” and “Did you count them all?”, with a +1 button right in the notification</li>
+<li><b>Costs:</b> see what today, this month and this year cost you</li>
+<li><b>Calendar:</b> optional daily summary in a separate local calendar</li>
+<li><b>Your day, your rules:</b> choose when a new day starts – night owls count after midnight to the previous day</li>
+</ul>
+<p><b>Private by design:</b> no account, no ads, no analytics. All data stays on your device. Works without Google Play Services.</p>
+<p><b>Optional extras:</b></p>
+<ul>
+<li><b>Nextcloud:</b> sync with your own Nextcloud running the “cigarettecounter” app – use phone and tablet side by side</li>
+<li><b>Home Assistant:</b> send reminders to a webhook, e.g. for a voice announcement</li>
+<li><b>Butt Bin:</b> an ashtray that counts by itself when you stub out a cigarette and hands the entries to the app via Bluetooth (DIY hardware, see crazy-midi.de)</li>
+</ul>
+<p>This app is not a medical product and gives no health advice.</p>

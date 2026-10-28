@@ -1,0 +1,7 @@
+{
+    "require": {
+        "minishlink/web-push": "*",
+        "php-http/curl-client": "^2.4",
+        "nyholm/psr7": "^1.8"
+    }
+}

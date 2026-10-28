@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Standardsprache Englisch, Deutsch in values-de/strings.xml -->
+<resources>
+    <string name="app_name" translatable="false">Ciggie Counter</string>
+    <string name="info_url" translatable="false">https://crazy-midi.de</string>
+    <string name="ashtray_info_link" translatable="false">ℹ️ crazy-midi.de</string>
+
+    <!-- Navigation -->
+    <string name="tab_counter">Counter</string>
+    <string name="tab_stats">Statistics</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Allgemein -->
+    <string name="time_clock">%s</string>
+    <string name="error">Error: %s</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+
+    <!-- Zähler -->
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="yesterday_count">Yesterday: %d</string>
+    <string name="cost_today">today %s</string>
+    <string name="add_past">🕐 Add earlier cigarette</string>
+    <string name="future_time">That time is in the future</string>
+    <string name="tip_title">Tip: Butt Bin</string>
+    <string name="tip_text">With the Butt Bin your ashtray counts by itself when you stub out a cigarette, even without your phone nearby.</string>
+    <string name="learn_more">Learn more</string>
+    <string name="delete_entry_title">Delete entry?</string>
+    <string name="delete_entry_text">Remove the cigarette from %s.</string>
+    <string name="pacing_interval">Break: about %d minutes</string>
+    <string name="pacing_allowed">✅ You may smoke again</string>
+    <string name="pacing_next">Next one allowed at %s</string>
+    <string name="pacing_remaining">%1$d minutes to go · break about %2$d minutes</string>
+
+    <!-- Statistik -->
+    <string name="this_month">This month</string>
+    <string name="this_year">This year</string>
+    <string name="avg_7">Ø 7 days</string>
+    <string name="avg_30">Ø 30 days</string>
+    <string name="per_day">per day</string>
+    <string name="last_30_days">Last 30 days</string>
+    <string name="dashed_target">dashed: daily target</string>
+    <string name="last_12_months">Last 12 months</string>
+    <string name="time_of_day">Time of day (last 30 days)</string>
+    <!-- Datumsformat unter den Balken -->
+    <string name="chart_day_pattern">M/d</string>
+
+    <!-- Einstellungen -->
+    <string name="section_general">General</string>
+    <string name="cost_per_cigarette">Cost per cigarette (%s)</string>
+    <string name="day_start">New day starts at (hour, 0–23)</string>
+    <string name="day_start_hint">Cigarettes before this hour still count for the previous day (e.g. 4 for night owls).</string>
+    <string name="section_breaks">Breaks</string>
+    <string name="mode_computed">Calculate from daily target</string>
+    <string name="mode_fixed">Fixed break</string>
+    <string name="mode_off">Off</string>
+    <string name="daily_target">Target cigarettes per day</string>
+    <string name="wake_hours">Waking hours per day</string>
+    <string name="computed_hint">The remaining allowance is spread over the rest of your waking time. Smoke faster and the breaks get longer.</string>
+    <string name="fixed_minutes">Minutes between cigarettes</string>
+    <string name="section_reminders">Reminders</string>
+    <string name="reminder_next_allowed">“You may smoke again”</string>
+    <string name="reminder_count_check">“Did you count them all?”</string>
+    <string name="count_check_every">… every (minutes)</string>
+    <string name="exact_alarm_hint">Without permission for exact alarms, reminders may arrive a few minutes late.</string>
+    <string name="exact_alarm_button">Allow exact reminders</string>
+    <string name="section_calendar">Calendar</string>
+    <string name="calendar_switch">Daily summary in calendar</string>
+    <string name="calendar_hint">Creates a separate calendar “Ciggie Counter” and adds “🚬 N cigarettes” every day.</string>
+    <string name="section_ha">Home Assistant (optional)</string>
+    <string name="webhook_url">Webhook URL</string>
+    <string name="ha_hint">Reminders are also sent as {\"message\": …} to this webhook, e.g. for a voice announcement.</string>
+    <string name="ha_test_message">Test from Ciggie Counter</string>
+    <string name="ha_test_button">Send test</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved ✓</string>
+
+    <string name="section_ashtray">Butt Bin (optional)</string>
+    <string name="ashtray_intro">The Butt Bin is an ashtray with a plunger that counts every cigarette you stub out and stores it with the time, even when your phone is not nearby. This app collects the entries via Bluetooth. Without a Butt Bin the app works just the same, you simply count by hand.</string>
+    <string name="not_paired">Not paired</string>
+    <string name="paired">Paired: %s</string>
+    <string name="ashtray_searching">Searching for Butt Bin …</string>
+    <string name="ashtray_not_found">No Butt Bin found</string>
+    <string name="pair">Pair</string>
+    <string name="pair_again">Pair again</string>
+    <string name="syncing">Syncing …</string>
+    <string name="sync_now">Sync now</string>
+    <string name="unpair">Unpair</string>
+    <string name="last_sync">Last sync %1$s: %2$s</string>
+
+    <string name="section_data">Data</string>
+    <string name="data_hint">All data is stored on this device (and on your Nextcloud, if set up).</string>
+    <string name="delete_all">Delete all entries …</string>
+    <string name="delete_all_title">Delete all entries?</string>
+    <string name="delete_all_text">All counted cigarettes will be removed.</string>
+    <string name="delete_all_confirm_title">Really delete everything?</string>
+    <string name="delete_all_confirm_text">This cannot be undone.</string>
+    <string name="next">Continue</string>
+    <string name="delete_final">Delete permanently</string>
+
+    <string name="section_nc">Nextcloud (optional)</string>
+    <string name="nc_hint">For users of their own Nextcloud with the app “cigarettecounter”: every entry is sent to the server; without a network it is queued and sent later. From server app 0.9.3 on, the device also takes over the state from the server, so several devices (e.g. a tablet) can be used in parallel. Note: when switched on, the server state replaces the entries on this device. Only one device should collect from the Butt Bin.</string>
+    <string name="nc_server">Server, e.g. https://cloud.example.org</string>
+    <string name="nc_user">User</string>
+    <string name="nc_password">App password</string>
+    <string name="nc_url_invalid">Address must start with https:// (or http://)</string>
+    <string name="nc_password_hint">Create an app password: Nextcloud → Settings → Security → “Create new app password”.</string>
+    <string name="nc_checking">Checking connection …</string>
+    <string name="nc_ok">Connection OK – press “Save” to apply</string>
+    <string name="nc_test">Test connection</string>
+    <string name="nc_last">Last transfer %1$s: %2$s</string>
+
+    <!-- Erinnerungen -->
+    <string name="channel_reminders">Reminders</string>
+    <string name="channel_reminders_desc">“You may smoke again” and “Did you count them all?”</string>
+    <string name="msg_next_allowed">You may smoke one again now.</string>
+    <string name="msg_count_check">Did you count all your cigarettes?</string>
+    <string name="action_counted">+1 counted</string>
+    <plurals name="calendar_title">
+        <item quantity="one">🚬 %d cigarette</item>
+        <item quantity="other">🚬 %d cigarettes</item>
+    </plurals>
+
+    <!-- Butt Bin -->
+    <string name="ashtray_none_paired">No Butt Bin paired</string>
+    <string name="bt_permission_missing">Bluetooth permission missing</string>
+    <string name="ashtray_first_sync">Paired, counting from now on</string>
+    <string name="ashtray_nothing_new">No new cigarettes</string>
+    <plurals name="ashtray_added">
+        <item quantity="one">%d imported</item>
+        <item quantity="other">%d imported</item>
+    </plurals>
+    <plurals name="ashtray_dropped">
+        <item quantity="one">, %d without time discarded</item>
+        <item quantity="other">, %d without time discarded</item>
+    </plurals>
+    <string name="bt_off">Bluetooth is off</string>
+    <string name="bt_missing">No Bluetooth</string>
+    <string name="bt_scan_failed">Search failed (%d)</string>
+    <string name="bt_no_service">No Butt Bin service</string>
+    <string name="bt_disconnected">Connection lost (status %d)</string>
+
+    <!-- Nextcloud -->
+    <string name="nc_not_configured">Nextcloud not set up</string>
+    <string name="nc_app_missing">App “cigarettecounter” not found on the server (HTTP 404)</string>
+    <string name="nc_auth_rejected">Login rejected (check user/app password)</string>
+    <string name="nc_http">Nextcloud replied with HTTP %d</string>
+    <string name="nc_all_sent">Everything sent</string>
+    <plurals name="nc_sent">
+        <item quantity="one">%d change sent</item>
+        <item quantity="other">%d changes sent</item>
+    </plurals>
+    <plurals name="nc_from_server">
+        <item quantity="one">%d entry from server</item>
+        <item quantity="other">%d entries from server</item>
+    </plurals>
+    <string name="nc_retry">Error: %s – will retry later</string>
+</resources>

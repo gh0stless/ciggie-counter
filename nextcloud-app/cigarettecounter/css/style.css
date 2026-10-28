@@ -1,0 +1,272 @@
+/* Nextclouds #content hat feste Höhe + overflow:clip (schneidet knallhart ab,
+   nicht mal scrollbar), #app-content sollte selbst scrollen, tut es hier aber
+   nicht zuverlässig - erzwingen wir für unsere Seite direkt. */
+#content {
+    overflow-y: auto !important;
+}
+
+#app-content {
+    overflow-y: auto !important;
+    background-color: #f2ece0 !important;
+    color: #2a241c !important;
+}
+
+/* Das Theme-Hintergrundbild sitzt tatsächlich auf body selbst (bestätigt im
+   kompilierten Core-CSS: body { background-image: var(--image-background);
+   position: fixed; ... }), nicht auf #content/#app-content - deshalb griff
+   der Override oben allein nicht. Hier direkt an der Quelle abschalten. */
+body {
+    background-image: none !important;
+    background-color: #f2ece0 !important;
+}
+
+#cigcounter-app {
+    max-width: 420px;
+    margin: 2rem auto 4rem;
+    text-align: center;
+    padding: 0 1rem;
+    position: relative;
+    color: #2a241c;
+}
+
+.cigcounter-settings-toggle {
+    position: absolute;
+    top: 0;
+    right: 1rem;
+    border: none;
+    background: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 0.3rem 0.5rem;
+}
+
+.cigcounter-settings-toggle:hover {
+    opacity: 1;
+}
+
+.cigcounter-cost {
+    font-size: 0.95rem;
+    opacity: 0.7;
+    margin-top: -1.4rem;
+    margin-bottom: 1.4rem;
+    min-height: 1.2em;
+}
+
+.cigcounter-periods {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-bottom: 1.8rem;
+}
+
+.cigcounter-period-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.cigcounter-period-label {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.cigcounter-backdate-toggle {
+    display: block;
+    margin: 0.8rem auto 0;
+    border: none;
+    background: none;
+    font-size: 0.85rem;
+    opacity: 0.6;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.cigcounter-backdate-toggle:hover {
+    opacity: 1;
+}
+
+.cigcounter-backdate-form {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.cigcounter-backdate-form[hidden] {
+    display: none;
+}
+
+.cigcounter-backdate-form input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    font-size: 0.95rem;
+}
+
+.cigcounter-next {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-top: 1rem;
+    min-height: 1.2em;
+}
+
+.cigcounter-interval-info {
+    font-size: 0.8rem;
+    opacity: 0.55;
+    min-height: 1.1em;
+}
+
+.cigcounter-computed-interval {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-top: -0.3rem;
+}
+
+.cigcounter-settings {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: 8px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    box-sizing: border-box;
+}
+
+.cigcounter-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.cigcounter-settings input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    font-size: 1rem;
+}
+
+.cigcounter-settings select {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    font-size: 1rem;
+}
+
+.cigcounter-settings[hidden] {
+    display: none;
+}
+
+.cigcounter-radio-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0.5rem !important;
+}
+
+.cigcounter-radio-label input {
+    width: auto;
+}
+
+.cigcounter-interval-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.cigcounter-settings-save {
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    width: auto;
+    max-width: none;
+}
+
+.cigcounter-push-status {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.cigcounter-settings-divider {
+    border: none;
+    border-top: 1px solid var(--color-border, #e0e0e0);
+    margin: 0.4rem 0;
+}
+
+.cigcounter-reset-btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    width: auto;
+    max-width: none;
+    border: 1px solid var(--color-error, #e9322d);
+    background: none;
+    color: var(--color-error, #e9322d);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cigcounter-count {
+    font-size: 6rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.cigcounter-label {
+    font-size: 1rem;
+    opacity: 0.6;
+    margin-bottom: 2rem;
+}
+
+.cigcounter-addbtn {
+    font-size: 1.5rem;
+    padding: 1.2rem 2.5rem;
+    border-radius: 999px;
+    border: none;
+    background-color: var(--color-primary-element, #0082c9);
+    color: var(--color-primary-element-text, #fff);
+    cursor: pointer;
+    width: 100%;
+    max-width: 300px;
+}
+
+.cigcounter-addbtn:active {
+    opacity: 0.8;
+}
+
+.cigcounter-addbtn:disabled {
+    opacity: 0.5;
+}
+
+.cigcounter-history {
+    margin-top: 2.5rem;
+    text-align: left;
+}
+
+.cigcounter-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.2rem;
+    border-bottom: 1px solid var(--color-border, #e0e0e0);
+    font-variant-numeric: tabular-nums;
+}
+
+.cigcounter-entry-old {
+    opacity: 0.45;
+}
+
+.cigcounter-entry-time {
+    font-size: 1rem;
+}
+
+.cigcounter-entry-del {
+    border: none;
+    background: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+    color: var(--color-error, #e9322d);
+}

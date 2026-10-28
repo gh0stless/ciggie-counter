@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>cigarettecounter</id>
+    <name>Zigarettenzähler</name>
+    <summary>Einfacher, schneller Zigarettenzähler pro Benutzer</summary>
+    <description><![CDATA[Ein Knopf, ein Klick, ein Eintrag. Zeigt die heutige Anzahl gerauchter Zigaretten und eine kurze Verlaufsliste zum Korrigieren. Als PWA auch vom Handy-Homescreen aus nutzbar.]]></description>
+    <version>0.9.3</version>
+    <licence>agpl</licence>
+    <author>Andreas S.</author>
+    <namespace>CigaretteCounter</namespace>
+    <category>tools</category>
+    <dependencies>
+        <nextcloud min-version="28" max-version="35"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <id>cigarettecounter</id>
+            <name>Zigarettenzähler</name>
+            <route>cigarettecounter.page.index</route>
+            <icon>app.svg</icon>
+        </navigation>
+    </navigations>
+</info>

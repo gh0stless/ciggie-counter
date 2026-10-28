@@ -1,0 +1,18 @@
+<p>Ciggie Counter hilft dir, den Überblick über deine Zigaretten zu behalten – ein Tipp pro Zigarette.</p>
+<ul>
+<li><b>Zähler:</b> großer +1-Knopf, heute und gestern auf einen Blick, Zigaretten nachträglich eintragen oder falsche Einträge löschen</li>
+<li><b>Statistik:</b> dieser Monat, dieses Jahr, Durchschnitt über 7 und 30 Tage, Balkendiagramme pro Tag, pro Monat und nach Tageszeit</li>
+<li><b>Pausen:</b> Tagesziel festlegen und die App verteilt den Rest über deine Wachzeit, oder feste Pausen nutzen</li>
+<li><b>Erinnerungen:</b> „Du darfst wieder“ und „Hast du alle gezählt?“, mit +1-Knopf direkt in der Benachrichtigung</li>
+<li><b>Kosten:</b> was heute, diesen Monat und dieses Jahr zusammenkommt</li>
+<li><b>Kalender:</b> auf Wunsch tägliche Zusammenfassung in einem eigenen lokalen Kalender</li>
+<li><b>Dein Tag, deine Regeln:</b> Tageswechsel selbst festlegen – Nachtschwärmer zählen nach Mitternacht noch zum Vortag</li>
+</ul>
+<p><b>Datenschutz eingebaut:</b> kein Konto, keine Werbung, keine Analyse. Alle Daten bleiben auf deinem Gerät. Läuft ohne Google-Play-Dienste.</p>
+<p><b>Optional:</b></p>
+<ul>
+<li><b>Nextcloud:</b> Abgleich mit deiner eigenen Nextcloud mit der App „cigarettecounter“ – Handy und Tablet parallel nutzen</li>
+<li><b>Home Assistant:</b> Erinnerungen an einen Webhook schicken, z. B. für eine Sprachansage</li>
+<li><b>Butt Bin:</b> ein Aschenbecher, der beim Ausdrücken selbst mitzählt und die Einträge per Bluetooth an die App gibt (Selbstbau-Hardware, siehe crazy-midi.de)</li>
+</ul>
+<p>Die App ist kein Medizinprodukt und gibt keine Gesundheitsratschläge.</p>

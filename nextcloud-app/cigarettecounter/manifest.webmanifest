@@ -1,0 +1,21 @@
+{
+    "name": "Zigarettenzähler",
+    "short_name": "ZigZähler",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#1a1a1a",
+    "theme_color": "#1a1a1a",
+    "icons": [
+        {
+            "src": "icon/192",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon/512",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

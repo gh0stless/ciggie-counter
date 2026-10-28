@@ -1,0 +1,36 @@
+# --- Build-Ausgaben ---
+**/build/
+**/.gradle/
+firmware/out/
+*.apk
+*.aab
+
+# --- Lokale Einstellungen und Schlüssel (nie veröffentlichen) ---
+local.properties
+keystore.properties
+*.jks
+*.keystore
+.idea/
+*.iml
+.vscode/
+.tlk/
+.claude/
+
+# --- Fremdcode, wird per Anleitung geholt ---
+firmware/tc_ble_sdk/
+nextcloud-app/cigarettecounter/vendor/
+
+# --- Interne Notizen (private Infrastruktur, bleiben lokal) ---
+handover_superascher.md
+hardware-handover.md
+einkaufsliste.md
+nextcloud-app/PROJEKT.md
+nextcloud-app/docs/
+nextcloud-app/backups/
+
+# --- Fremde Dokumente und Bilder (Urheberrecht) ---
+datasheets/*.pdf
+design/
+
+# --- Altlast: leerer Ordner der früheren Bridge-App ---
+/android/
