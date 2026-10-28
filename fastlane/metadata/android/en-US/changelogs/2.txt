@@ -1,0 +1,2 @@
+- New: “Announce every entry” – the phone says “Cigarette number 12 counted.” (built-in text-to-speech, always English)
+- Home Assistant announcements now come from the Nextcloud app, so they also work when the phone is not in your home network; the webhook field was removed from the app

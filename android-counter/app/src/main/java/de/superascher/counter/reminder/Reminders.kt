@@ -16,9 +16,6 @@ import de.superascher.counter.data.Settings
 import de.superascher.counter.logic.Counter
 import de.superascher.counter.sync.Nextcloud
 import de.superascher.counter.ui.MainActivity
-import java.net.HttpURLConnection
-import java.net.URL
-import kotlin.concurrent.thread
 
 /**
  * Erinnerungen wie in der Nextcloud-App (PushReminderJob / CountCheckReminderJob),
@@ -30,14 +27,30 @@ object Reminders {
     private const val ACTION_COUNT_CHECK = "de.superascher.counter.COUNT_CHECK"
     const val ACTION_COUNT = "de.superascher.counter.COUNT"
 
-    /** Eine Zigarette zählen (Knopf, Nachtragen, Benachrichtigung, Butt Bin). */
-    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual") {
+    /**
+     * Eine Zigarette zählen (Knopf, Nachtragen, Benachrichtigung, Butt Bin).
+     * Sprachansagen über Home Assistant macht die Nextcloud-App, wenn der Eintrag dort ankommt.
+     * [announce] = false, wenn der Aufrufer mehrere Einträge auf einmal bringt und selbst einmal ansagt.
+     */
+    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true) {
         val nc = Settings.load(context).ncEnabled
         EntryStore.get(context).add(ts, source, forward = nc)
         if (nc) Nextcloud.kick(context)
         // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
         AppState(context).lastCountCheckAt = Counter.nowSeconds()
         reschedule(context)
+        if (announce) announceCount(context, ts)
+    }
+
+    /** "Cigarette number 12 counted." auf dem Handy, nur für Einträge des heutigen Zähltags. */
+    fun announceCount(context: Context, ts: Long) {
+        val settings = Settings.load(context)
+        if (!settings.speakCount) return
+        val counter = Counter(settings)
+        val today = counter.today()
+        if (counter.logicalDate(ts) != today) return
+        val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
+        Speech.say(context, context.getString(R.string.speech_counted, number))
     }
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
@@ -91,18 +104,18 @@ object Reminders {
                 // einmal pro Pause melden, erst merken, dann melden: nie doppelt
                 if (last != state.lastNotifiedFor && next <= Counter.nowSeconds()) {
                     state.lastNotifiedFor = last
-                    notify(context, 1, context.getString(R.string.msg_next_allowed), settings)
+                    notify(context, 1, context.getString(R.string.msg_next_allowed))
                 }
             }
             ACTION_COUNT_CHECK -> {
                 state.lastCountCheckAt = Counter.nowSeconds()
-                notify(context, 2, context.getString(R.string.msg_count_check), settings)
+                notify(context, 2, context.getString(R.string.msg_count_check))
             }
         }
         reschedule(context)
     }
 
-    private fun notify(context: Context, id: Int, message: String, settings: Settings) {
+    private fun notify(context: Context, id: Int, message: String) {
         if (context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             val open = PendingIntent.getActivity(
                 context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
@@ -120,26 +133,6 @@ object Reminders {
                 .addAction(android.app.Notification.Action.Builder(null, context.getString(R.string.action_counted), count).build())
                 .build()
             context.getSystemService(NotificationManager::class.java).notify(id, n)
-        }
-        if (settings.haWebhookUrl.startsWith("http")) sendToHomeAssistant(settings.haWebhookUrl, message)
-    }
-
-    /** Wie HomeAssistantNotifier.php: JSON {"message": …} an einen HA-Webhook. */
-    fun sendToHomeAssistant(url: String, message: String) = thread {
-        runCatching {
-            val conn = URL(url).openConnection() as HttpURLConnection
-            try {
-                conn.requestMethod = "POST"
-                conn.connectTimeout = 3000
-                conn.readTimeout = 5000
-                conn.doOutput = true
-                conn.setRequestProperty("Content-Type", "application/json")
-                val json = "{\"message\":\"" + message.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}"
-                conn.outputStream.use { it.write(json.toByteArray()) }
-                conn.responseCode
-            } finally {
-                conn.disconnect()
-            }
         }
     }
 

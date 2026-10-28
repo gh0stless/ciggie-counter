@@ -1,0 +1,2 @@
+- Neu: „Jede Eingabe ansagen“ – das Handy sagt „Cigarette number 12 counted.“ (eingebaute Sprachausgabe, immer Englisch)
+- Ansagen über Home Assistant kommen jetzt von der Nextcloud-App und klappen damit auch, wenn das Handy nicht im Heimnetz ist; das Webhook-Feld ist aus der App entfernt

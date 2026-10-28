@@ -5,7 +5,7 @@
     <name>Zigarettenzähler</name>
     <summary>Einfacher, schneller Zigarettenzähler pro Benutzer</summary>
     <description><![CDATA[Ein Knopf, ein Klick, ein Eintrag. Zeigt die heutige Anzahl gerauchter Zigaretten und eine kurze Verlaufsliste zum Korrigieren. Als PWA auch vom Handy-Homescreen aus nutzbar.]]></description>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
     <licence>agpl</licence>
     <author>Andreas S.</author>
     <namespace>CigaretteCounter</namespace>

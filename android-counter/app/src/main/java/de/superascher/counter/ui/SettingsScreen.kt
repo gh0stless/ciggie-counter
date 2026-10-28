@@ -60,7 +60,6 @@ private fun decimal(v: Double) = v.toString().removeSuffix(".0").replace('.', De
 @Composable
 fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> Unit) {
     val context = LocalContext.current
-    val res = LocalResources.current
     var cost by remember { mutableStateOf(initial.costPerCigarette?.let { decimal(it) } ?: "") }
     var dayStart by remember { mutableStateOf(initial.dayStartHour.toString()) }
     var mode by remember { mutableStateOf(initial.intervalMode) }
@@ -70,8 +69,8 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
     var nextAllowed by remember { mutableStateOf(initial.nextAllowedReminder) }
     var countCheck by remember { mutableStateOf(initial.countCheckReminder) }
     var countCheckMin by remember { mutableStateOf(initial.countCheckMinutes.toString()) }
+    var speakCount by remember { mutableStateOf(initial.speakCount) }
     var calendar by remember { mutableStateOf(initial.calendarSummary) }
-    var ha by remember { mutableStateOf(initial.haWebhookUrl) }
     var ncUrl by remember { mutableStateOf(initial.ncUrl) }
     var ncUser by remember { mutableStateOf(initial.ncUser) }
     var ncPassword by remember { mutableStateOf(initial.ncAppPassword) }
@@ -112,6 +111,8 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         SwitchRow(stringResource(R.string.reminder_next_allowed), nextAllowed) { nextAllowed = it }
         SwitchRow(stringResource(R.string.reminder_count_check), countCheck) { countCheck = it }
         if (countCheck) NumberField(stringResource(R.string.count_check_every), countCheckMin) { countCheckMin = it }
+        SwitchRow(stringResource(R.string.speak_count), speakCount) { speakCount = it }
+        if (speakCount) Hint(stringResource(R.string.speak_count_hint))
         val alarms = context.getSystemService(AlarmManager::class.java)
         if (!alarms.canScheduleExactAlarms()) {
             Hint(stringResource(R.string.exact_alarm_hint))
@@ -130,17 +131,6 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         }
         Hint(stringResource(R.string.calendar_hint))
 
-        Section(stringResource(R.string.section_ha))
-        OutlinedTextField(ha, { ha = it }, Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text(stringResource(R.string.webhook_url)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
-        Hint(stringResource(R.string.ha_hint))
-        if (ha.startsWith("http")) {
-            OutlinedButton(onClick = { Reminders.sendToHomeAssistant(ha.trim(), res.getString(R.string.ha_test_message)) }) {
-                Text(stringResource(R.string.ha_test_button))
-            }
-        }
-
         NextcloudSection(ncUrl, ncUser, ncPassword, { ncUrl = it }, { ncUser = it }, { ncPassword = it })
 
         Button(onClick = {
@@ -154,8 +144,8 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
                 nextAllowedReminder = nextAllowed,
                 countCheckReminder = countCheck,
                 countCheckMinutes = num(countCheckMin)?.toInt()?.coerceAtLeast(1) ?: 10,
+                speakCount = speakCount,
                 calendarSummary = calendar,
-                haWebhookUrl = ha,
                 ncUrl = ncUrl,
                 ncUser = ncUser,
                 ncAppPassword = ncPassword,

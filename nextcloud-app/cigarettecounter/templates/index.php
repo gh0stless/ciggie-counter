@@ -95,8 +95,13 @@
 
         <hr class="cigcounter-settings-divider">
 
+        <label class="cigcounter-radio-label">
+            <input type="checkbox" id="cigcounter-setting-count-announce-enabled">
+            Ansage bei jeder Eingabe ("12. Zigarette gezählt", auch für Einträge der Handy-App)
+        </label>
+
         <label>
-            Home-Assistant-Webhook (Sprachansage beider Erinnerungen)
+            Home-Assistant-Webhook (Sprachansagen)
             <input type="url" id="cigcounter-setting-ha-webhook" placeholder="http://<HA-IP>:8123/api/webhook/…" autocomplete="off">
         </label>
         <button id="cigcounter-ha-test" class="cigcounter-addbtn cigcounter-settings-save" type="button">🔊 Ansage testen</button>

@@ -12,7 +12,7 @@
 <p><b>Optional extras:</b></p>
 <ul>
 <li><b>Nextcloud:</b> sync with your own Nextcloud running the “cigarettecounter” app – use phone and tablet side by side</li>
-<li><b>Home Assistant:</b> send reminders to a webhook, e.g. for a voice announcement</li>
+<li><b>Home Assistant:</b> voice announcements of reminders and every counted cigarette, via the Nextcloud app</li>
 <li><b>Butt Bin:</b> an ashtray that counts by itself when you stub out a cigarette and hands the entries to the app via Bluetooth (DIY hardware, see crazy-midi.de)</li>
 </ul>
 <p>This app is not a medical product and gives no health advice.</p>

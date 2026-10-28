@@ -1,0 +1,73 @@
+# Zigarettenzähler – Anbindung an die Nextcloud-App "cigarettecounter"
+# (Projekt Cigarrette Counter + SuperAscher, nextcloud-app/PROJEKT.md §5)
+#
+# Nur Sensoren und Zähl-Aktion; die Logik (Sprachbefehle, Telegram) steckt im Blueprint
+# cigcounter_assist_blueprint.yaml, die Instanz wird über die UI angelegt.
+#
+# Benötigte Einträge in secrets.yaml:
+#   cigcounter_today_url: https://<nextcloud>/index.php/apps/cigarettecounter/api/today
+#   cigcounter_add_url:   https://<nextcloud>/index.php/apps/cigarettecounter/api/add
+#   cigcounter_user:      <Nextcloud-Benutzer>
+#   cigcounter_password:  <Nextcloud-App-Passwort>   (Einstellungen > Sicherheit, nicht das Login-Passwort)
+#
+# Header OCS-APIRequest: true ist Pflicht, sonst verlangt Nextcloud ein CSRF-Token (HTTP 412).
+
+rest:
+  - resource: !secret cigcounter_today_url
+    method: GET
+    authentication: basic
+    username: !secret cigcounter_user
+    password: !secret cigcounter_password
+    headers:
+      OCS-APIRequest: "true"
+      Accept: application/json
+    scan_interval: 60
+    sensor:
+      - name: "Zigaretten heute"
+        unique_id: cigcounter_today
+        value_template: "{{ value_json.todayCount }}"
+        unit_of_measurement: "Zigaretten"
+        state_class: measurement
+        icon: mdi:smoking
+      - name: "Zigaretten Monat"
+        unique_id: cigcounter_month
+        value_template: "{{ value_json.monthCount }}"
+        unit_of_measurement: "Zigaretten"
+        state_class: measurement  # Langzeitstatistik für das Dashboard
+        icon: mdi:calendar-month
+      - name: "Zigaretten Jahr"
+        unique_id: cigcounter_year
+        value_template: "{{ value_json.yearCount }}"
+        unit_of_measurement: "Zigaretten"
+        state_class: measurement  # Langzeitstatistik für das Dashboard
+        icon: mdi:calendar
+      - name: "Zigaretten Kosten heute"
+        unique_id: cigcounter_cost_today
+        # null, wenn in Nextcloud keine Kosten pro Zigarette eingestellt sind
+        value_template: "{{ value_json.todayCost if value_json.todayCost is not none else 'unknown' }}"
+        unit_of_measurement: "€"
+        icon: mdi:cash
+      - name: "Zigarette nächste erlaubt"
+        unique_id: cigcounter_next_allowed
+        device_class: timestamp
+        # null, wenn kein Pausenziel eingestellt ist oder noch nichts gezählt wurde
+        value_template: "{{ value_json.nextAllowedAt if value_json.nextAllowedAt else 'unknown' }}"
+        icon: mdi:timer-sand
+      - name: "Zigaretten Pause"
+        unique_id: cigcounter_interval
+        value_template: "{{ value_json.intervalMinutes | round(0) if value_json.intervalMinutes is not none else 'unknown' }}"
+        unit_of_measurement: "min"
+        icon: mdi:timer-outline
+
+rest_command:
+  # Eine Zigarette "jetzt" zählen (ohne timestamp = aktuelle Zeit)
+  cigcounter_add:
+    url: !secret cigcounter_add_url
+    method: POST
+    username: !secret cigcounter_user
+    password: !secret cigcounter_password
+    headers:
+      OCS-APIRequest: "true"
+      Accept: application/json
+    content_type: "application/x-www-form-urlencoded"
+    payload: ""

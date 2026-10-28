@@ -1,0 +1,99 @@
+# ============================================================
+#  Zigarettenzähler – Dashboard v1 (28.10.2026)
+#  Benötigt (HACS): mushroom-cards
+#  Sensoren + rest_command aus cigcounter_package.yaml
+#  Daten kommen aus der Nextcloud-App; Handy-App, Superascher und
+#  Sprache zählen alle dort hinein, das Dashboard zeigt denselben Stand.
+#  Diagramme nutzen die HA-Langzeitstatistik: Sie füllen sich erst ab
+#  Einrichtung (28.10.2026); die komplette Historie zeigt die Handy-App.
+# ============================================================
+
+title: "Zigaretten"
+icon: mdi:smoking
+path: zigaretten
+
+cards:
+
+  # ════════════════════════════════════════════════════════════
+  #  HEUTE
+  # ════════════════════════════════════════════════════════════
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: "{{ states('sensor.zigaretten_heute') }}"
+        secondary: >
+          heute{% if is_number(states('sensor.zigaretten_kosten_heute')) %} · {{ '%.2f' | format(states('sensor.zigaretten_kosten_heute') | float) | replace('.', ',') }} €{% endif %}
+        icon: mdi:smoking
+        icon_color: brown
+        tap_action:
+          action: more-info
+        entity: sensor.zigaretten_heute
+      - type: custom:mushroom-template-card
+        primary: >
+          {% set n = states('sensor.zigarette_nachste_erlaubt') %}
+          {% if n in ['unknown', 'unavailable', 'none', ''] %}Keine Pause
+          {% elif as_timestamp(n) <= as_timestamp(now()) %}Jetzt erlaubt
+          {% else %}ab {{ as_timestamp(n) | timestamp_custom('%H:%M') }} Uhr{% endif %}
+        secondary: >
+          {% set p = states('sensor.zigaretten_pause') %}
+          {% if is_number(p) %}Pause ca. {{ p | int }} min{% else %}nächste erlaubt{% endif %}
+        icon: mdi:timer-sand
+        icon_color: >
+          {% set n = states('sensor.zigarette_nachste_erlaubt') %}
+          {% if n in ['unknown', 'unavailable', 'none', ''] %}grey
+          {% elif as_timestamp(n) <= as_timestamp(now()) %}green{% else %}orange{% endif %}
+        entity: sensor.zigarette_nachste_erlaubt
+        tap_action:
+          action: more-info
+
+  # ════════════════════════════════════════════════════════════
+  #  ZÄHLEN
+  # ════════════════════════════════════════════════════════════
+  - type: custom:mushroom-template-card
+    primary: "Zigarette zählen"
+    secondary: "Zählt in Nextcloud, die Anzeige folgt innerhalb einer Minute"
+    icon: mdi:plus-circle
+    icon_color: red
+    tap_action:
+      action: perform-action
+      perform_action: rest_command.cigcounter_add
+      confirmation:
+        text: "Eine Zigarette zählen?"
+
+  # ════════════════════════════════════════════════════════════
+  #  MONAT / JAHR
+  # ════════════════════════════════════════════════════════════
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-entity-card
+        entity: sensor.zigaretten_monat
+        name: "Dieser Monat"
+        icon_color: blue
+      - type: custom:mushroom-entity-card
+        entity: sensor.zigaretten_jahr
+        name: "Dieses Jahr"
+        icon_color: purple
+
+  # ════════════════════════════════════════════════════════════
+  #  VERLAUF (HA-Langzeitstatistik, ab 28.10.2026)
+  # ════════════════════════════════════════════════════════════
+  - type: statistics-graph
+    title: "Pro Tag (letzte 30 Tage)"
+    entities:
+      - entity: sensor.zigaretten_heute
+        name: "Zigaretten"
+    period: day
+    stat_types:
+      - max
+    chart_type: bar
+    days_to_show: 30
+  - type: statistics-graph
+    title: "Pro Monat"
+    entities:
+      - entity: sensor.zigaretten_monat
+        name: "Zigaretten"
+    period: month
+    stat_types:
+      - max
+    chart_type: bar
+    days_to_show: 365

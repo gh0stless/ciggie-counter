@@ -1,0 +1,248 @@
+# Zigarettenzähler – Zählen und Abfragen per Sprache (Assist) und Telegram
+#
+# - Daten liegen in der Nextcloud-App "cigarettecounter"; Sensoren und rest_command.cigcounter_add
+#   kommen aus cigcounter_package.yaml (gleicher Ordner). App, Superascher, Browser und HA
+#   sehen dadurch immer denselben Stand.
+# - Eine Automation, mehrere Trigger-IDs, choose-Block (Standard-Muster). Kein TTS-Kanal:
+#   Assist antwortet selbst per Sprache (set_conversation_response), Telegram nur an den Aufrufer.
+blueprint:
+  name: "🚬 Zigarettenzähler – Sprache & Telegram"
+  description: >
+    Zählt Zigaretten per Sprachbefehl oder Telegram und beantwortet Fragen nach
+    heute/Monat/Jahr/Kosten/nächster erlaubter Zigarette. Benötigt cigcounter_package.yaml.
+  domain: automation
+  input:
+    # ══════════════════════════════════════════════════
+    sensors_section:
+      name: "📊 Sensoren (aus cigcounter_package.yaml)"
+      icon: mdi:smoking
+      input:
+        today_sensor:
+          name: "Zigaretten heute"
+          default: sensor.zigaretten_heute
+          selector:
+            entity:
+              domain: sensor
+        month_sensor:
+          name: "Zigaretten Monat"
+          default: sensor.zigaretten_monat
+          selector:
+            entity:
+              domain: sensor
+        year_sensor:
+          name: "Zigaretten Jahr"
+          default: sensor.zigaretten_jahr
+          selector:
+            entity:
+              domain: sensor
+        cost_sensor:
+          name: "Kosten heute"
+          default: sensor.zigaretten_kosten_heute
+          selector:
+            entity:
+              domain: sensor
+        next_sensor:
+          name: "Nächste erlaubt"
+          default: sensor.zigarette_nachste_erlaubt
+          selector:
+            entity:
+              domain: sensor
+    # ══════════════════════════════════════════════════
+    voice_section:
+      name: "🎙️ Sprachbefehle (Assist)"
+      icon: mdi:microphone
+      input:
+        sentences_count:
+          name: "Zählen"
+          description: "Assist-Satzsyntax: [optional], (a|b) = Alternativen"
+          default:
+            - "[ich] rauche [jetzt] eine"
+            - "Zigarette zählen"
+            - "eine Zigarette [ist] geraucht"
+          selector:
+            text:
+              multiple: true
+        sentences_today:
+          name: "Heute abfragen"
+          default:
+            - "wie viele Zigaretten [habe ich] heute [geraucht]"
+            - "Zigaretten heute"
+          selector:
+            text:
+              multiple: true
+        sentences_month:
+          name: "Monat abfragen"
+          default:
+            - "wie viele Zigaretten [habe ich] diesen Monat [geraucht]"
+          selector:
+            text:
+              multiple: true
+        sentences_year:
+          name: "Jahr abfragen"
+          default:
+            - "wie viele Zigaretten [habe ich] dieses Jahr [geraucht]"
+          selector:
+            text:
+              multiple: true
+        sentences_cost:
+          name: "Kosten abfragen"
+          default:
+            - "was haben [die] Zigaretten heute gekostet"
+            - "Zigarettenkosten [heute]"
+          selector:
+            text:
+              multiple: true
+        sentences_next:
+          name: "Nächste erlaubte abfragen"
+          default:
+            - "wann darf ich [wieder] rauchen"
+            - "darf ich [schon] rauchen"
+          selector:
+            text:
+              multiple: true
+    # ══════════════════════════════════════════════════
+    telegram_section:
+      name: "📲 Telegram"
+      icon: mdi:send
+      input:
+        enable_telegram:
+          name: "Telegram-Befehle aktiv"
+          default: true
+          selector:
+            boolean: {}
+        telegram_count_command:
+          name: "Befehl: zählen"
+          default: "/rauchen"
+          selector:
+            text: {}
+        telegram_status_command:
+          name: "Befehl: Status"
+          default: "/zigstatus"
+          selector:
+            text: {}
+
+mode: queued
+
+triggers:
+  - trigger: conversation
+    command: !input sentences_count
+    id: voice_count
+  - trigger: conversation
+    command: !input sentences_today
+    id: voice_today
+  - trigger: conversation
+    command: !input sentences_month
+    id: voice_month
+  - trigger: conversation
+    command: !input sentences_year
+    id: voice_year
+  - trigger: conversation
+    command: !input sentences_cost
+    id: voice_cost
+  - trigger: conversation
+    command: !input sentences_next
+    id: voice_next
+  - trigger: event
+    event_type: telegram_command
+    event_data:
+      command: !input telegram_count_command
+    id: telegram_count
+  - trigger: event
+    event_type: telegram_command
+    event_data:
+      command: !input telegram_status_command
+    id: telegram_status
+
+# Global nur Inputs und Zustände, keine Attribute (Regel §1.1)
+variables:
+  v_today: !input today_sensor
+  v_month: !input month_sensor
+  v_year: !input year_sensor
+  v_cost: !input cost_sensor
+  v_next: !input next_sensor
+  v_enable_telegram: !input enable_telegram
+
+actions:
+  - choose:
+      # ── Zählen (Sprache oder Telegram) ─────────────────
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'voice_count' or (trigger.id == 'telegram_count' and v_enable_telegram) }}"
+        sequence:
+          - action: rest_command.cigcounter_add
+            response_variable: r
+          - variables:
+              ok: "{{ r.status == 200 }}"
+              # /api/add antwortet mit demselben JSON wie /api/today
+              answer: >
+                {% if ok and r.content is mapping %}
+                  Gezählt. Das ist die {{ r.content.todayCount }}. Zigarette heute.
+                {% else %}
+                  Das Zählen hat nicht geklappt, Nextcloud antwortet mit Status {{ r.status }}.
+                {% endif %}
+          - action: homeassistant.update_entity
+            target:
+              entity_id: "{{ [v_today, v_month, v_year, v_cost, v_next] }}"
+          - choose:
+              - conditions: "{{ trigger.id == 'telegram_count' }}"
+                sequence:
+                  - action: telegram_bot.send_message
+                    data:
+                      chat_id: "{{ trigger.event.data.chat_id }}"
+                      message: "🚬 {{ answer | trim }}"
+            default:
+              - set_conversation_response: "{{ answer | trim }}"
+
+      # ── Status per Telegram ────────────────────────────
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'telegram_status' and v_enable_telegram }}"
+        sequence:
+          - variables:
+              status_msg: >
+                {% set ns = namespace(lines=['🚬 Zigarettenzähler ' ~ now().strftime('%d.%m.%Y %H:%M')]) %}
+                {% set ns.lines = ns.lines + ['Heute: ' ~ states(v_today)] %}
+                {% set ns.lines = ns.lines + ['Monat: ' ~ states(v_month)] %}
+                {% set ns.lines = ns.lines + ['Jahr: ' ~ states(v_year)] %}
+                {% if is_number(states(v_cost)) %}
+                  {% set ns.lines = ns.lines + ['Kosten heute: ' ~ '%.2f' | format(states(v_cost) | float) ~ ' €'] %}
+                {% endif %}
+                {% set n = states(v_next) %}
+                {% if n not in ['unknown', 'unavailable', 'none', ''] %}
+                  {% set ns.lines = ns.lines + ['Nächste erlaubt: ' ~ (as_timestamp(n) <= as_timestamp(now())) | iif('jetzt', as_timestamp(n) | timestamp_custom('%H:%M') ~ ' Uhr')] %}
+                {% endif %}
+                {{ ns.lines | join('\n') }}
+          - action: telegram_bot.send_message
+            data:
+              chat_id: "{{ trigger.event.data.chat_id }}"
+              message: "{{ status_msg }}"
+
+      # ── Abfragen per Sprache ───────────────────────────
+      - conditions: "{{ trigger.id == 'voice_today' }}"
+        sequence:
+          - set_conversation_response: "Heute waren es {{ states(v_today) }} Zigaretten."
+      - conditions: "{{ trigger.id == 'voice_month' }}"
+        sequence:
+          - set_conversation_response: "Diesen Monat waren es {{ states(v_month) }} Zigaretten."
+      - conditions: "{{ trigger.id == 'voice_year' }}"
+        sequence:
+          - set_conversation_response: "Dieses Jahr waren es {{ states(v_year) }} Zigaretten."
+      - conditions: "{{ trigger.id == 'voice_cost' }}"
+        sequence:
+          - set_conversation_response: >
+              {% if is_number(states(v_cost)) %}
+                Heute hast du {{ '%.2f' | format(states(v_cost) | float) | replace('.', ',') }} Euro verraucht.
+              {% else %}
+                In Nextcloud sind keine Kosten pro Zigarette eingestellt.
+              {% endif %}
+      - conditions: "{{ trigger.id == 'voice_next' }}"
+        sequence:
+          - set_conversation_response: >
+              {% set n = states(v_next) %}
+              {% if n in ['unknown', 'unavailable', 'none', ''] %}
+                Es ist keine Pause eingestellt.
+              {% elif as_timestamp(n) <= as_timestamp(now()) %}
+                Ja, du darfst jetzt wieder.
+              {% else %}
+                Erst ab {{ as_timestamp(n) | timestamp_custom('%H:%M') }} Uhr, also in {{ ((as_timestamp(n) - as_timestamp(now())) / 60) | round(0) | int }} Minuten.
+              {% endif %}

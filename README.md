@@ -2,11 +2,15 @@
 
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
+![Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button](design/superascher_entwurf_v1.jpg)
+
+*Butt Bin concept render (AI-generated design study, not the real prototype yet).*
+
 This repository contains three parts that work on their own or together:
 
 | Part | Folder | What it does |
 |---|---|---|
-| **Ciggie Counter** (Android app) | [`android-counter/`](android-counter/) | Counter with +1 button, history, statistics, break timer, reminders, optional calendar summary, Home Assistant webhook and Nextcloud sync. English and German. |
+| **Ciggie Counter** (Android app) | [`android-counter/`](android-counter/) | Counter with +1 button, history, statistics, break timer, reminders, optional calendar summary and Nextcloud sync. English and German. |
 | **Butt Bin** (hardware, prototype) | [`firmware/`](firmware/) | An ashtray with a plunger that counts every cigarette you stub out, stores it with a timestamp and hands it to the app via Bluetooth LE, even when the phone was away. |
 | **Nextcloud app** `cigarettecounter` | [`nextcloud-app/cigarettecounter/`](nextcloud-app/cigarettecounter/) | Self-hosted web app/PWA with the same counting logic; lets several devices (phone, tablet) share one state. |
 
@@ -15,8 +19,8 @@ More about the Butt Bin: <https://crazy-midi.de>
 ## Ciggie Counter (Android)
 
 - Android 13 or newer, no Google Play Services needed (runs fine on GrapheneOS).
-- All data stays on the device. Optional: your own Nextcloud with the `cigarettecounter` app, a Home Assistant webhook for voice announcements.
-- Permissions are only used when the matching feature is switched on: notifications (reminders), exact alarms (punctual reminders), calendar (daily summary), Bluetooth scan/connect without location (Butt Bin), internet (Nextcloud/Home Assistant).
+- All data stays on the device. Optional: your own Nextcloud with the `cigarettecounter` app, which can also send voice announcements to Home Assistant.
+- Permissions are only used when the matching feature is switched on: notifications (reminders), exact alarms (punctual reminders), calendar (daily summary), Bluetooth scan/connect without location (Butt Bin), internet (Nextcloud).
 
 ### Build
 
@@ -44,9 +48,11 @@ Building needs the [Telink TC BLE SDK](https://github.com/telink-semi/tc_ble_sdk
 
 The firmware is derived from the SDK example `acl_peripheral_demo`; files taken from the SDK keep their Apache-2.0 headers.
 
+A first schematic draft for the carrier board (Ai-Thinker TB-03F module, USB-C charging with TP4054, DW01A/FS8205 battery protection, XC6206 LDO, one recycled single Li-ion cell) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) (KiCad 10, not yet laid out or built).
+
 ## Nextcloud app
 
-Install by copying `nextcloud-app/cigarettecounter/` to your Nextcloud `apps/` (or `custom_apps/`) folder, run `composer install --no-dev` inside it and enable the app. The Android app talks to it with an app password (Settings → Security). A Home Assistant blueprint for voice announcements is in [`nextcloud-app/homeassistant/`](nextcloud-app/homeassistant/).
+Install by copying `nextcloud-app/cigarettecounter/` to your Nextcloud `apps/` (or `custom_apps/`) folder, run `composer install --no-dev` inside it and enable the app. The Android app talks to it with an app password (Settings → Security). It can announce reminders and every counted cigarette ("12. Zigarette gezählt") through a Home Assistant webhook; blueprints, sensors and a setup guide are in [`nextcloud-app/homeassistant/`](nextcloud-app/homeassistant/).
 
 ## License
 

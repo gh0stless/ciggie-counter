@@ -15,8 +15,15 @@
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <!-- Home-Assistant-Webhook und Nextcloud (nur wenn eingetragen) -->
+    <!-- Nextcloud (nur wenn eingetragen) -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Sprachausgabe "Jede Eingabe ansagen": ohne diese Angabe sieht die App keine TTS-Engine -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <application
         android:name=".App"

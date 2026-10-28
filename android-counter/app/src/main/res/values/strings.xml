@@ -62,17 +62,16 @@
     <string name="section_reminders">Reminders</string>
     <string name="reminder_next_allowed">“You may smoke again”</string>
     <string name="reminder_count_check">“Did you count them all?”</string>
+    <string name="speak_count">Announce every entry</string>
+    <string name="speak_count_hint">The phone says “Cigarette number 12 counted.” after each entry, also for the Butt Bin. Uses the media volume.</string>
+    <!-- Ansage immer Englisch, siehe Speech.kt -->
+    <string name="speech_counted" translatable="false">Cigarette number %d counted.</string>
     <string name="count_check_every">… every (minutes)</string>
     <string name="exact_alarm_hint">Without permission for exact alarms, reminders may arrive a few minutes late.</string>
     <string name="exact_alarm_button">Allow exact reminders</string>
     <string name="section_calendar">Calendar</string>
     <string name="calendar_switch">Daily summary in calendar</string>
     <string name="calendar_hint">Creates a separate calendar “Ciggie Counter” and adds “🚬 N cigarettes” every day.</string>
-    <string name="section_ha">Home Assistant (optional)</string>
-    <string name="webhook_url">Webhook URL</string>
-    <string name="ha_hint">Reminders are also sent as {\"message\": …} to this webhook, e.g. for a voice announcement.</string>
-    <string name="ha_test_message">Test from Ciggie Counter</string>
-    <string name="ha_test_button">Send test</string>
     <string name="save">Save</string>
     <string name="saved">Saved ✓</string>
 

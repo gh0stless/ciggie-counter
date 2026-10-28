@@ -60,16 +60,20 @@ object AshtraySync {
 
         var added = 0
         var dropped = 0
+        var latest: Long? = null
         for (event in result.events.sortedBy { it.seq }) {
             if (event.seq < state.ashtrayNextSeq) continue
             val time = event.unixTime
             if (time == null) dropped++ else {
-                Reminders.count(context, time, "ashtray")
+                Reminders.count(context, time, "ashtray", announce = false)
+                latest = maxOf(latest ?: time, time)
                 added++
             }
             state.ashtrayNextSeq = event.seq + 1
         }
         state.ashtrayNextSeq = maxOf(state.ashtrayNextSeq, result.count)
+        // Mehrere Einträge auf einmal: nur einmal ansagen, mit dem Stand nach dem neuesten
+        latest?.let { Reminders.announceCount(context, it) }
         return buildString {
             val res = context.resources
             append(if (added == 0) context.getString(R.string.ashtray_nothing_new) else res.getQuantityString(R.plurals.ashtray_added, added, added))

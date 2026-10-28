@@ -18,8 +18,9 @@ data class Settings(
     /** Standard aus: alle paar Minuten nachzufragen ist für neue Nutzer zu aufdringlich */
     val countCheckReminder: Boolean = false,
     val countCheckMinutes: Int = 10,
+    /** Nach jedem Zählen "Cigarette number 12 counted." über die Sprachausgabe des Handys */
+    val speakCount: Boolean = false,
     val calendarSummary: Boolean = false,
-    val haWebhookUrl: String = "",
     /** Optional: eigene Nextcloud mit der App "cigarettecounter" (nextcloud-app/) */
     val ncUrl: String = "",
     val ncUser: String = "",
@@ -48,8 +49,8 @@ data class Settings(
                 nextAllowedReminder = getBoolean("next_allowed_reminder", true),
                 countCheckReminder = getBoolean("count_check", false),
                 countCheckMinutes = getInt("count_check_minutes", 10),
+                speakCount = getBoolean("speak_count", false),
                 calendarSummary = getBoolean("calendar_summary", false),
-                haWebhookUrl = getString("ha_webhook", "") ?: "",
                 ncUrl = getString("nc_url", "") ?: "",
                 ncUser = getString("nc_user", "") ?: "",
                 ncAppPassword = getString("nc_app_password", "") ?: "",
@@ -66,8 +67,10 @@ data class Settings(
             putBoolean("next_allowed_reminder", s.nextAllowedReminder)
             putBoolean("count_check", s.countCheckReminder)
             putInt("count_check_minutes", s.countCheckMinutes.coerceAtLeast(1))
+            putBoolean("speak_count", s.speakCount)
             putBoolean("calendar_summary", s.calendarSummary)
-            putString("ha_webhook", s.haWebhookUrl.trim())
+            // Home Assistant macht seit 1.0.1 die Nextcloud-App: alte Webhook-URL (geheim) nicht liegen lassen
+            remove("ha_webhook")
             putString("nc_url", s.ncUrl.trim().trimEnd('/'))
             putString("nc_user", s.ncUser.trim())
             putString("nc_app_password", s.ncAppPassword.trim())

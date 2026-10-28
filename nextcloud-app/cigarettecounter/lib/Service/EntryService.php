@@ -216,8 +216,11 @@ class EntryService {
         ?string $countCheckEnabled = null,
         ?string $countCheckIntervalMinutes = null,
         ?string $nextAllowedReminderEnabled = null,
-        ?string $dayStartHour = null
+        ?string $dayStartHour = null,
+        ?string $countAnnounceEnabled = null
     ): void {
+        $this->config->setUserValue($uid, 'cigarettecounter', 'count_announce_enabled', $countAnnounceEnabled === '1' ? '1' : '0');
+
         if ($dayStartHour !== null && $dayStartHour !== '' && (int)$dayStartHour >= 0 && (int)$dayStartHour <= 23) {
             $this->config->setUserValue($uid, 'cigarettecounter', 'day_start_hour', (string)(int)$dayStartHour);
         } else {
@@ -391,5 +394,12 @@ class EntryService {
 
     public function isNextAllowedReminderEnabled(string $uid): bool {
         return $this->config->getUserValue($uid, 'cigarettecounter', 'next_allowed_reminder_enabled', '1') !== '0';
+    }
+
+    /**
+     * Ansage "12. Zigarette gezählt" bei jedem neuen Eintrag (Standard aus).
+     */
+    public function isCountAnnounceEnabled(string $uid): bool {
+        return $this->config->getUserValue($uid, 'cigarettecounter', 'count_announce_enabled', '0') === '1';
     }
 }

@@ -25,6 +25,7 @@
     var resetBtn = document.getElementById('cigcounter-reset-btn');
     var settingNextAllowedEnabledInput = document.getElementById('cigcounter-setting-next-allowed-enabled');
     var settingCountCheckEnabledInput = document.getElementById('cigcounter-setting-countcheck-enabled');
+    var settingCountAnnounceInput = document.getElementById('cigcounter-setting-count-announce-enabled');
     var settingCountCheckIntervalInput = document.getElementById('cigcounter-setting-countcheck-interval');
     var settingHaWebhookInput = document.getElementById('cigcounter-setting-ha-webhook');
     var settingDayStartInput = document.getElementById('cigcounter-setting-day-start');
@@ -292,6 +293,7 @@
                 settingNextAllowedEnabledInput.checked = !!data.nextAllowedReminderEnabled;
                 settingCountCheckEnabledInput.checked = !!data.countCheckEnabled;
                 settingCountCheckIntervalInput.value = data.countCheckIntervalMinutes;
+                settingCountAnnounceInput.checked = !!data.countAnnounceEnabled;
                 settingHaWebhookInput.value = data.haWebhookUrl || '';
                 settingDayStartInput.value = data.dayStartHour;
                 settingCalendarSelect.innerHTML = '';
@@ -325,6 +327,7 @@
         params.set('nextAllowedReminderEnabled', settingNextAllowedEnabledInput.checked ? '1' : '0');
         params.set('countCheckEnabled', settingCountCheckEnabledInput.checked ? '1' : '0');
         params.set('countCheckIntervalMinutes', settingCountCheckIntervalInput.value);
+        params.set('countAnnounceEnabled', settingCountAnnounceInput.checked ? '1' : '0');
         params.set('haWebhookUrl', settingHaWebhookInput.value);
         params.set('dayStartHour', settingDayStartInput.value);
         // Nur mitschicken, wenn die Liste geladen ist - sonst würde ein leerer Wert

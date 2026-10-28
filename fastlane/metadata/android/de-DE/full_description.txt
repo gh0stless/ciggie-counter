@@ -12,7 +12,7 @@
 <p><b>Optional:</b></p>
 <ul>
 <li><b>Nextcloud:</b> Abgleich mit deiner eigenen Nextcloud mit der App „cigarettecounter“ – Handy und Tablet parallel nutzen</li>
-<li><b>Home Assistant:</b> Erinnerungen an einen Webhook schicken, z. B. für eine Sprachansage</li>
+<li><b>Home Assistant:</b> über die Nextcloud-App Erinnerungen und jede gezählte Zigarette ansagen lassen</li>
 <li><b>Butt Bin:</b> ein Aschenbecher, der beim Ausdrücken selbst mitzählt und die Einträge per Bluetooth an die App gibt (Selbstbau-Hardware, siehe crazy-midi.de)</li>
 </ul>
 <p>Die App ist kein Medizinprodukt und gibt keine Gesundheitsratschläge.</p>

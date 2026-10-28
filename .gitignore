@@ -16,6 +16,12 @@ keystore.properties
 .tlk/
 .claude/
 
+# --- KiCad: Sperr-/Cache-/Nutzerdateien ---
+*.lck
+*.kicad_prl
+fp-info-cache
+*-backups/
+
 # --- Fremdcode, wird per Anleitung geholt ---
 firmware/tc_ble_sdk/
 nextcloud-app/cigarettecounter/vendor/
@@ -30,7 +36,7 @@ nextcloud-app/backups/
 
 # --- Fremde Dokumente und Bilder (Urheberrecht) ---
 datasheets/*.pdf
-design/
+design/referenz_*
 
 # --- Altlast: leerer Ordner der früheren Bridge-App ---
 /android/

@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "ButtBin")(type "KiCad")(uri "${KIPRJMOD}/ButtBin.kicad_sym")(options "")(descr "Butt Bin Projektsymbole"))
+)
