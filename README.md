@@ -48,7 +48,7 @@ Building needs the [Telink TC BLE SDK](https://github.com/telink-semi/tc_ble_sdk
 
 The firmware is derived from the SDK example `acl_peripheral_demo`; files taken from the SDK keep their Apache-2.0 headers.
 
-A first schematic draft for the carrier board (Ai-Thinker TB-03F module, USB-C charging with TP4054, DW01A/FS8205 battery protection, XC6206 LDO, one recycled single Li-ion cell) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) (KiCad 10, not yet laid out or built).
+A first schematic draft for the carrier board (Ai-Thinker TB-03F module, USB-C charging with TP4054 and charge LED, TPS7A0333 LDO with self-latching power (switched on by the plunger or USB, the firmware switches itself off when the cell is empty), one recycled single Li-ion cell, 0402 parts and solder pads to keep it small) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) (KiCad 10, not yet laid out or built).
 
 ## Nextcloud app
 
