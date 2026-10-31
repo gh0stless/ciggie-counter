@@ -7,6 +7,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -51,7 +52,10 @@ object Nextcloud {
         val wm = WorkManager.getInstance(context)
         wm.enqueueUniqueWork(
             "nextcloud-now", ExistingWorkPolicy.APPEND_OR_REPLACE,
-            OneTimeWorkRequestBuilder<NextcloudWorker>().setConstraints(network).build(),
+            // expedited: im Ruhemodus nicht minutenlang aufschieben (sonst kommt z. B. die
+            // "Alle gezählt?"-Erinnerung vom Server, obwohl schon gezählt wurde)
+            OneTimeWorkRequestBuilder<NextcloudWorker>().setConstraints(network)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build(),
         )
         wm.enqueueUniquePeriodicWork(
             "nextcloud", ExistingPeriodicWorkPolicy.KEEP,

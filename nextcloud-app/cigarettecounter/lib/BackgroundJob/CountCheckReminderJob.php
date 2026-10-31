@@ -47,12 +47,11 @@ class CountCheckReminderJob extends TimedJob {
         ));
 
         foreach ($uids as $uid) {
-            if (!$this->entryService->isCountCheckEnabled($uid)) {
-                continue;
-            }
-
-            $hasPush = !empty($this->pushService->loadSubscriptions($uid));
-            $hasHa = $this->haNotifier->getWebhookUrl($uid) !== '';
+            // Zwei Ausgabewege, einzeln schaltbar: Browser/PWA-Push und Home Assistant
+            $hasPush = $this->entryService->isCountCheckEnabled($uid)
+                && !empty($this->pushService->loadSubscriptions($uid));
+            $hasHa = $this->entryService->isHaCountCheckEnabled($uid)
+                && $this->haNotifier->getWebhookUrl($uid) !== '';
             if (!$hasPush && !$hasHa) {
                 continue;
             }

@@ -1,0 +1,4 @@
+- Neu: beide Erinnerungen („Du darfst wieder“, „Alle gezählt?“) einzeln als Benachrichtigung und/oder Ansage
+- Ansagen in der Sprache des Handys, wenn die Sprachausgabe eine Stimme dafür hat, sonst Englisch
+- Butt Bin: Einträge kommen zuverlässig sofort an (Android stufte die Hintergrundsuche nach 30 Min herunter)
+- Abgleich mit Nextcloud wird im Ruhemodus nicht mehr aufgeschoben

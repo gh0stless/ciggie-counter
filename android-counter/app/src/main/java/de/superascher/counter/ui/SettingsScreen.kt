@@ -67,7 +67,9 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
     var wake by remember { mutableStateOf(decimal(initial.wakeHours)) }
     var fixed by remember { mutableStateOf(initial.fixedIntervalMinutes?.toString() ?: "") }
     var nextAllowed by remember { mutableStateOf(initial.nextAllowedReminder) }
+    var nextAllowedSpeak by remember { mutableStateOf(initial.nextAllowedSpeak) }
     var countCheck by remember { mutableStateOf(initial.countCheckReminder) }
+    var countCheckSpeak by remember { mutableStateOf(initial.countCheckSpeak) }
     var countCheckMin by remember { mutableStateOf(initial.countCheckMinutes.toString()) }
     var speakCount by remember { mutableStateOf(initial.speakCount) }
     var calendar by remember { mutableStateOf(initial.calendarSummary) }
@@ -108,9 +110,14 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         if (mode == "fixed") NumberField(stringResource(R.string.fixed_minutes), fixed) { fixed = it }
 
         Section(stringResource(R.string.section_reminders))
-        SwitchRow(stringResource(R.string.reminder_next_allowed), nextAllowed) { nextAllowed = it }
-        SwitchRow(stringResource(R.string.reminder_count_check), countCheck) { countCheck = it }
-        if (countCheck) NumberField(stringResource(R.string.count_check_every), countCheckMin) { countCheckMin = it }
+        Text(stringResource(R.string.reminder_next_allowed), style = MaterialTheme.typography.titleSmall)
+        SwitchRow(stringResource(R.string.reminder_as_notification), nextAllowed) { nextAllowed = it }
+        SwitchRow(stringResource(R.string.reminder_as_speech), nextAllowedSpeak) { nextAllowedSpeak = it }
+        Text(stringResource(R.string.reminder_count_check), style = MaterialTheme.typography.titleSmall)
+        SwitchRow(stringResource(R.string.reminder_as_notification), countCheck) { countCheck = it }
+        SwitchRow(stringResource(R.string.reminder_as_speech), countCheckSpeak) { countCheckSpeak = it }
+        if (countCheck || countCheckSpeak) NumberField(stringResource(R.string.count_check_every), countCheckMin) { countCheckMin = it }
+        Hint(stringResource(R.string.reminder_speech_hint))
         SwitchRow(stringResource(R.string.speak_count), speakCount) { speakCount = it }
         if (speakCount) Hint(stringResource(R.string.speak_count_hint))
         val alarms = context.getSystemService(AlarmManager::class.java)
@@ -142,7 +149,9 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
                 wakeHours = num(wake)?.takeIf { it in 1.0..24.0 } ?: 18.0,
                 fixedIntervalMinutes = num(fixed)?.toInt(),
                 nextAllowedReminder = nextAllowed,
+                nextAllowedSpeak = nextAllowedSpeak,
                 countCheckReminder = countCheck,
+                countCheckSpeak = countCheckSpeak,
                 countCheckMinutes = num(countCheckMin)?.toInt()?.coerceAtLeast(1) ?: 10,
                 speakCount = speakCount,
                 calendarSummary = calendar,

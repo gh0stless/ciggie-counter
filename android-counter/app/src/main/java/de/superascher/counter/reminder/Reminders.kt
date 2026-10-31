@@ -50,7 +50,7 @@ object Reminders {
         val today = counter.today()
         if (counter.logicalDate(ts) != today) return
         val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
-        Speech.say(context, context.getString(R.string.speech_counted, number))
+        Speech.say(context, R.string.speech_counted, number)
     }
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
@@ -72,13 +72,13 @@ object Reminders {
         if (next != null && next < now - 15 * 60) {
             state.lastNotifiedFor = last ?: 0 // längst erlaubt (z. B. nach Neustart): nicht nachträglich melden
         }
-        if (settings.nextAllowedReminder && next != null && last != state.lastNotifiedFor) {
+        if ((settings.nextAllowedReminder || settings.nextAllowedSpeak) && next != null && last != state.lastNotifiedFor) {
             setAlarm(context, ACTION_NEXT_ALLOWED, maxOf(next, now + 1))
         } else {
             cancelAlarm(context, ACTION_NEXT_ALLOWED)
         }
 
-        if (settings.countCheckReminder) {
+        if (settings.countCheckReminder || settings.countCheckSpeak) {
             val base = state.lastCountCheckAt.takeIf { it > 0 } ?: now
             setAlarm(context, ACTION_COUNT_CHECK, maxOf(base + settings.countCheckMinutes * 60L, now + 60))
         } else {
@@ -93,26 +93,31 @@ object Reminders {
         )
     }
 
-    internal fun fire(context: Context, action: String) {
+    /** [onDone]: nach einer eventuellen Ansage (der Empfänger hält den Prozess so lange wach). */
+    internal fun fire(context: Context, action: String, onDone: () -> Unit = {}) {
+        var speech: Int? = null
         val state = AppState(context)
         val settings = Settings.load(context)
         when (action) {
             ACTION_NEXT_ALLOWED -> {
                 val entries = EntryStore.get(context).entries.value
-                val last = entries.lastOrNull() ?: return
-                val next = Counter(settings).allowedFrom(entries) ?: return
+                val last = entries.lastOrNull() ?: return onDone()
+                val next = Counter(settings).allowedFrom(entries) ?: return onDone()
                 // einmal pro Pause melden, erst merken, dann melden: nie doppelt
                 if (last != state.lastNotifiedFor && next <= Counter.nowSeconds()) {
                     state.lastNotifiedFor = last
-                    notify(context, 1, context.getString(R.string.msg_next_allowed))
+                    if (settings.nextAllowedReminder) notify(context, 1, context.getString(R.string.msg_next_allowed))
+                    if (settings.nextAllowedSpeak) speech = R.string.msg_next_allowed
                 }
             }
             ACTION_COUNT_CHECK -> {
                 state.lastCountCheckAt = Counter.nowSeconds()
-                notify(context, 2, context.getString(R.string.msg_count_check))
+                if (settings.countCheckReminder) notify(context, 2, context.getString(R.string.msg_count_check))
+                if (settings.countCheckSpeak) speech = R.string.msg_count_check
             }
         }
         reschedule(context)
+        speech?.let { Speech.say(context, it, onDone = onDone) } ?: onDone()
     }
 
     private fun notify(context: Context, id: Int, message: String) {
@@ -168,8 +173,13 @@ class ReminderReceiver : BroadcastReceiver() {
                 Reminders.reschedule(context)
                 de.superascher.counter.ashtray.Presence.register(context)
             }
+            de.superascher.counter.ashtray.Presence.ACTION_REFRESH -> de.superascher.counter.ashtray.Presence.register(context)
             null -> Unit
-            else -> Reminders.fire(context, action)
+            else -> {
+                // Ansage läuft asynchron: Prozess wach halten, bis sie fertig ist (Android friert sonst ein)
+                val pending = goAsync()
+                Reminders.fire(context, action) { pending.finish() }
+            }
         }
     }
 }

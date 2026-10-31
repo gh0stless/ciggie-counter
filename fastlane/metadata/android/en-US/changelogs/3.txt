@@ -1,0 +1,4 @@
+- New: both reminders (“You may smoke again”, “Did you count them all?”) separately as notification and/or announcement
+- Announcements use the phone’s language if the speech engine has a voice for it, otherwise English
+- Butt Bin: entries now arrive right away (Android downgraded the background scan after 30 minutes)
+- Nextcloud sync is no longer postponed in idle mode

@@ -64,8 +64,11 @@
     <string name="reminder_count_check">“Did you count them all?”</string>
     <string name="speak_count">Announce every entry</string>
     <string name="speak_count_hint">The phone says “Cigarette number 12 counted.” after each entry, also for the Butt Bin. Uses the media volume.</string>
-    <!-- Ansage immer Englisch, siehe Speech.kt -->
-    <string name="speech_counted" translatable="false">Cigarette number %d counted.</string>
+    <!-- Sprache der Ansage siehe Speech.kt -->
+    <string name="speech_counted">Cigarette number %d counted.</string>
+    <string name="reminder_as_notification">Notification</string>
+    <string name="reminder_as_speech">Say it aloud</string>
+    <string name="reminder_speech_hint">Announcements use the phone’s language if the speech engine has a voice for it, otherwise English. Home Assistant announcements are set up in the Nextcloud app.</string>
     <string name="count_check_every">… every (minutes)</string>
     <string name="exact_alarm_hint">Without permission for exact alarms, reminders may arrive a few minutes late.</string>
     <string name="exact_alarm_button">Allow exact reminders</string>

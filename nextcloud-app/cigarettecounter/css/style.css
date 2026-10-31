@@ -189,6 +189,11 @@ body {
     opacity: 0.7;
 }
 
+.cigcounter-settings-subhead {
+    font-weight: bold;
+    margin-top: 0.3rem;
+}
+
 .cigcounter-settings-divider {
     border: none;
     border-top: 1px solid var(--color-border, #e0e0e0);

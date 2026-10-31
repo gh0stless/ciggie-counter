@@ -41,7 +41,10 @@ class PushReminderJob extends TimedJob {
         $now = new \DateTime();
 
         foreach ($this->entryService->listUserIdsWithEntries() as $uid) {
-            if (!$this->entryService->isNextAllowedReminderEnabled($uid)) {
+            // Zwei Ausgabewege, einzeln schaltbar: Browser/PWA-Push und Home Assistant
+            $viaPush = $this->entryService->isNextAllowedReminderEnabled($uid);
+            $viaHa = $this->entryService->isHaNextAllowedEnabled($uid);
+            if (!$viaPush && !$viaHa) {
                 continue;
             }
 
@@ -63,8 +66,12 @@ class PushReminderJob extends TimedJob {
             // Erst merken, dann senden: hängt HA oder der Push-Dienst, soll
             // der nächste Cron-Lauf nicht noch einmal ansagen.
             $this->entryService->setLastNotifiedFor($uid, $nextAllowedAt);
-            $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
-            $this->haNotifier->notify($uid, self::MESSAGE);
+            if ($viaPush) {
+                $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
+            }
+            if ($viaHa) {
+                $this->haNotifier->notify($uid, self::MESSAGE);
+            }
         }
     }
 }

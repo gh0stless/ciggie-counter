@@ -2,6 +2,7 @@ package de.superascher.counter.ashtray
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
@@ -27,17 +28,22 @@ import java.nio.ByteOrder
  * 30 s lang schnell (Firmware app_adv.c), der Zählerstand steht in den Manufacturer Data.
  * Ist er höher als der eigene Stand, startet sofort ein Abgleich.
  *
- * Android verwirft den Scan bei Neustart und Bluetooth aus/an, deshalb registriert [AshtrayWorker]
- * ihn alle 15 Minuten neu.
+ * Android verwirft den Scan bei Neustart und Bluetooth aus/an und stuft ihn nach rund 30 Minuten
+ * herunter ("downgraded scan", dann kommen kaum noch Treffer). Deshalb erneuert ein genauer Wecker
+ * ihn alle 20 Minuten; der 15-Minuten-Takt von [AshtrayWorker] wird im Ruhemodus zu oft verschoben.
  */
 @SuppressLint("MissingPermission") // Berechtigungen werden in register() geprüft
 object Presence {
     /** Company ID 0xFFFF (Test-ID) aus der Firmware, danach u32 Zählerstand little endian */
     private const val COMPANY_ID = 0xFFFF
 
+    const val ACTION_REFRESH = "de.superascher.counter.SCAN_REFRESH"
+    private const val REFRESH_MS = 20 * 60_000L
+
     fun register(context: Context) {
         if (AppState(context).ashtrayAddress == null) return unregister(context)
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) return
+        scheduleRefresh(context)
         val scanner = scanner(context) ?: return
         val pi = pendingIntent(context)
         runCatching { scanner.stopScan(pi) } // keine doppelten Registrierungen
@@ -50,6 +56,7 @@ object Presence {
     }
 
     fun unregister(context: Context) {
+        context.getSystemService(AlarmManager::class.java).cancel(refreshIntent(context))
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) return
         runCatching { scanner(context)?.stopScan(pendingIntent(context)) }
     }
@@ -60,6 +67,22 @@ object Presence {
         if (data.size < 4) return null
         return ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).int.toLong() and 0xFFFFFFFFL
     }
+
+    private fun scheduleRefresh(context: Context) {
+        val am = context.getSystemService(AlarmManager::class.java)
+        val at = System.currentTimeMillis() + REFRESH_MS
+        if (am.canScheduleExactAlarms()) {
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, refreshIntent(context))
+        } else {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, refreshIntent(context))
+        }
+    }
+
+    private fun refreshIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
+        context, ACTION_REFRESH.hashCode(),
+        Intent(context, de.superascher.counter.reminder.ReminderReceiver::class.java).setAction(ACTION_REFRESH),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
 
     private fun scanner(context: Context): BluetoothLeScanner? =
         context.getSystemService(BluetoothManager::class.java).adapter?.bluetoothLeScanner

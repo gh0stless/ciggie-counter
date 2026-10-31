@@ -197,6 +197,8 @@ class ApiController extends Controller {
             'countCheckIntervalMinutes' => $this->entryService->getCountCheckIntervalMinutes($this->userId),
             'nextAllowedReminderEnabled' => $this->entryService->isNextAllowedReminderEnabled($this->userId),
             'countAnnounceEnabled' => $this->entryService->isCountAnnounceEnabled($this->userId),
+            'haNextAllowedEnabled' => $this->entryService->isHaNextAllowedEnabled($this->userId),
+            'haCountCheckEnabled' => $this->entryService->isHaCountCheckEnabled($this->userId),
             'haWebhookUrl' => $this->haNotifier->getWebhookUrl($this->userId),
             'dayStartHour' => $this->entryService->getDayStartHour($this->userId),
             'calendarUri' => $this->calendarSync->getCalendarUri($this->userId),
@@ -236,7 +238,9 @@ class ApiController extends Controller {
         ?string $haWebhookUrl = null,
         ?string $dayStartHour = null,
         ?string $calendarUri = null,
-        ?string $countAnnounceEnabled = null
+        ?string $countAnnounceEnabled = null,
+        ?string $haNextAllowedEnabled = null,
+        ?string $haCountCheckEnabled = null
     ): JSONResponse {
         try {
             $this->haNotifier->setWebhookUrl($this->userId, $haWebhookUrl);
@@ -258,7 +262,9 @@ class ApiController extends Controller {
             $countCheckIntervalMinutes,
             $nextAllowedReminderEnabled,
             $dayStartHour,
-            $countAnnounceEnabled
+            $countAnnounceEnabled,
+            $haNextAllowedEnabled,
+            $haCountCheckEnabled
         );
         return $this->settings();
     }

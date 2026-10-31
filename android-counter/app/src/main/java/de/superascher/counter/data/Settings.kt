@@ -14,9 +14,12 @@ data class Settings(
     val dailyTarget: Int? = null,
     val wakeHours: Double = 18.0,
     val fixedIntervalMinutes: Int? = null,
+    /** "Du darfst wieder": als Benachrichtigung / als Ansage */
     val nextAllowedReminder: Boolean = true,
+    val nextAllowedSpeak: Boolean = false,
     /** Standard aus: alle paar Minuten nachzufragen ist für neue Nutzer zu aufdringlich */
     val countCheckReminder: Boolean = false,
+    val countCheckSpeak: Boolean = false,
     val countCheckMinutes: Int = 10,
     /** Nach jedem Zählen "Cigarette number 12 counted." über die Sprachausgabe des Handys */
     val speakCount: Boolean = false,
@@ -47,7 +50,9 @@ data class Settings(
                 wakeHours = getFloat("wake_hours", 18f).toDouble(),
                 fixedIntervalMinutes = getInt("fixed_interval", 0).takeIf { it > 0 },
                 nextAllowedReminder = getBoolean("next_allowed_reminder", true),
+                nextAllowedSpeak = getBoolean("next_allowed_speak", false),
                 countCheckReminder = getBoolean("count_check", false),
+                countCheckSpeak = getBoolean("count_check_speak", false),
                 countCheckMinutes = getInt("count_check_minutes", 10),
                 speakCount = getBoolean("speak_count", false),
                 calendarSummary = getBoolean("calendar_summary", false),
@@ -65,7 +70,9 @@ data class Settings(
             putFloat("wake_hours", s.wakeHours.toFloat())
             putInt("fixed_interval", s.fixedIntervalMinutes ?: 0)
             putBoolean("next_allowed_reminder", s.nextAllowedReminder)
+            putBoolean("next_allowed_speak", s.nextAllowedSpeak)
             putBoolean("count_check", s.countCheckReminder)
+            putBoolean("count_check_speak", s.countCheckSpeak)
             putInt("count_check_minutes", s.countCheckMinutes.coerceAtLeast(1))
             putBoolean("speak_count", s.speakCount)
             putBoolean("calendar_summary", s.calendarSummary)

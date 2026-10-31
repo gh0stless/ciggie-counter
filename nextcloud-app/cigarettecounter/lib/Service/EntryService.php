@@ -217,9 +217,18 @@ class EntryService {
         ?string $countCheckIntervalMinutes = null,
         ?string $nextAllowedReminderEnabled = null,
         ?string $dayStartHour = null,
-        ?string $countAnnounceEnabled = null
+        ?string $countAnnounceEnabled = null,
+        ?string $haNextAllowedEnabled = null,
+        ?string $haCountCheckEnabled = null
     ): void {
         $this->config->setUserValue($uid, 'cigarettecounter', 'count_announce_enabled', $countAnnounceEnabled === '1' ? '1' : '0');
+        // null = älteres Frontend ohne diese Felder: Wert nicht anfassen
+        if ($haNextAllowedEnabled !== null) {
+            $this->config->setUserValue($uid, 'cigarettecounter', 'ha_next_allowed_enabled', $haNextAllowedEnabled === '1' ? '1' : '0');
+        }
+        if ($haCountCheckEnabled !== null) {
+            $this->config->setUserValue($uid, 'cigarettecounter', 'ha_count_check_enabled', $haCountCheckEnabled === '1' ? '1' : '0');
+        }
 
         if ($dayStartHour !== null && $dayStartHour !== '' && (int)$dayStartHour >= 0 && (int)$dayStartHour <= 23) {
             $this->config->setUserValue($uid, 'cigarettecounter', 'day_start_hour', (string)(int)$dayStartHour);
@@ -394,6 +403,21 @@ class EntryService {
 
     public function isNextAllowedReminderEnabled(string $uid): bool {
         return $this->config->getUserValue($uid, 'cigarettecounter', 'next_allowed_reminder_enabled', '1') !== '0';
+    }
+
+    /**
+     * Ausgabe der Erinnerungen über Home Assistant, getrennt von Browser/PWA
+     * (die beiden Schalter darüber). Noch nie gespeichert: wie der Browser-Schalter,
+     * so verhält sich ein Update genau wie vorher.
+     */
+    public function isHaNextAllowedEnabled(string $uid): bool {
+        $raw = $this->config->getUserValue($uid, 'cigarettecounter', 'ha_next_allowed_enabled', '');
+        return $raw === '' ? $this->isNextAllowedReminderEnabled($uid) : $raw === '1';
+    }
+
+    public function isHaCountCheckEnabled(string $uid): bool {
+        $raw = $this->config->getUserValue($uid, 'cigarettecounter', 'ha_count_check_enabled', '');
+        return $raw === '' ? $this->isCountCheckEnabled($uid) : $raw === '1';
     }
 
     /**

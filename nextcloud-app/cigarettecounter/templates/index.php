@@ -79,14 +79,24 @@
 
         <hr class="cigcounter-settings-divider">
 
+        <div class="cigcounter-settings-subhead">Erinnerung "Du darfst wieder"</div>
         <label class="cigcounter-radio-label">
             <input type="checkbox" id="cigcounter-setting-next-allowed-enabled">
-            "Nächste erlaubt"-Erinnerung aktiv
+            im Browser / als Push (PWA)
+        </label>
+        <label class="cigcounter-radio-label">
+            <input type="checkbox" id="cigcounter-setting-ha-next-allowed-enabled">
+            über Home Assistant (Lautsprecher / Telegram)
         </label>
 
+        <div class="cigcounter-settings-subhead">Erinnerung "Hast du alle gezählt?"</div>
         <label class="cigcounter-radio-label">
             <input type="checkbox" id="cigcounter-setting-countcheck-enabled">
-            Erinnerung "Hast du alle gezählt?" aktiv
+            im Browser / als Push (PWA)
+        </label>
+        <label class="cigcounter-radio-label">
+            <input type="checkbox" id="cigcounter-setting-ha-countcheck-enabled">
+            über Home Assistant (Lautsprecher / Telegram)
         </label>
         <label>
             Erinnerungsintervall (Minuten)

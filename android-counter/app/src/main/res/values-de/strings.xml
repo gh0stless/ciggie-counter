@@ -57,7 +57,11 @@
     <string name="reminder_next_allowed">„Du darfst wieder“</string>
     <string name="reminder_count_check">„Hast du alle gezählt?“</string>
     <string name="speak_count">Jede Eingabe ansagen</string>
-    <string name="speak_count_hint">Das Handy sagt nach jeder Eingabe „Cigarette number 12 counted.“ – immer auf Englisch, das kann jede Sprachausgabe. Auch für den Butt Bin. Lautstärke = Medienlautstärke.</string>
+    <string name="speak_count_hint">Das Handy sagt nach jeder Eingabe „Zigarette Nummer 12 gezählt.“, auch für den Butt Bin. Lautstärke = Medienlautstärke.</string>
+    <string name="speech_counted">Zigarette Nummer %d gezählt.</string>
+    <string name="reminder_as_notification">Benachrichtigung</string>
+    <string name="reminder_as_speech">Ansage</string>
+    <string name="reminder_speech_hint">Ansagen in der Sprache des Handys, wenn die Sprachausgabe eine Stimme dafür hat, sonst auf Englisch. Ansagen über Home Assistant stellst du in der Nextcloud-App ein.</string>
     <string name="count_check_every">… alle (Minuten)</string>
     <string name="exact_alarm_hint">Erinnerungen kommen ohne Erlaubnis für genaue Wecker evtl. ein paar Minuten zu spät.</string>
     <string name="exact_alarm_button">Genaue Erinnerungen erlauben</string>
