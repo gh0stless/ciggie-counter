@@ -11,7 +11,8 @@
 #include "app_adv.h"
 
 
-#define ADV_IDLE_INTERVAL				ADV_INTERVAL_1S
+// Ruhe: alle 2 s reicht, nach jedem Stempeln sendet er ohnehin 30 s lang schnell
+#define ADV_IDLE_INTERVAL				ADV_INTERVAL_2S
 #define ADV_FAST_INTERVAL				ADV_INTERVAL_100MS
 #define ADV_FAST_DURATION_US			(30 * 1000 * 1000)	//max. 268 s (Überlauf System-Timer)
 

@@ -52,6 +52,10 @@
 /* User must check battery voltage on mass production application to prevent abnormal writing or erasing Flash at a low voltage !!! */
 #define APP_BATT_CHECK_ENABLE							0
 
+/* Sendeleistung: Handy liegt immer in der Nähe, ein paar Meter reichen. -10 dBm statt 0 dBm
+ * spart Strom an der Knopfzelle; nicht weiter senken, Metallschale und Hand dämpfen mit. */
+#define APP_TX_POWER									RF_POWER_N9p89dBm
+
 
 ///////////////////////// DEBUG  Configuration ////////////////////////////////////////////////
 #define DEBUG_GPIO_ENABLE							0

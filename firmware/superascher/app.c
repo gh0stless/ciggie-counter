@@ -360,7 +360,7 @@ int app_gatt_data_handler(u16 connHandle, u8 *pkt)
  */
 void task_suspend_exit(u8 e, u8 *p, int n)
 {
-	rf_set_power_level_index(RF_POWER_P0dBm);
+	rf_set_power_level_index(APP_TX_POWER);
 }
 
 
@@ -612,7 +612,7 @@ _attribute_no_inline_ void user_init_normal(void)
 //////////////////////////// User Configuration for BLE application ////////////////////////////
 	// Advertising startet in app_log_init (app_adv_init), dort ist der Zählerstand bekannt
 
-	rf_set_power_level_index (RF_POWER_P0dBm);
+	rf_set_power_level_index(APP_TX_POWER);
 
 
 	#if (BLE_APP_PM_ENABLE)
@@ -680,7 +680,7 @@ _attribute_ram_code_ void user_init_deepRetn(void)
 
 	blc_ll_initBasicMCU();   //mandatory
 
-	rf_set_power_level_index (RF_POWER_P0dBm);
+	rf_set_power_level_index(APP_TX_POWER);
 
 	blc_ll_recoverDeepRetention();
 
