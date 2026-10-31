@@ -2,7 +2,7 @@
 
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
-![Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button](design/superascher_entwurf_v1.jpg)
+![Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button](design/Concept%20%231.jpg)
 
 *Butt Bin concept render (AI-generated design study, not the real prototype yet).*
 
