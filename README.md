@@ -2,9 +2,12 @@
 
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
-![Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button](design/Concept%20%231.jpg)
+<p>
+  <img src="design/Design%20%231.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a red glitter plunger knob that lights up, the knob also shown upside down with its USB-C charging port">
+  <img src="design/Concept%20%231.jpg" width="49%" alt="Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button">
+</p>
 
-*Butt Bin concept render (AI-generated design study, not the real prototype yet).*
+*Butt Bin design studies (AI-generated renders, not the real prototype yet).*
 
 This repository contains three parts that work on their own or together:
 
