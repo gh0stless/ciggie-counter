@@ -75,7 +75,7 @@
     <string name="ashtray_battery">Battery: %1$d %%</string>
     <string name="reminder_as_notification">Notification</string>
     <string name="reminder_as_speech">Say it aloud</string>
-    <string name="reminder_speech_hint">Announcements use the phone’s language if the speech engine has a voice for it, otherwise English. Home Assistant announcements are set up in the Nextcloud app.</string>
+    <string name="reminder_speech_hint">Announcements use the phone’s language if the speech engine has a voice for it, otherwise English. Announcements via Home Assistant (speakers, Telegram) come from the Home Assistant integration “Ciggie Counter”.</string>
     <string name="count_check_every">… every (minutes)</string>
     <string name="exact_alarm_hint">Without permission for exact alarms, reminders may arrive a few minutes late.</string>
     <string name="exact_alarm_button">Allow exact reminders</string>
