@@ -26,15 +26,9 @@
     var resetBtn = document.getElementById('cigcounter-reset-btn');
     var settingNextAllowedEnabledInput = document.getElementById('cigcounter-setting-next-allowed-enabled');
     var settingCountCheckEnabledInput = document.getElementById('cigcounter-setting-countcheck-enabled');
-    var settingCountAnnounceInput = document.getElementById('cigcounter-setting-count-announce-enabled');
-    var settingHaNextAllowedInput = document.getElementById('cigcounter-setting-ha-next-allowed-enabled');
-    var settingHaCountCheckInput = document.getElementById('cigcounter-setting-ha-countcheck-enabled');
     var settingCountCheckIntervalInput = document.getElementById('cigcounter-setting-countcheck-interval');
-    var settingHaWebhookInput = document.getElementById('cigcounter-setting-ha-webhook');
     var settingDayStartInput = document.getElementById('cigcounter-setting-day-start');
     var settingCalendarSelect = document.getElementById('cigcounter-setting-calendar');
-    var haTestBtn = document.getElementById('cigcounter-ha-test');
-    var haStatusEl = document.getElementById('cigcounter-ha-status');
 
     var backdateToggle = document.getElementById('cigcounter-backdate-toggle');
     var backdateForm = document.getElementById('cigcounter-backdate-form');
@@ -309,10 +303,6 @@
                 settingNextAllowedEnabledInput.checked = !!data.nextAllowedReminderEnabled;
                 settingCountCheckEnabledInput.checked = !!data.countCheckEnabled;
                 settingCountCheckIntervalInput.value = data.countCheckIntervalMinutes;
-                settingCountAnnounceInput.checked = !!data.countAnnounceEnabled;
-                settingHaNextAllowedInput.checked = !!data.haNextAllowedEnabled;
-                settingHaCountCheckInput.checked = !!data.haCountCheckEnabled;
-                settingHaWebhookInput.value = data.haWebhookUrl || '';
                 settingDayStartInput.value = data.dayStartHour;
                 settingCalendarSelect.innerHTML = '';
                 (data.calendars || []).forEach(function (c) {
@@ -322,7 +312,6 @@
                     settingCalendarSelect.appendChild(opt);
                 });
                 settingCalendarSelect.value = data.calendarUri;
-                haStatusEl.textContent = '';
                 computedIntervalEl.textContent = data.intervalMinutes
                     ? '→ aktuell errechnet: ' + formatInterval(data.intervalMinutes)
                     : '→ noch kein Wert (Ziel eintragen und speichern)';
@@ -345,10 +334,6 @@
         params.set('nextAllowedReminderEnabled', settingNextAllowedEnabledInput.checked ? '1' : '0');
         params.set('countCheckEnabled', settingCountCheckEnabledInput.checked ? '1' : '0');
         params.set('countCheckIntervalMinutes', settingCountCheckIntervalInput.value);
-        params.set('countAnnounceEnabled', settingCountAnnounceInput.checked ? '1' : '0');
-        params.set('haNextAllowedEnabled', settingHaNextAllowedInput.checked ? '1' : '0');
-        params.set('haCountCheckEnabled', settingHaCountCheckInput.checked ? '1' : '0');
-        params.set('haWebhookUrl', settingHaWebhookInput.value);
         params.set('dayStartHour', settingDayStartInput.value);
         // Nur mitschicken, wenn die Liste geladen ist - sonst würde ein leerer Wert
         // die Auswahl auf den Standard zurücksetzen.
@@ -372,29 +357,6 @@
             .then(function () {
                 scheduleCountCheck(settingCountCheckEnabledInput.checked, parseInt(settingCountCheckIntervalInput.value, 10) || 10);
                 refresh();
-            });
-    }
-
-    function testHomeAssistant() {
-        haStatusEl.textContent = 'Speichere und sende Test-Ansage …';
-        haTestBtn.disabled = true;
-        // Erst speichern, damit genau die eingetragene URL getestet wird.
-        saveSettings()
-            .then(function () {
-                return fetch(apiUrl('/ha-test'), { method: 'POST', headers: headers() });
-            })
-            .then(function (r) {
-                return r.json().then(function (data) {
-                    haStatusEl.textContent = data.ok
-                        ? 'Ansage verschickt – kam sie aus dem Lautsprecher?'
-                        : 'Fehlgeschlagen: ' + (data.error || ('HTTP ' + r.status));
-                });
-            })
-            .catch(function (err) {
-                haStatusEl.textContent = 'Fehlgeschlagen: ' + err.message;
-            })
-            .finally(function () {
-                haTestBtn.disabled = false;
             });
     }
 
@@ -549,10 +511,9 @@
                 settingsPanel.hidden = true;
             })
             .catch(function (err) {
-                haStatusEl.textContent = err.message;
+                pushStatusEl.textContent = err.message;
             });
     });
-    haTestBtn.addEventListener('click', testHomeAssistant);
     pushEnableBtn.addEventListener('click', enablePush);
     resetBtn.addEventListener('click', resetAll);
     addBtn.addEventListener('click', function () { addEntry(); });

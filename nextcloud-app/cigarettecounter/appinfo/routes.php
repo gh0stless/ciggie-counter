@@ -99,10 +99,5 @@ return [
             'url' => '/api/v2/entries',
             'verb' => 'POST',
         ],
-        [
-            'name' => 'api#haTest',
-            'url' => '/api/ha-test',
-            'verb' => 'POST',
-        ],
     ],
 ];

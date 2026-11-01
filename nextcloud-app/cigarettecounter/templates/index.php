@@ -94,38 +94,18 @@
             <input type="checkbox" id="cigcounter-setting-next-allowed-enabled">
             im Browser / als Push (PWA)
         </label>
-        <label class="cigcounter-radio-label">
-            <input type="checkbox" id="cigcounter-setting-ha-next-allowed-enabled">
-            über Home Assistant (Lautsprecher / Telegram)
-        </label>
 
         <div class="cigcounter-settings-subhead">Erinnerung "Hast du alle gezählt?"</div>
         <label class="cigcounter-radio-label">
             <input type="checkbox" id="cigcounter-setting-countcheck-enabled">
             im Browser / als Push (PWA)
         </label>
-        <label class="cigcounter-radio-label">
-            <input type="checkbox" id="cigcounter-setting-ha-countcheck-enabled">
-            über Home Assistant (Lautsprecher / Telegram)
-        </label>
         <label>
             Erinnerungsintervall (Minuten)
             <input type="number" id="cigcounter-setting-countcheck-interval" step="1" min="1" inputmode="numeric">
         </label>
 
-        <hr class="cigcounter-settings-divider">
-
-        <label class="cigcounter-radio-label">
-            <input type="checkbox" id="cigcounter-setting-count-announce-enabled">
-            Ansage bei jeder Eingabe ("12. Zigarette gezählt", auch für Einträge der Handy-App)
-        </label>
-
-        <label>
-            Home-Assistant-Webhook (Sprachansagen)
-            <input type="url" id="cigcounter-setting-ha-webhook" placeholder="http://<HA-IP>:8123/api/webhook/…" autocomplete="off">
-        </label>
-        <button id="cigcounter-ha-test" class="cigcounter-addbtn cigcounter-settings-save" type="button">🔊 Ansage testen</button>
-        <div class="cigcounter-push-status" id="cigcounter-ha-status"></div>
+        <div class="cigcounter-push-status">Sprachansagen über Lautsprecher oder Telegram: Home-Assistant-Integration „Ciggie Counter“ (HACS) installieren und mit dieser Nextcloud verbinden.</div>
 
         <button id="cigcounter-settings-save" class="cigcounter-addbtn cigcounter-settings-save" type="button">Speichern</button>
         <button id="cigcounter-push-enable" class="cigcounter-addbtn cigcounter-settings-save" type="button">🔔 Push-Erinnerungen aktivieren</button>

@@ -60,7 +60,7 @@ A first schematic draft for the board (Ai-Thinker TB-03F module powered directly
 
 ## Nextcloud app
 
-Install by copying `nextcloud-app/cigarettecounter/` to your Nextcloud `apps/` (or `custom_apps/`) folder, run `composer install --no-dev` inside it and enable the app. The Android app talks to it with an app password (Settings → Security). It can announce reminders and every counted cigarette ("12. Zigarette gezählt") through a Home Assistant webhook; blueprints, sensors and a setup guide are in [`nextcloud-app/homeassistant/`](nextcloud-app/homeassistant/).
+Install by copying `nextcloud-app/cigarettecounter/` to your Nextcloud `apps/` (or `custom_apps/`) folder, run `composer install --no-dev` inside it and enable the app. The Android app talks to it with an app password (Settings → Security). For Home Assistant use the integration [gh0stless/ciggie-counter-ha](https://github.com/gh0stless/ciggie-counter-ha): it syncs with this app and does the announcements (TTS, Telegram) and voice commands.
 
 ## License
 

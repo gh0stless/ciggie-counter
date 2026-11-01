@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\CigaretteCounter\BackgroundJob;
 
 use OCA\CigaretteCounter\Service\EntryService;
-use OCA\CigaretteCounter\Service\HomeAssistantNotifier;
 use OCA\CigaretteCounter\Service\PushSubscriptionService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -14,37 +13,32 @@ use OCP\BackgroundJob\TimedJob;
  * Prüft minütlich (begrenzt durch die tatsächliche Cron-Taktung des Systems,
  * i.d.R. alle paar Minuten) pro Nutzer, ob die berechnete Pausenzeit
  * ("nextAllowedAt") gerade abgelaufen ist, und schickt dann genau einmal
- * eine Erinnerung - per Web Push und, falls eingerichtet, als Ansage über
- * einen Home-Assistant-Webhook.
+ * eine Erinnerung per Web Push (Browser/PWA). Ansagen über Home Assistant
+ * macht die HA-Integration "Ciggie Counter".
  */
 class PushReminderJob extends TimedJob {
     private const MESSAGE = 'Du darfst jetzt wieder eine rauchen.';
 
     private EntryService $entryService;
     private PushSubscriptionService $pushService;
-    private HomeAssistantNotifier $haNotifier;
 
     public function __construct(
         ITimeFactory $time,
         EntryService $entryService,
-        PushSubscriptionService $pushService,
-        HomeAssistantNotifier $haNotifier
+        PushSubscriptionService $pushService
     ) {
         parent::__construct($time);
         $this->setInterval(60);
         $this->entryService = $entryService;
         $this->pushService = $pushService;
-        $this->haNotifier = $haNotifier;
     }
 
     protected function run($argument): void {
         $now = new \DateTime();
 
         foreach ($this->entryService->listUserIdsWithEntries() as $uid) {
-            // Zwei Ausgabewege, einzeln schaltbar: Browser/PWA-Push und Home Assistant
-            $viaPush = $this->entryService->isNextAllowedReminderEnabled($uid);
-            $viaHa = $this->entryService->isHaNextAllowedEnabled($uid);
-            if (!$viaPush && !$viaHa) {
+            // Ansagen über Home Assistant macht die HA-Integration selbst
+            if (!$this->entryService->isNextAllowedReminderEnabled($uid)) {
                 continue;
             }
 
@@ -70,12 +64,7 @@ class PushReminderJob extends TimedJob {
             if ($this->entryService->isMuted($uid)) {
                 continue;
             }
-            if ($viaPush) {
-                $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
-            }
-            if ($viaHa) {
-                $this->haNotifier->notify($uid, self::MESSAGE);
-            }
+            $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
         }
     }
 }

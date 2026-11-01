@@ -6,7 +6,6 @@ namespace OCA\CigaretteCounter\Controller;
 
 use OCA\CigaretteCounter\Service\CalendarSyncService;
 use OCA\CigaretteCounter\Service\EntryService;
-use OCA\CigaretteCounter\Service\HomeAssistantNotifier;
 use OCA\CigaretteCounter\Service\PushSubscriptionService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
@@ -16,7 +15,6 @@ use OCP\IUserSession;
 class ApiController extends Controller {
     private EntryService $entryService;
     private PushSubscriptionService $pushService;
-    private HomeAssistantNotifier $haNotifier;
     private CalendarSyncService $calendarSync;
     private string $userId;
 
@@ -25,14 +23,12 @@ class ApiController extends Controller {
         IRequest $request,
         EntryService $entryService,
         PushSubscriptionService $pushService,
-        HomeAssistantNotifier $haNotifier,
         CalendarSyncService $calendarSync,
         IUserSession $userSession
     ) {
         parent::__construct($appName, $request);
         $this->entryService = $entryService;
         $this->pushService = $pushService;
-        $this->haNotifier = $haNotifier;
         $this->calendarSync = $calendarSync;
         $this->userId = $userSession->getUser()->getUID();
     }
@@ -167,8 +163,6 @@ class ApiController extends Controller {
             if ($newest >= time() - 10 * 60) {
                 $this->entryService->setLastCountCheckAt($this->userId, (new \DateTime())->format('c'));
             }
-            // Mehrere auf einmal (Butt Bin): nur einmal ansagen, mit dem neuesten
-            $this->announceCount($this->entryService->loadEntries($this->userId), date('c', $newest));
         }
         return new JSONResponse(['rev' => $result['rev'], 'accepted' => $result['accepted']]);
     }
@@ -196,37 +190,8 @@ class ApiController extends Controller {
         // Wer gerade zählt, braucht keine "Hast du alle gezählt?"-Erinnerung:
         // das Erinnerungsintervall läuft ab jetzt neu.
         $this->entryService->setLastCountCheckAt($this->userId, (new \DateTime())->format('c'));
-        $this->announceCount($entries, $ts);
 
         return $this->today();
-    }
-
-    /**
-     * "12. Zigarette gezählt" an Home Assistant. Kommt für Einträge aus Web-App und
-     * Handy-App (die schickt jeden Eintrag hierher), auch wenn das Handy HA selbst
-     * nicht erreicht (Gäste-WLAN, mobil). Nur für frische Einträge des heutigen
-     * Zähltags - Nachträge und ein später nachgereichter Rückstau bleiben still.
-     *
-     * @param string[] $entries
-     */
-    private function announceCount(array $entries, string $ts): void {
-        if (!$this->entryService->isCountAnnounceEnabled($this->userId) || $this->entryService->isMuted($this->userId)) {
-            return;
-        }
-        $time = (new \DateTimeImmutable($ts))->getTimestamp();
-        if ($time < time() - 10 * 60) {
-            return;
-        }
-        $h = $this->entryService->getDayStartHour($this->userId);
-        $tz = $this->entryService->getUserTimeZone($this->userId);
-        $today = $this->entryService->currentLogicalDate($h, $tz);
-        if ($this->entryService->logicalDate($ts, $h, $tz) !== $today) {
-            return;
-        }
-        $number = count(array_filter($entries, fn (string $e) =>
-            $this->entryService->logicalDate($e, $h, $tz) === $today
-            && (new \DateTimeImmutable($e))->getTimestamp() <= $time));
-        $this->haNotifier->notify($this->userId, $number . '. Zigarette gezählt.');
     }
 
     private function resolveTimestamp(?string $timestamp): string {
@@ -283,10 +248,6 @@ class ApiController extends Controller {
             'countCheckEnabled' => $this->entryService->isCountCheckEnabled($this->userId),
             'countCheckIntervalMinutes' => $this->entryService->getCountCheckIntervalMinutes($this->userId),
             'nextAllowedReminderEnabled' => $this->entryService->isNextAllowedReminderEnabled($this->userId),
-            'countAnnounceEnabled' => $this->entryService->isCountAnnounceEnabled($this->userId),
-            'haNextAllowedEnabled' => $this->entryService->isHaNextAllowedEnabled($this->userId),
-            'haCountCheckEnabled' => $this->entryService->isHaCountCheckEnabled($this->userId),
-            'haWebhookUrl' => $this->haNotifier->getWebhookUrl($this->userId),
             'dayStartHour' => $this->entryService->getDayStartHour($this->userId),
             'calendarUri' => $this->calendarSync->getCalendarUri($this->userId),
             'calendars' => $this->calendarOptions(),
@@ -322,15 +283,10 @@ class ApiController extends Controller {
         ?string $countCheckEnabled = null,
         ?string $countCheckIntervalMinutes = null,
         ?string $nextAllowedReminderEnabled = null,
-        ?string $haWebhookUrl = null,
         ?string $dayStartHour = null,
-        ?string $calendarUri = null,
-        ?string $countAnnounceEnabled = null,
-        ?string $haNextAllowedEnabled = null,
-        ?string $haCountCheckEnabled = null
+        ?string $calendarUri = null
     ): JSONResponse {
         try {
-            $this->haNotifier->setWebhookUrl($this->userId, $haWebhookUrl);
             if ($calendarUri !== null) {
                 $this->calendarSync->setCalendarUri($this->userId, $calendarUri);
             }
@@ -348,28 +304,9 @@ class ApiController extends Controller {
             $countCheckEnabled,
             $countCheckIntervalMinutes,
             $nextAllowedReminderEnabled,
-            $dayStartHour,
-            $countAnnounceEnabled,
-            $haNextAllowedEnabled,
-            $haCountCheckEnabled
+            $dayStartHour
         );
         return $this->settings();
-    }
-
-    /**
-     * Schickt eine Test-Ansage an den gespeicherten Home-Assistant-Webhook.
-     *
-     * @NoAdminRequired
-     */
-    public function haTest(): JSONResponse {
-        if ($this->haNotifier->getWebhookUrl($this->userId) === '') {
-            return new JSONResponse(['ok' => false, 'error' => 'Keine Webhook-URL gespeichert.'], 400);
-        }
-        $ok = $this->haNotifier->notify($this->userId, 'Test vom Zigarettenzähler.');
-        return new JSONResponse(
-            ['ok' => $ok, 'error' => $ok ? null : $this->haNotifier->getLastError()],
-            $ok ? 200 : 502
-        );
     }
 
     /**

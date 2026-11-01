@@ -6,7 +6,7 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 |---|---|
 | GitHub Releases | v1.0.4 veröffentlicht (01.11.2026, signierte APK) |
 | IzzyOnDroid | Metadaten, Screenshots und Icon liegen in `fastlane/`; Antrag stellen (Schritt 2) |
-| Home Assistant | Integration `ciggie_counter` im eigenen Repo gh0stless/ciggie-counter-ha, v0.1.0, über HACS als benutzerdefiniertes Repository installierbar; Aufnahme in die HACS-Standardliste per PR an hacs/default möglich (alle Prüfungen grün). Blueprints für die Nextcloud-Anbindung mit Import-Knopf in `nextcloud-app/homeassistant/README.md` |
+| Home Assistant | Integration `ciggie_counter` im eigenen Repo gh0stless/ciggie-counter-ha, v0.1.0, über HACS als benutzerdefiniertes Repository installierbar; Aufnahme in die HACS-Standardliste per PR an hacs/default möglich (alle Prüfungen grün). Blueprints (TTS/Telegram, Assist/Telegram) mit Import-Knopf liegen im Integrations-Repo; die alten Webhook-/Paket-Dateien sind entfernt |
 | F-Droid (Haupt-Repo) | vorbereitet, siehe unten |
 | Nextcloud App Store | vorbereitet, siehe unten |
 | Google Play | zurückgestellt, siehe unten |
@@ -58,32 +58,27 @@ Anti-features: none known. The optional Nextcloud sync talks to the user's own s
 
 Vor dem Absenden die Berechtigungen mit `android-counter/app/src/main/AndroidManifest.xml` abgleichen.
 
-## 3. Home Assistant (Blueprint Exchange)
+## 3. Home Assistant
 
-HACS nimmt keine Blueprints. Blueprints werden im Forum geteilt: https://community.home-assistant.io/c/blueprints-exchange/53 (Forenkonto nötig). Ein Beitrag pro Blueprint, Import-Knopf wie in `nextcloud-app/homeassistant/README.md`. Vorschlag für den Ankündigungs-Blueprint:
+Integration `ciggie_counter`: https://github.com/gh0stless/ciggie-counter-ha (HACS als benutzerdefiniertes Repository; alle HACS-/hassfest-Prüfungen grün).
+
+- **HACS-Standardliste:** Pull Request an https://github.com/hacs/default (Datei `integration`, Zeile `gh0stless/ciggie-counter-ha`). Voraussetzungen erfüllt: Release, Beschreibung, Themen, Brand-Icon.
+- **Forum:** ein Beitrag in „Share your Projects“ für die Integration, die beiden Blueprints (TTS & Telegram, Assist & Telegram) zusätzlich im Blueprint Exchange (Forenkonto nötig). Import-Knöpfe stehen in der README der Integration. Vorschlag:
 
 ```markdown
-# 🚬 Cigarette counter: TTS & Telegram announcements (Nextcloud)
+# 🚬 Ciggie Counter – count cigarettes in Home Assistant
 
-Speaks reminders of the self-hosted cigarette counter
-([Nextcloud app + Android app](https://github.com/gh0stless/ciggie-counter))
-via TTS and optionally Telegram: "You may smoke again", "Did you count them all?"
-and "Cigarette number 12 counted" after every entry.
+A standalone integration (HACS) to count cigarettes, pace yourself with breaks and get
+reminders – optionally synced with an Android app and a Nextcloud app.
 
-[import button from nextcloud-app/homeassistant/README.md]
+- count with a button entity, by voice (Assist), Telegram – or any button/contact you already have
+- sensors: today, month, year, cost, break, next allowed, last cigarette
+- reminders as events + a TTS & Telegram blueprint (night schedule, do-not-disturb, persons at home)
+- mute switch, day start hour for night owls
+- the "Butt Bin": a DIY ashtray that counts by itself (open hardware)
 
-- Trigger: local webhook (the Nextcloud app sends `{"message": "..."}`)
-- Any TTS engine (e.g. Piper) and media player
-- Optional: night schedule, do-not-disturb switch, only when someone is home,
-  Telegram targets (muted at night if you like)
-
-Texts of the blueprint and the messages are German for now.
-Setup: https://github.com/gh0stless/ciggie-counter/tree/main/nextcloud-app/homeassistant
+https://github.com/gh0stless/ciggie-counter-ha
 ```
-
-Der zweite Blueprint (Sprache & Telegram) braucht `cigcounter_package.yaml` und lohnt einen eigenen Beitrag erst, wenn die Texte englisch sind.
-
-Später möglich: eine echte Integration (Python, `custom_components/`) für HACS, die die Nextcloud-API direkt abfragt, statt Paket + Blueprints. Eigenes Projekt, eigenes Repo.
 
 ## Vorbereitet für später
 

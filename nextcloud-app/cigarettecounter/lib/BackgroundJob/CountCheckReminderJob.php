@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\CigaretteCounter\BackgroundJob;
 
 use OCA\CigaretteCounter\Service\EntryService;
-use OCA\CigaretteCounter\Service\HomeAssistantNotifier;
 use OCA\CigaretteCounter\Service\PushSubscriptionService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -13,8 +12,8 @@ use OCP\BackgroundJob\TimedJob;
 /**
  * Prüft minütlich pro Nutzer, ob laut dessen eigenem (in den Einstellungen
  * konfigurierbaren) Erinnerungsintervall wieder eine "Hast du alle
- * Zigaretten gezählt?"-Erinnerung fällig ist - per Web Push und, falls
- * eingerichtet, als Ansage über den Home-Assistant-Webhook. Die Job-Taktung
+ * Zigaretten gezählt?"-Erinnerung fällig ist - per Web Push (Browser/PWA).
+ * Ansagen über Home Assistant macht die HA-Integration "Ciggie Counter". Die Job-Taktung
  * (setInterval) ist nur die Prüf-Frequenz, nicht das Erinnerungsintervall.
  */
 class CountCheckReminderJob extends TimedJob {
@@ -22,37 +21,27 @@ class CountCheckReminderJob extends TimedJob {
 
     private EntryService $entryService;
     private PushSubscriptionService $pushService;
-    private HomeAssistantNotifier $haNotifier;
 
     public function __construct(
         ITimeFactory $time,
         EntryService $entryService,
-        PushSubscriptionService $pushService,
-        HomeAssistantNotifier $haNotifier
+        PushSubscriptionService $pushService
     ) {
         parent::__construct($time);
         $this->setInterval(60);
         $this->entryService = $entryService;
         $this->pushService = $pushService;
-        $this->haNotifier = $haNotifier;
     }
 
     protected function run($argument): void {
         $now = new \DateTime();
 
-        // Nutzer mit Push-Abo ODER eingetragenem HA-Webhook.
-        $uids = array_unique(array_merge(
-            $this->pushService->listUserIdsWithSubscriptions(),
-            $this->entryService->listUserIdsWithEntries()
-        ));
+        // Nur Browser-/PWA-Push; Ansagen über Home Assistant macht die HA-Integration selbst
+        $uids = $this->pushService->listUserIdsWithSubscriptions();
 
         foreach ($uids as $uid) {
-            // Zwei Ausgabewege, einzeln schaltbar: Browser/PWA-Push und Home Assistant
-            $hasPush = $this->entryService->isCountCheckEnabled($uid)
-                && !empty($this->pushService->loadSubscriptions($uid));
-            $hasHa = $this->entryService->isHaCountCheckEnabled($uid)
-                && $this->haNotifier->getWebhookUrl($uid) !== '';
-            if (!$hasPush && !$hasHa) {
+            if (!$this->entryService->isCountCheckEnabled($uid)
+                || empty($this->pushService->loadSubscriptions($uid))) {
                 continue;
             }
 
@@ -71,12 +60,7 @@ class CountCheckReminderJob extends TimedJob {
             if ($this->entryService->isMuted($uid)) {
                 continue;
             }
-            if ($hasPush) {
-                $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
-            }
-            if ($hasHa) {
-                $this->haNotifier->notify($uid, self::MESSAGE);
-            }
+            $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
         }
     }
 }
