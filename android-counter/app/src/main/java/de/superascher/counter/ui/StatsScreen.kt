@@ -112,7 +112,8 @@ private fun ChartCard(title: String, note: String?, content: @Composable () -> U
 @Composable
 private fun BarChart(values: List<Int>, labels: List<String>, guide: Int? = null) {
     val bar = MaterialTheme.colorScheme.primary
-    val line = MaterialTheme.colorScheme.error
+    val line = MaterialTheme.colorScheme.onSurface // Tagesziel, hebt sich von den Balken ab
+    val axis = MaterialTheme.colorScheme.outline
     val max = maxOf(values.maxOrNull() ?: 0, guide ?: 0, 1)
     Canvas(Modifier.fillMaxWidth().height(140.dp).padding(top = 8.dp)) {
         val slot = size.width / values.size
@@ -126,7 +127,7 @@ private fun BarChart(values: List<Int>, labels: List<String>, guide: Int? = null
             drawLine(line, Offset(0f, y), Offset(size.width, y), 3f,
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f)))
         }
-        drawLine(Color.Gray, Offset(0f, size.height), Offset(size.width, size.height), 2f)
+        drawLine(axis, Offset(0f, size.height), Offset(size.width, size.height), 2f)
     }
     Row(Modifier.fillMaxWidth()) {
         labels.forEach { Text(it, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false) }

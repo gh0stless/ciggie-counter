@@ -35,7 +35,7 @@ class PageController extends Controller {
         Util::addHeader('link', ['rel' => 'apple-touch-icon', 'href' => $iconUrl]);
         Util::addHeader('meta', ['name' => 'apple-mobile-web-app-capable', 'content' => 'yes']);
         Util::addHeader('meta', ['name' => 'mobile-web-app-capable', 'content' => 'yes']);
-        Util::addHeader('meta', ['name' => 'theme-color', 'content' => '#1a1a1a']);
+        Util::addHeader('meta', ['name' => 'theme-color', 'content' => '#2d0800']);
 
         return new TemplateResponse($this->appName, 'index');
     }

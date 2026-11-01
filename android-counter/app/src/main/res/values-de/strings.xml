@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Slogan auf dem Startbildschirm: die drei Dinge am Morgen -->
+    <string name="slogan">Kaffee · Kippchen · Kacken</string>
     <!-- Navigation -->
     <string name="tab_counter">Zähler</string>
     <string name="tab_stats">Statistik</string>

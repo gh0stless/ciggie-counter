@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dunkel wie die App, kein weißes Aufblitzen beim Start -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/espresso</item>
+        <item name="android:colorAccent">@color/filter</item>
+        <!-- System-Splash (Android 12+) im selben Espresso wie der eigene Startbildschirm -->
+        <item name="android:windowSplashScreenBackground">@color/espresso</item>
+    </style>
+</resources>

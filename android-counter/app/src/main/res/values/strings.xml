@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Standardsprache Englisch, Deutsch in values-de/strings.xml -->
 <resources>
+    <!-- Slogan auf dem Startbildschirm: die drei Dinge am Morgen -->
+    <string name="slogan">Coffee · Ciggie · Crap</string>
     <string name="app_name" translatable="false">Ciggie Counter</string>
     <string name="info_url" translatable="false">https://crazy-midi.de</string>
     <string name="ashtray_info_link" translatable="false">ℹ️ crazy-midi.de</string>

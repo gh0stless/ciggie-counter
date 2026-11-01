@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FF37474F</color>
+    <!-- Projekt-Flagge, siehe AppTheme in MainActivity.kt -->
+    <color name="espresso">#FF2D0800</color>
+    <color name="kaffee">#FF590F02</color>
+    <color name="filter">#FFF9A948</color>
+    <color name="papier">#FFFFFFFF</color>
+    <color name="asche">#FFA1A1A1</color>
+    <color name="ic_launcher_background">@color/kaffee</color>
 </resources>

@@ -1,0 +1,3 @@
+- New look based on the project flag: espresso, coffee and filter orange, always dark
+- New app icon
+- Splash screen with the slogan “Coffee · Ciggie · Crap”

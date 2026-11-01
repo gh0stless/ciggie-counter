@@ -1,0 +1,3 @@
+- Neues Design nach der Projekt-Flagge: Espresso, Kaffee und Filter-Orange, immer dunkel
+- Neues App-Icon
+- Startbildschirm mit Slogan „Kaffee · Kippchen · Kacken“

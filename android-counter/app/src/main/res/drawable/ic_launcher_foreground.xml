@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Zigarette mit Glut und Rauch, 108dp-Raster (sichtbar ist der innere 72dp-Bereich) -->
+<!-- Zigarette (Filter, Papier, Asche) auf der Kante, darüber drei Rauten wie in der Projekt-Flagge.
+     108dp-Raster, sichtbar ist der innere 72dp-Bereich -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
     <!-- Filter -->
-    <path android:fillColor="#FFFFB74D" android:pathData="M30,56h14v8h-14z" />
+    <path android:fillColor="#FFF9A948" android:pathData="M26,50h14v8h-14z" />
     <!-- Papier -->
-    <path android:fillColor="#FFFFFFFF" android:pathData="M44,56h28v8h-28z" />
-    <!-- Glut -->
-    <path android:fillColor="#FFFF5722" android:pathData="M72,56h6v8h-6z" />
-    <!-- Rauch -->
-    <path android:strokeColor="#FFB0BEC5" android:strokeWidth="2.5" android:strokeLineCap="round"
-        android:pathData="M75,52 C71,47 79,44 75,39 C71,34 79,31 75,26" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M40,50h36v8h-36z" />
+    <!-- Asche -->
+    <path android:fillColor="#FFA1A1A1" android:pathData="M76,50h8v8h-8z" />
+    <!-- Rauten -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M46,26l4,4l-4,4l-4,-4z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M52,32l4,4l-4,4l-4,-4z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M46,38l4,4l-4,4l-4,-4z" />
 </vector>

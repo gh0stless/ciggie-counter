@@ -2,14 +2,46 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>cigarettecounter</id>
-    <name>Zigarettenzähler</name>
-    <summary>Einfacher, schneller Zigarettenzähler pro Benutzer</summary>
-    <description><![CDATA[Ein Knopf, ein Klick, ein Eintrag. Zeigt die heutige Anzahl gerauchter Zigaretten und eine kurze Verlaufsliste zum Korrigieren. Als PWA auch vom Handy-Homescreen aus nutzbar.]]></description>
-    <version>0.9.5</version>
+    <name lang="en">Ciggie Counter</name>
+    <name lang="de">Zigarettenzähler</name>
+    <summary lang="en">Count your cigarettes with one click, pace yourself, see your costs</summary>
+    <summary lang="de">Zigaretten mit einem Klick zählen, Pausen einhalten, Kosten im Blick</summary>
+    <description lang="en"><![CDATA[Count your cigarettes with one click: in the browser, as an app on your phone's home screen (PWA), from the Ciggie Counter Android app or from the Butt Bin, an ashtray that counts by itself.
+
+- **Counter:** today, this month, this year and today's costs at a glance
+- **Breaks:** fixed, or computed from a daily target over your waking hours; shows when the next one is allowed
+- **Reminders:** "You may smoke again" and "Did you count them all?" as web push and/or as a Home Assistant announcement (speaker, Telegram), each switchable
+- **Calendar:** daily summary in a calendar of your choice
+- **Night owls:** choose the hour at which a new day starts
+- **Corrections:** add cigarettes later, delete wrong entries
+- **API** for the Android app (F-Droid/IzzyOnDroid) and Home Assistant (blueprints included)
+
+Private by design: everything stays on your Nextcloud, no tracking.
+
+The user interface is German for now; an English translation is planned.]]></description>
+    <description lang="de"><![CDATA[Zigaretten mit einem Klick zählen: im Browser, als App auf dem Handy-Homescreen (PWA), mit der Android-App Ciggie Counter oder mit dem Butt Bin, einem Aschenbecher, der selbst zählt.
+
+- **Zähler:** heute, Monat, Jahr und die Kosten von heute auf einen Blick
+- **Pausen:** fest oder aus einem Tagesziel über die Wachzeit berechnet; zeigt, wann die nächste erlaubt ist
+- **Erinnerungen:** „Du darfst wieder“ und „Hast du alle gezählt?“ als Web-Push und/oder als Ansage über Home Assistant (Lautsprecher, Telegram), einzeln schaltbar
+- **Kalender:** Tageszusammenfassung in einem Kalender deiner Wahl
+- **Nachtschwärmer:** Tageswechsel zu einer eigenen Uhrzeit
+- **Korrekturen:** Zigaretten nachtragen, falsche Einträge löschen
+- **Schnittstelle** für die Android-App (F-Droid/IzzyOnDroid) und Home Assistant (Blueprints liegen bei)
+
+Datensparsam: Alles bleibt in deiner Nextcloud, kein Tracking.]]></description>
+    <version>0.9.8</version>
     <licence>agpl</licence>
     <author homepage="https://crazy-midi.de">gh0stless (crazy-midi.de)</author>
     <namespace>CigaretteCounter</namespace>
     <category>tools</category>
+    <category>organization</category>
+    <website>https://crazy-midi.de</website>
+    <bugs>https://github.com/gh0stless/ciggie-counter/issues</bugs>
+    <repository type="git">https://github.com/gh0stless/ciggie-counter</repository>
+    <screenshot>https://raw.githubusercontent.com/gh0stless/ciggie-counter/main/design/screenshots/nextcloud_de_2.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/gh0stless/ciggie-counter/main/design/screenshots/nextcloud_de_3.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/gh0stless/ciggie-counter/main/design/screenshots/nextcloud_de_4.png</screenshot>
     <dependencies>
         <nextcloud min-version="28" max-version="35"/>
     </dependencies>

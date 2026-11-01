@@ -5,10 +5,24 @@
     overflow-y: auto !important;
 }
 
+/* Farben aus der Projekt-Flagge (design/brand-flag.jpg), wie die Android-App: immer dunkel.
+   Die Variablen gelten nur auf dieser Seite, das CSS lädt nur hier. */
+body {
+    --cc-espresso: #2d0800;
+    --cc-kaffee: #590f02;
+    --cc-filter: #f9a948;
+    --cc-papier: #ffffff;
+    --cc-asche: #a1a1a1;
+    --cc-line: rgba(161, 161, 161, 0.35);
+    --cc-error: #ff8a7a;
+    /* Nextcloud-Kopfzeile liegt direkt auf unserem dunklen Hintergrund: Symbole hell */
+    --color-background-plain-text: #ffffff;
+}
+
 #app-content {
     overflow-y: auto !important;
-    background-color: #f2ece0 !important;
-    color: #2a241c !important;
+    background-color: var(--cc-espresso) !important;
+    color: var(--cc-papier) !important;
 }
 
 /* Das Theme-Hintergrundbild sitzt tatsächlich auf body selbst (bestätigt im
@@ -17,7 +31,7 @@
    der Override oben allein nicht. Hier direkt an der Quelle abschalten. */
 body {
     background-image: none !important;
-    background-color: #f2ece0 !important;
+    background-color: var(--cc-espresso) !important;
 }
 
 #cigcounter-app {
@@ -26,7 +40,11 @@ body {
     text-align: center;
     padding: 0 1rem;
     position: relative;
-    color: #2a241c;
+    color: var(--cc-papier);
+}
+
+#cigcounter-app button {
+    color: inherit;
 }
 
 .cigcounter-settings-toggle {
@@ -101,7 +119,7 @@ body {
 .cigcounter-backdate-form input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 1px solid var(--color-border, #e0e0e0);
+    border: 1px solid var(--cc-line);
     font-size: 0.95rem;
 }
 
@@ -127,8 +145,9 @@ body {
 .cigcounter-settings {
     margin-top: 1.5rem;
     padding: 1rem;
-    border: 1px solid var(--color-border, #e0e0e0);
-    border-radius: 8px;
+    background-color: var(--cc-kaffee);
+    border: none;
+    border-radius: 16px;
     text-align: left;
     display: flex;
     flex-direction: column;
@@ -146,14 +165,14 @@ body {
 .cigcounter-settings input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 1px solid var(--color-border, #e0e0e0);
+    border: 1px solid var(--cc-line);
     font-size: 1rem;
 }
 
 .cigcounter-settings select {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 1px solid var(--color-border, #e0e0e0);
+    border: 1px solid var(--cc-line);
     font-size: 1rem;
 }
 
@@ -196,7 +215,7 @@ body {
 
 .cigcounter-settings-divider {
     border: none;
-    border-top: 1px solid var(--color-border, #e0e0e0);
+    border-top: 1px solid var(--cc-line);
     margin: 0.4rem 0;
 }
 
@@ -205,9 +224,9 @@ body {
     padding: 0.6rem 1rem;
     width: auto;
     max-width: none;
-    border: 1px solid var(--color-error, #e9322d);
+    border: 1px solid var(--cc-error);
     background: none;
-    color: var(--color-error, #e9322d);
+    color: var(--cc-error);
     border-radius: 6px;
     cursor: pointer;
 }
@@ -229,8 +248,9 @@ body {
     padding: 1.2rem 2.5rem;
     border-radius: 999px;
     border: none;
-    background-color: var(--color-primary-element, #0082c9);
-    color: var(--color-primary-element-text, #fff);
+    background-color: var(--cc-filter) !important;
+    color: var(--cc-espresso) !important;
+    font-weight: 600;
     cursor: pointer;
     width: 100%;
     max-width: 300px;
@@ -247,6 +267,13 @@ body {
 .cigcounter-history {
     margin-top: 2.5rem;
     text-align: left;
+    background-color: var(--cc-kaffee);
+    border-radius: 16px;
+    padding: 0.6rem 1rem;
+}
+
+.cigcounter-history:empty {
+    display: none;
 }
 
 .cigcounter-entry {
@@ -254,7 +281,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0.4rem 0.2rem;
-    border-bottom: 1px solid var(--color-border, #e0e0e0);
+    border-bottom: 1px solid var(--cc-line);
     font-variant-numeric: tabular-nums;
 }
 
@@ -273,5 +300,47 @@ body {
     line-height: 1;
     padding: 0.2rem 0.6rem;
     cursor: pointer;
-    color: var(--color-error, #e9322d);
+    color: var(--cc-error);
+}
+
+/* Eingabefelder dunkel statt Nextcloud-Weiß */
+#cigcounter-app input,
+#cigcounter-app select {
+    background-color: var(--cc-espresso);
+    color: var(--cc-papier);
+}
+
+#cigcounter-app input[type="checkbox"],
+#cigcounter-app input[type="radio"] {
+    accent-color: var(--cc-filter);
+}
+
+.cigcounter-entry-del,
+.cigcounter-backdate-toggle {
+    color: var(--cc-filter) !important;
+}
+
+/* Nextclouds Standard-Knopfflächen (grau) bei unseren Text- und Symbolknöpfen weg */
+#cigcounter-app .cigcounter-settings-toggle,
+#cigcounter-app .cigcounter-backdate-toggle,
+#cigcounter-app .cigcounter-entry-del {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#cigcounter-app .cigcounter-addbtn:hover {
+    background-color: var(--cc-filter) !important;
+    filter: brightness(1.08);
+}
+
+#cigcounter-app .cigcounter-backdate-toggle {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+#cigcounter-app .cigcounter-reset-btn {
+    background: none !important;
+    border: 1px solid var(--cc-error) !important;
+    color: var(--cc-error) !important;
 }
