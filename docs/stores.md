@@ -4,7 +4,7 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 
 | Kanal | Stand |
 |---|---|
-| GitHub Releases | v1.0.0 vorhanden; v1.0.3 anlegen (Schritt 1) |
+| GitHub Releases | v1.0.3 veröffentlicht (01.11.2026, signierte APK) |
 | IzzyOnDroid | Metadaten, Screenshots und Icon liegen in `fastlane/`; Antrag stellen (Schritt 2) |
 | Home Assistant | Blueprints mit Import-Knopf in `nextcloud-app/homeassistant/README.md`; Forenbeitrag (Schritt 3) |
 | F-Droid (Haupt-Repo) | vorbereitet, siehe unten |
