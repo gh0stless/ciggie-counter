@@ -6,7 +6,7 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 |---|---|
 | GitHub Releases | v1.0.4 veröffentlicht (01.11.2026, signierte APK) |
 | IzzyOnDroid | Metadaten, Screenshots und Icon liegen in `fastlane/`; Antrag stellen (Schritt 2) |
-| Home Assistant | Blueprints mit Import-Knopf in `nextcloud-app/homeassistant/README.md`; Forenbeitrag (Schritt 3) |
+| Home Assistant | Integration `ciggie_counter` im eigenen Repo gh0stless/ciggie-counter-ha, v0.1.0, über HACS als benutzerdefiniertes Repository installierbar; Aufnahme in die HACS-Standardliste per PR an hacs/default möglich (alle Prüfungen grün). Blueprints für die Nextcloud-Anbindung mit Import-Knopf in `nextcloud-app/homeassistant/README.md` |
 | F-Droid (Haupt-Repo) | vorbereitet, siehe unten |
 | Nextcloud App Store | vorbereitet, siehe unten |
 | Google Play | zurückgestellt, siehe unten |

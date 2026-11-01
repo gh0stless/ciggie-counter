@@ -16,6 +16,7 @@ This repository contains three parts that work on their own or together:
 | **Ciggie Counter** (Android app) | [`android-counter/`](android-counter/) | Counter with +1 button, history, statistics, break timer, reminders, optional calendar summary and Nextcloud sync. English and German. |
 | **Butt Bin** (hardware, prototype) | [`firmware/`](firmware/) | An ashtray with a plunger that counts every cigarette you stub out, stores it with a timestamp and hands it to the app via Bluetooth LE, even when the phone was away. |
 | **Nextcloud app** `cigarettecounter` | [`nextcloud-app/cigarettecounter/`](nextcloud-app/cigarettecounter/) | Self-hosted web app/PWA with the same counting logic; lets several devices (phone, tablet) share one state. |
+| **Home Assistant integration** `ciggie_counter` | [gh0stless/ciggie-counter-ha](https://github.com/gh0stless/ciggie-counter-ha) | Standalone counting in Home Assistant (HACS): sensors, reminders as events, count with any button or contact; the Android app can sync with it like with Nextcloud. |
 
 More about the Butt Bin: <https://crazy-midi.de>
 
