@@ -1,2 +1,3 @@
 - Announcements stay quiet while Do Not Disturb or a mode like “Bedtime” is on
 - Settings: hint and direct link to Do Not Disturb to set up a night schedule
+- Butt Bin: small picture of the design study in the settings

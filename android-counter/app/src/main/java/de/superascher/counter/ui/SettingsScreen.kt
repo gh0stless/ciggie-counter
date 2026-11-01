@@ -6,12 +6,16 @@ import android.content.Intent
 import android.provider.Settings as AndroidSettings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -34,8 +38,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -203,11 +209,19 @@ private fun AshtraySection() {
     Section(stringResource(R.string.section_ashtray))
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.ashtray_intro))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painterResource(R.drawable.butt_bin_design),
+                    contentDescription = stringResource(R.string.ashtray_image_desc),
+                    modifier = Modifier.size(96.dp).clip(RoundedCornerShape(12.dp)),
+                )
+                Text(stringResource(R.string.ashtray_intro), Modifier.weight(1f))
+            }
             TextButton(onClick = { openInfo(context) }) { Text(stringResource(R.string.ashtray_info_link)) }
             Text(address?.let { stringResource(R.string.paired, it) } ?: stringResource(R.string.not_paired))
             if (status.isNotEmpty()) Text(status, style = MaterialTheme.typography.bodySmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // FlowRow: passen die Knöpfe nicht in eine Zeile, rutscht der letzte in die nächste
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(enabled = !busy, onClick = {
                     run(R.string.ashtray_searching) {
                         val found = AshtrayBle.scan(context)

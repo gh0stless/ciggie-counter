@@ -75,6 +75,7 @@
 
     <string name="section_ashtray">Butt Bin (optional)</string>
     <string name="ashtray_intro">Der Butt Bin ist ein Aschenbecher mit Drücker, der jede ausgedrückte Zigarette selbst zählt und mit Uhrzeit speichert – auch wenn das Handy nicht in der Nähe ist. Diese App holt die Einträge per Bluetooth ab. Ohne Butt Bin funktioniert die App genauso, du zählst dann von Hand.</string>
+    <string name="ashtray_image_desc">Butt-Bin-Designstudie: Edelstahl-Ascher mit transparentem Drückknauf und LED-Ring</string>
     <string name="not_paired">Nicht gekoppelt</string>
     <string name="paired">Gekoppelt: %s</string>
     <string name="ashtray_searching">Suche Butt Bin …</string>

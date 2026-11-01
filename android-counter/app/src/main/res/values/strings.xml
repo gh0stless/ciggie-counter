@@ -82,6 +82,7 @@
 
     <string name="section_ashtray">Butt Bin (optional)</string>
     <string name="ashtray_intro">The Butt Bin is an ashtray with a plunger that counts every cigarette you stub out and stores it with the time, even when your phone is not nearby. This app collects the entries via Bluetooth. Without a Butt Bin the app works just the same, you simply count by hand.</string>
+    <string name="ashtray_image_desc">Butt Bin design study: steel ashtray with a clear plunger knob and a ring of LEDs</string>
     <string name="not_paired">Not paired</string>
     <string name="paired">Paired: %s</string>
     <string name="ashtray_searching">Searching for Butt Bin …</string>
