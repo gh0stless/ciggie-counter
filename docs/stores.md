@@ -4,7 +4,7 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 
 | Kanal | Stand |
 |---|---|
-| GitHub Releases | v1.0.3 veröffentlicht (01.11.2026, signierte APK) |
+| GitHub Releases | v1.0.4 veröffentlicht (01.11.2026, signierte APK) |
 | IzzyOnDroid | Metadaten, Screenshots und Icon liegen in `fastlane/`; Antrag stellen (Schritt 2) |
 | Home Assistant | Blueprints mit Import-Knopf in `nextcloud-app/homeassistant/README.md`; Forenbeitrag (Schritt 3) |
 | F-Droid (Haupt-Repo) | vorbereitet, siehe unten |
@@ -16,11 +16,11 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 Jede Version braucht einen Tag `vX.Y.Z` auf dem Commit, aus dem die APK gebaut wurde. IzzyOnDroid holt die APK aus dem Release, F-Droid baut aus dem Tag.
 
 ```sh
-# im Projektordner, APK vorher mit ./gradlew assembleRelease (android-counter/) bauen
-gh release create v1.0.3 \
-  "android-counter/app/build/outputs/apk/release/app-release.apk#ciggie-counter-1.0.3.apk" \
-  --title "Ciggie Counter 1.0.3" \
-  --notes-file fastlane/metadata/android/en-US/changelogs/4.txt
+# im Projektordner, APK vorher mit ./gradlew assembleRelease (android-counter/) bauen.
+# Datei vorher umbenennen: "#Name" hinter dem Pfad ändert bei gh nur die Anzeige, nicht den Dateinamen.
+cp android-counter/app/build/outputs/apk/release/app-release.apk ciggie-counter-1.0.4.apk
+gh release create v1.0.4 ciggie-counter-1.0.4.apk   --title "Ciggie Counter 1.0.4"   --notes-file fastlane/metadata/android/en-US/changelogs/5.txt
+rm ciggie-counter-1.0.4.apk
 ```
 
 Release-Notizen = `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`. Für jede neue Version: `versionCode`/`versionName` in `android-counter/app/build.gradle.kts` erhöhen, Changelogs `<versionCode>.txt` in `en-US` und `de-DE` anlegen.
