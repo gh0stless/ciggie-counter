@@ -344,3 +344,17 @@ body {
     border: 1px solid var(--cc-error) !important;
     color: var(--cc-error) !important;
 }
+
+.cigcounter-muted-hint {
+    color: var(--cc-filter);
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+}
+
+.cigcounter-muted-hint[hidden] {
+    display: none;
+}
+
+.cigcounter-mute {
+    font-weight: 600;
+}

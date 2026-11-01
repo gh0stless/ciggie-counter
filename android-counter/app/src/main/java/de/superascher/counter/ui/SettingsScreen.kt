@@ -116,6 +116,13 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         if (mode == "fixed") NumberField(stringResource(R.string.fixed_minutes), fixed) { fixed = it }
 
         Section(stringResource(R.string.section_reminders))
+        var muted by remember { mutableStateOf(AppState(context).muted) }
+        SwitchRow(stringResource(R.string.mute_all), muted) { on ->
+            muted = on
+            AppState(context).muted = on
+            Thread { de.superascher.counter.sync.Nextcloud.setMuted(context, on) }.start()
+        }
+        Hint(stringResource(R.string.mute_all_hint))
         Text(stringResource(R.string.reminder_next_allowed), style = MaterialTheme.typography.titleSmall)
         SwitchRow(stringResource(R.string.reminder_as_notification), nextAllowed) { nextAllowed = it }
         SwitchRow(stringResource(R.string.reminder_as_speech), nextAllowedSpeak) { nextAllowedSpeak = it }
@@ -219,6 +226,9 @@ private fun AshtraySection() {
             }
             TextButton(onClick = { openInfo(context) }) { Text(stringResource(R.string.ashtray_info_link)) }
             Text(address?.let { stringResource(R.string.paired, it) } ?: stringResource(R.string.not_paired))
+            if (address != null && state.ashtrayBattery >= 0) {
+                Text(stringResource(R.string.ashtray_battery, state.ashtrayBattery))
+            }
             if (status.isNotEmpty()) Text(status, style = MaterialTheme.typography.bodySmall)
             // FlowRow: passen die Knöpfe nicht in eine Zeile, rutscht der letzte in die nächste
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

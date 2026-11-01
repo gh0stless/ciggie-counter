@@ -86,8 +86,58 @@ class ApiController extends Controller {
             'countCheckEnabled' => $this->entryService->isCountCheckEnabled($this->userId),
             'countCheckIntervalMinutes' => $this->entryService->getCountCheckIntervalMinutes($this->userId),
             'nextAllowedReminderEnabled' => $this->entryService->isNextAllowedReminderEnabled($this->userId),
+            'muted' => $this->entryService->isMuted($this->userId),
+            // Butt Bin: kompletter Gerätestatus (siehe ashtray()), Batterie zusätzlich direkt
+            'ashtray' => $ashtray = $this->entryService->getAshtrayState($this->userId),
+            'ashtrayBattery' => $ashtray['battery'],
             'todayCost' => $costPerCigarette !== null ? round($todayCount * $costPerCigarette, 2) : null,
         ]);
+    }
+
+    /**
+     * Stumm-Schalter, gedacht für Home Assistant (REST-Switch: GET = Zustand, POST = setzen)
+     * und die Handy-App. Antwort immer {"muted": bool}.
+     *
+     * @NoAdminRequired
+     */
+    public function mute(): JSONResponse {
+        return new JSONResponse(['muted' => $this->entryService->isMuted($this->userId)]);
+    }
+
+    /**
+     * @param string|null $muted "1"/"true"/"on" = stumm, alles andere = wieder an
+     *
+     * @NoAdminRequired
+     */
+    public function setMute(?string $muted = null): JSONResponse {
+        $this->entryService->setMuted($this->userId, in_array(strtolower((string)$muted), ['1', 'true', 'on'], true));
+        return $this->mute();
+    }
+
+    /**
+     * Gerätestatus des Butt Bin (Batterie, Firmware, spätere Sensoren). Felder siehe
+     * EntryService::ASHTRAY_FIELDS, unbekannte Werte sind null.
+     *
+     * @NoAdminRequired
+     */
+    public function ashtray(): JSONResponse {
+        return new JSONResponse($this->entryService->getAshtrayState($this->userId));
+    }
+
+    /**
+     * Teil-Update durch die Handy-App: nur mitgeschickte, bekannte Felder werden übernommen.
+     * Optional "at" = Zeitpunkt der Messung (ISO), sonst jetzt.
+     *
+     * @NoAdminRequired
+     */
+    public function updateAshtray(): JSONResponse {
+        $params = $this->request->getParams();
+        try {
+            $time = (new \DateTimeImmutable($params['at'] ?? 'now'))->format('c');
+        } catch (\Exception $e) {
+            $time = date('c');
+        }
+        return new JSONResponse($this->entryService->updateAshtrayState($this->userId, $params, $time));
     }
 
     /**
@@ -127,7 +177,7 @@ class ApiController extends Controller {
      * @param string[] $entries
      */
     private function announceCount(array $entries, string $ts): void {
-        if (!$this->entryService->isCountAnnounceEnabled($this->userId)) {
+        if (!$this->entryService->isCountAnnounceEnabled($this->userId) || $this->entryService->isMuted($this->userId)) {
             return;
         }
         $time = (new \DateTimeImmutable($ts))->getTimestamp();

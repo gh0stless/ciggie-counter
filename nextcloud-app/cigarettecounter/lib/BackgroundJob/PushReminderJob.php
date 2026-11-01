@@ -66,6 +66,10 @@ class PushReminderJob extends TimedJob {
             // Erst merken, dann senden: hängt HA oder der Push-Dienst, soll
             // der nächste Cron-Lauf nicht noch einmal ansagen.
             $this->entryService->setLastNotifiedFor($uid, $nextAllowedAt);
+            // Stumm: Erinnerung gilt als erledigt, kommt also nach dem Einschalten nicht nach
+            if ($this->entryService->isMuted($uid)) {
+                continue;
+            }
             if ($viaPush) {
                 $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
             }

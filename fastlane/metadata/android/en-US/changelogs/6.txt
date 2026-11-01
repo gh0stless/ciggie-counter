@@ -1,0 +1,2 @@
+- New: “Mute everything” – no reminders or announcements until switched off; shared with Nextcloud, switchable from Home Assistant
+- Butt Bin: battery level is read during sync, shown and reported to Nextcloud

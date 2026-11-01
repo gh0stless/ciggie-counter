@@ -70,6 +70,26 @@ return [
             'verb' => 'POST',
         ],
         [
+            'name' => 'api#mute',
+            'url' => '/api/mute',
+            'verb' => 'GET',
+        ],
+        [
+            'name' => 'api#setMute',
+            'url' => '/api/mute',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'api#ashtray',
+            'url' => '/api/ashtray',
+            'verb' => 'GET',
+        ],
+        [
+            'name' => 'api#updateAshtray',
+            'url' => '/api/ashtray',
+            'verb' => 'POST',
+        ],
+        [
             'name' => 'api#haTest',
             'url' => '/api/ha-test',
             'verb' => 'POST',

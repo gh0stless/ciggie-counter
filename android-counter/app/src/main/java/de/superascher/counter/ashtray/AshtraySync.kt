@@ -57,6 +57,11 @@ object AshtraySync {
             return context.getString(R.string.ashtray_first_sync)
         }
         if (result.count < state.ashtrayNextSeq) state.ashtrayNextSeq = 0
+        result.battery?.let {
+            state.ashtrayBattery = it
+            state.ashtrayBatteryAt = System.currentTimeMillis()
+            if (de.superascher.counter.data.Settings.load(context).ncEnabled) de.superascher.counter.sync.Nextcloud.kick(context)
+        }
 
         var added = 0
         var dropped = 0

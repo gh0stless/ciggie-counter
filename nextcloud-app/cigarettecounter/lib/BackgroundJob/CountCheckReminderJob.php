@@ -67,6 +67,10 @@ class CountCheckReminderJob extends TimedJob {
 
             // Erst merken, dann senden: hängt HA, soll der nächste Lauf nicht doppelt ansagen.
             $this->entryService->setLastCountCheckAt($uid, $now->format('c'));
+            // Stumm: Takt läuft still weiter, nach dem Einschalten kommt nichts sofort nach
+            if ($this->entryService->isMuted($uid)) {
+                continue;
+            }
             if ($hasPush) {
                 $this->pushService->sendToUser($uid, 'Zigarettenzähler', self::MESSAGE);
             }

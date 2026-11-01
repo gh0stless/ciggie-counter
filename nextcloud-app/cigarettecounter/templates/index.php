@@ -19,6 +19,8 @@
         </div>
     </div>
 
+    <div class="cigcounter-muted-hint" id="cigcounter-muted-hint" hidden>🔇 Erinnerungen und Ansagen sind stumm</div>
+
     <button id="cigcounter-addbtn" class="cigcounter-addbtn" type="button">
         + Zigarette
     </button>
@@ -32,8 +34,16 @@
 
     <div class="cigcounter-next" id="cigcounter-next"></div>
     <div class="cigcounter-interval-info" id="cigcounter-interval-info"></div>
+    <div class="cigcounter-interval-info" id="cigcounter-ashtray-battery"></div>
 
     <div class="cigcounter-settings" id="cigcounter-settings" hidden>
+        <label class="cigcounter-radio-label cigcounter-mute">
+            <input type="checkbox" id="cigcounter-setting-muted">
+            🔇 Alles stumm: keine Erinnerungen und Ansagen auf allen Geräten (wirkt sofort, auch per Home Assistant schaltbar)
+        </label>
+
+        <hr class="cigcounter-settings-divider">
+
         <label>
             Kosten pro Zigarette (€)
             <input type="number" id="cigcounter-setting-cost" step="0.01" min="0" inputmode="decimal">

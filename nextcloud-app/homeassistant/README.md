@@ -7,7 +7,7 @@ The YAML files and their UI texts are in German; entity names and sentences can 
 | File | What it does |
 |---|---|
 | `cigcounter_announce_blueprint.yaml` | Speaks Nextcloud's messages via TTS (and optionally Telegram): reminders and “12. Zigarette gezählt.” after every entry. Triggered by a webhook. |
-| `cigcounter_package.yaml` | REST sensors (today, month, year, cost, next allowed, break length) and `rest_command.cigcounter_add`. |
+| `cigcounter_package.yaml` | REST sensors (today, month, year, cost, next allowed, break length, Butt Bin battery), `rest_command.cigcounter_add` and the switch `switch.zigaretten_erinnerungen_stumm`. |
 | `cigcounter_assist_blueprint.yaml` | Count and ask by voice (Assist) or Telegram command. Needs the package. |
 | `cigcounter_dashboard.yaml` | Dashboard view (needs [Mushroom cards](https://github.com/piitaya/lovelace-mushroom) from HACS). Needs the package. |
 
@@ -31,6 +31,7 @@ The trigger is `local_only`, so Nextcloud and Home Assistant must be in the same
    ```yaml
    cigcounter_today_url: https://<nextcloud>/index.php/apps/cigarettecounter/api/today
    cigcounter_add_url:   https://<nextcloud>/index.php/apps/cigarettecounter/api/add
+   cigcounter_mute_url:  https://<nextcloud>/index.php/apps/cigarettecounter/api/mute
    cigcounter_user:      <nextcloud user>
    cigcounter_password:  <app password>
    ```
@@ -42,3 +43,21 @@ The trigger is `local_only`, so Nextcloud and Home Assistant must be in the same
 4. Optional: add `cigcounter_dashboard.yaml` as a new dashboard view (raw configuration editor).
 
 If “Ansage bei jeder Eingabe” is on, counting by voice is announced by Nextcloud as well, in addition to Assist's own answer.
+
+## 3. Mute everything from Home Assistant
+
+The package adds `switch.zigaretten_erinnerungen_stumm`. While it is on, no reminders and no count announcements are sent on any device: Nextcloud push, Home Assistant announcements, the browser and the Android app (it asks Nextcloud right before each reminder). Counting keeps working. The same switch is in the Nextcloud app settings (🔇).
+
+Example: mute during the night schedule.
+
+```yaml
+automation:
+  - alias: "Zigaretten-Erinnerungen nachts stumm"
+    triggers:
+      - trigger: state
+        entity_id: schedule.nachtruhe
+    actions:
+      - action: "switch.turn_{{ 'on' if trigger.to_state.state == 'on' else 'off' }}"
+        target:
+          entity_id: switch.zigaretten_erinnerungen_stumm
+```

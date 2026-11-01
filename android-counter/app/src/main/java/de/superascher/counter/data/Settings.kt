@@ -126,6 +126,24 @@ class AppState(context: Context) {
         get() = sp.getLong("ashtray_trigger_at", 0)
         set(v) = sp.edit { putLong("ashtray_trigger_at", v) }
 
+    /** Batterie des Butt Bin in %, -1 = unbekannt; Zeitpunkt der Messung und der letzten Meldung an Nextcloud */
+    var ashtrayBattery: Int
+        get() = sp.getInt("ashtray_battery", -1)
+        set(v) = sp.edit { putInt("ashtray_battery", v) }
+
+    var ashtrayBatteryAt: Long
+        get() = sp.getLong("ashtray_battery_at", 0)
+        set(v) = sp.edit { putLong("ashtray_battery_at", v) }
+
+    var ashtrayBatterySentAt: Long
+        get() = sp.getLong("ashtray_battery_sent_at", 0)
+        set(v) = sp.edit { putLong("ashtray_battery_sent_at", v) }
+
+    /** Alles stumm (keine Erinnerungen, keine Ansagen); mit Nextcloud abgeglichen, dort auch per Home Assistant */
+    var muted: Boolean
+        get() = sp.getBoolean("muted", false)
+        set(v) = sp.edit { putBoolean("muted", v) }
+
     // Nextcloud (optional)
     var ncLastSync: Long
         get() = sp.getLong("nc_last_sync", 0)

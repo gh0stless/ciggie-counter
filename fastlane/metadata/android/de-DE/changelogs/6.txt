@@ -1,0 +1,2 @@
+- Neu: „Alles stumm“ – keine Erinnerungen und Ansagen, bis wieder ausgeschaltet; mit Nextcloud gemeinsamer Schalter, auch per Home Assistant
+- Butt Bin: Batteriestand wird beim Abgleich gelesen, angezeigt und an Nextcloud gemeldet

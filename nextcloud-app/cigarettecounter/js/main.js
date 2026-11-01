@@ -7,6 +7,7 @@
     var yearEl = document.getElementById('cigcounter-year-count');
     var nextEl = document.getElementById('cigcounter-next');
     var intervalInfoEl = document.getElementById('cigcounter-interval-info');
+    var ashtrayBatteryEl = document.getElementById('cigcounter-ashtray-battery');
     var addBtn = document.getElementById('cigcounter-addbtn');
     var historyEl = document.getElementById('cigcounter-history');
 
@@ -43,6 +44,10 @@
     var nextAlertTimer = null;
     var countCheckTimer = null;
     var nextAllowedReminderEnabled = true;
+    // "Alles stumm" (Nextcloud-Einstellung, auch per Home Assistant): kein Ton, keine Benachrichtigung
+    var muted = false;
+    var settingMutedInput = document.getElementById('cigcounter-setting-muted');
+    var mutedHintEl = document.getElementById('cigcounter-muted-hint');
     var countCheckInitialized = false;
     var AUTO_REFRESH_MS = 5 * 60 * 1000;
     var STALE_AFTER_HIDDEN_MS = 60 * 1000;
@@ -128,6 +133,9 @@
 
     // Kurzer, generierter Signalton statt einer Audio-Datei (quick & dirty).
     function playBeep() {
+        if (muted) {
+            return;
+        }
         try {
             var Ctx = window.AudioContext || window.webkitAudioContext;
             var ctx = new Ctx();
@@ -146,7 +154,7 @@
     }
 
     function notifyAllowedAgain() {
-        if (!nextAllowedReminderEnabled) {
+        if (!nextAllowedReminderEnabled || muted) {
             return;
         }
         playBeep();
@@ -169,7 +177,7 @@
         var ms = Math.max(intervalMinutes, 1) * 60 * 1000;
         countCheckTimer = setTimeout(function () {
             playBeep();
-            if ('Notification' in window && Notification.permission === 'granted') {
+            if (!muted && 'Notification' in window && Notification.permission === 'granted') {
                 new Notification('Zigarettenzähler', {
                     body: 'Hast du alle Zigaretten gezählt?',
                     icon: OC.generateUrl('/apps/cigarettecounter/icon/192')
@@ -223,6 +231,12 @@
         }
 
         nextAllowedReminderEnabled = !!data.nextAllowedReminderEnabled;
+        muted = !!data.muted;
+        mutedHintEl.hidden = !muted;
+        ashtrayBatteryEl.textContent = (data.ashtrayBattery !== null && data.ashtrayBattery !== undefined)
+            ? 'Butt Bin: ' + (data.ashtrayBattery <= 20 ? '🪫 ' : '🔋 ') + data.ashtrayBattery + ' %'
+            : '';
+        settingMutedInput.checked = muted;
 
         if (!countCheckInitialized) {
             countCheckInitialized = true;
@@ -499,6 +513,26 @@
         }
         addEntry(backdateInput.value);
         backdateForm.hidden = true;
+    });
+
+    // Stumm wirkt sofort, ohne "Speichern"
+    settingMutedInput.addEventListener('change', function () {
+        var params = new URLSearchParams();
+        params.set('muted', settingMutedInput.checked ? '1' : '0');
+        fetch(apiUrl('/mute'), {
+            method: 'POST',
+            headers: headers({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+            body: params.toString()
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                muted = !!data.muted;
+                settingMutedInput.checked = muted;
+                mutedHintEl.hidden = !muted;
+            })
+            .catch(function () {
+                settingMutedInput.checked = muted;
+            });
     });
 
     settingsToggle.addEventListener('click', function () {

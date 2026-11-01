@@ -81,6 +81,17 @@ object Nextcloud {
             sent++
         }
 
+        // Gerätestatus und Stumm-Schalter: ab Server-App 0.9.10, ältere kennen die Adressen nicht (404)
+        val state = AppState(context)
+        if (state.ashtrayBattery >= 0 && state.ashtrayBatteryAt > state.ashtrayBatterySentAt) {
+            val at = state.ashtrayBatteryAt
+            runCatching {
+                request(context, settings, "POST", "/api/ashtray", "battery=${state.ashtrayBattery}&at=" + enc(isoOf(at / 1000)))
+                state.ashtrayBatterySentAt = at
+            }
+        }
+        runCatching { state.muted = JSONObject(request(context, settings, "GET", "/api/mute", null)).getBoolean("muted") }
+
         val server = try {
             JSONObject(request(context, settings, "GET", "/api/entries", null)).getJSONArray("entries")
         } catch (e: NotFound) {
@@ -96,6 +107,28 @@ object Nextcloud {
         }
     }
 
+    /**
+     * Aktueller Stumm-Zustand direkt vom Server (kurzer Timeout, für den Moment einer Erinnerung).
+     * Ohne Nextcloud oder ohne Netz gilt der zuletzt bekannte Stand.
+     */
+    fun currentMuted(context: Context): Boolean {
+        val settings = Settings.load(context)
+        val state = AppState(context)
+        if (settings.ncEnabled) {
+            runCatching {
+                state.muted = JSONObject(request(context, settings, "GET", "/api/mute", null, timeoutMs = 3_000)).getBoolean("muted")
+            }
+        }
+        return state.muted
+    }
+
+    /** Stumm-Schalter in der App: lokal sofort, an Nextcloud im Hintergrund (nicht im UI-Thread aufrufen). */
+    fun setMuted(context: Context, muted: Boolean) {
+        AppState(context).muted = muted
+        val settings = Settings.load(context)
+        if (settings.ncEnabled) runCatching { request(context, settings, "POST", "/api/mute", "muted=" + if (muted) "1" else "0") }
+    }
+
     /** Zugangsdaten prüfen (GET /api/today). */
     fun test(context: Context, settings: Settings) {
         request(context, settings, "GET", "/api/today", null)
@@ -103,15 +136,17 @@ object Nextcloud {
 
     private fun enc(s: String) = URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
-    private fun request(context: Context, settings: Settings, method: String, path: String, body: String?): String {
+    private fun request(
+        context: Context, settings: Settings, method: String, path: String, body: String?, timeoutMs: Int = 0,
+    ): String {
         // index.php im Pfad funktioniert auch ohne "hübsche" URLs
         val url = URL(settings.ncUrl.trimEnd('/') + "/index.php/apps/cigarettecounter" + path)
         val auth = Base64.getEncoder().encodeToString("${settings.ncUser}:${settings.ncAppPassword}".toByteArray())
         val conn = url.openConnection() as HttpURLConnection
         try {
             conn.requestMethod = method
-            conn.connectTimeout = 10_000
-            conn.readTimeout = 15_000
+            conn.connectTimeout = if (timeoutMs > 0) timeoutMs else 10_000
+            conn.readTimeout = if (timeoutMs > 0) timeoutMs else 15_000
             conn.instanceFollowRedirects = false // Umleitung zur Login-Seite = Anmeldung fehlgeschlagen
             conn.setRequestProperty("Authorization", "Basic $auth")
             conn.setRequestProperty("Accept", "application/json")

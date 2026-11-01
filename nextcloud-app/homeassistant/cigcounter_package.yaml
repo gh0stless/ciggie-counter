@@ -7,6 +7,7 @@
 # Benötigte Einträge in secrets.yaml:
 #   cigcounter_today_url: https://<nextcloud>/index.php/apps/cigarettecounter/api/today
 #   cigcounter_add_url:   https://<nextcloud>/index.php/apps/cigarettecounter/api/add
+#   cigcounter_mute_url:  https://<nextcloud>/index.php/apps/cigarettecounter/api/mute
 #   cigcounter_user:      <Nextcloud-Benutzer>
 #   cigcounter_password:  <Nextcloud-App-Passwort>   (Einstellungen > Sicherheit, nicht das Login-Passwort)
 #
@@ -53,6 +54,13 @@ rest:
         # null, wenn kein Pausenziel eingestellt ist oder noch nichts gezählt wurde
         value_template: "{{ value_json.nextAllowedAt if value_json.nextAllowedAt else 'unknown' }}"
         icon: mdi:timer-sand
+      - name: "Butt Bin Batterie"
+        unique_id: cigcounter_ashtray_battery
+        # von der Handy-App nach jedem Abgleich gemeldet; unknown, solange kein Butt Bin gekoppelt ist
+        value_template: "{{ value_json.ashtrayBattery if value_json.ashtrayBattery is not none else 'unknown' }}"
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
       - name: "Zigaretten Pause"
         unique_id: cigcounter_interval
         value_template: "{{ value_json.intervalMinutes | round(0) if value_json.intervalMinutes is not none else 'unknown' }}"
@@ -71,3 +79,22 @@ rest_command:
       Accept: application/json
     content_type: "application/x-www-form-urlencoded"
     payload: ""
+
+switch:
+  # Alles stumm: keine Erinnerungen und keine Zählansage, auf keinem Gerät (Nextcloud, Handy-App,
+  # HA-Ansagen). Gezählt wird weiter. Gut für Automationen: Nachtruhe, Besuch, Kino ...
+  - platform: rest
+    name: "Zigaretten Erinnerungen stumm"
+    unique_id: cigcounter_muted
+    resource: !secret cigcounter_mute_url
+    method: post
+    body_on: "muted=1"
+    body_off: "muted=0"
+    is_on_template: "{{ value_json.muted }}"
+    username: !secret cigcounter_user
+    password: !secret cigcounter_password
+    headers:
+      OCS-APIRequest: "true"
+      Accept: application/json
+      Content-Type: application/x-www-form-urlencoded
+    icon: mdi:bell-off

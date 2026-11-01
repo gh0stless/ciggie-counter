@@ -45,7 +45,7 @@ object Reminders {
     /** "Cigarette number 12 counted." auf dem Handy, nur für Einträge des heutigen Zähltags. */
     fun announceCount(context: Context, ts: Long) {
         val settings = Settings.load(context)
-        if (!settings.speakCount) return
+        if (!settings.speakCount || AppState(context).muted) return
         val counter = Counter(settings)
         val today = counter.today()
         if (counter.logicalDate(ts) != today) return
@@ -94,7 +94,7 @@ object Reminders {
     }
 
     /** [onDone]: nach einer eventuellen Ansage (der Empfänger hält den Prozess so lange wach). */
-    internal fun fire(context: Context, action: String, onDone: () -> Unit = {}) {
+    internal fun fire(context: Context, action: String, muted: Boolean = false, onDone: () -> Unit = {}) {
         var speech: Int? = null
         val state = AppState(context)
         val settings = Settings.load(context)
@@ -106,14 +106,15 @@ object Reminders {
                 // einmal pro Pause melden, erst merken, dann melden: nie doppelt
                 if (last != state.lastNotifiedFor && next <= Counter.nowSeconds()) {
                     state.lastNotifiedFor = last
-                    if (settings.nextAllowedReminder) notify(context, 1, context.getString(R.string.msg_next_allowed))
-                    if (settings.nextAllowedSpeak) speech = R.string.msg_next_allowed
+                    // stumm: gilt als gemeldet, kommt also nach dem Ausschalten nicht nach
+                    if (!muted && settings.nextAllowedReminder) notify(context, 1, context.getString(R.string.msg_next_allowed))
+                    if (!muted && settings.nextAllowedSpeak) speech = R.string.msg_next_allowed
                 }
             }
             ACTION_COUNT_CHECK -> {
                 state.lastCountCheckAt = Counter.nowSeconds()
-                if (settings.countCheckReminder) notify(context, 2, context.getString(R.string.msg_count_check))
-                if (settings.countCheckSpeak) speech = R.string.msg_count_check
+                if (!muted && settings.countCheckReminder) notify(context, 2, context.getString(R.string.msg_count_check))
+                if (!muted && settings.countCheckSpeak) speech = R.string.msg_count_check
             }
         }
         reschedule(context)
@@ -176,9 +177,14 @@ class ReminderReceiver : BroadcastReceiver() {
             de.superascher.counter.ashtray.Presence.ACTION_REFRESH -> de.superascher.counter.ashtray.Presence.register(context)
             null -> Unit
             else -> {
-                // Ansage läuft asynchron: Prozess wach halten, bis sie fertig ist (Android friert sonst ein)
+                // Stumm-Abfrage (Netz) und Ansage laufen asynchron: Prozess wach halten, bis beides fertig ist
                 val pending = goAsync()
-                Reminders.fire(context, action) { pending.finish() }
+                Thread {
+                    val muted = de.superascher.counter.sync.Nextcloud.currentMuted(context)
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        Reminders.fire(context, action, muted) { pending.finish() }
+                    }
+                }.start()
             }
         }
     }

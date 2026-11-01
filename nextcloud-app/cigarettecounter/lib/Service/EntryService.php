@@ -426,4 +426,79 @@ class EntryService {
     public function isCountAnnounceEnabled(string $uid): bool {
         return $this->config->getUserValue($uid, 'cigarettecounter', 'count_announce_enabled', '0') === '1';
     }
+
+    /**
+     * Alles stumm: keine Erinnerungen ("Du darfst wieder", "Alle gezählt?") und keine
+     * Zählansage, auf keinem Weg (Push, Home Assistant, Browser, Handy-App). Zählen geht weiter.
+     * Bleibt an, bis es wieder ausgeschaltet wird (Zeitsteuerung z. B. per HA-Automation).
+     */
+    public function isMuted(string $uid): bool {
+        return $this->config->getUserValue($uid, 'cigarettecounter', 'muted', '0') === '1';
+    }
+
+    public function setMuted(string $uid, bool $muted): void {
+        $this->config->setUserValue($uid, 'cigarettecounter', 'muted', $muted ? '1' : '0');
+    }
+
+    /**
+     * Gerätestatus des Butt Bin, gemeldet von der Handy-App nach jedem Abgleich.
+     * Feldname => Typ. Was die Firmware noch nicht kann, bleibt null (Platzhalter für spätere
+     * Hardware: Raumluftsensor, Duftsprüher, Display).
+     */
+    public const ASHTRAY_FIELDS = [
+        'battery' => 'int',          // Batterie in %
+        'batteryMv' => 'int',        // Batteriespannung in mV
+        'firmware' => 'string',      // Firmware-Version
+        'rssi' => 'int',             // Funkstärke beim letzten Abgleich (dBm)
+        'airQuality' => 'int',       // Raumluft-Index (IAQ, 0–500), Platzhalter
+        'voc' => 'float',            // flüchtige organische Verbindungen (ppm), Platzhalter
+        'temperature' => 'float',    // °C, Platzhalter
+        'humidity' => 'float',       // % rel. Feuchte, Platzhalter
+        'sprayLevel' => 'int',       // Duftsprüher-Füllstand in %, Platzhalter
+        'sprayCount' => 'int',       // Sprühstöße seit dem Nachfüllen, Platzhalter
+        'lastSprayAt' => 'string',   // ISO-Zeit des letzten Sprühstoßes, Platzhalter
+        'display' => 'string',       // Anzeigemodus des Displays, Platzhalter
+    ];
+
+    /** @return array<string, mixed> alle Felder (null = unbekannt) plus updatedAt */
+    public function getAshtrayState(string $uid): array {
+        $raw = $this->config->getUserValue($uid, 'cigarettecounter', 'ashtray_state', '');
+        $stored = $raw === '' ? [] : (json_decode($raw, true) ?: []);
+        $state = [];
+        foreach (array_keys(self::ASHTRAY_FIELDS) as $key) {
+            $state[$key] = $stored[$key] ?? null;
+        }
+        $state['updatedAt'] = $stored['updatedAt'] ?? null;
+        return $state;
+    }
+
+    /**
+     * Übernimmt nur bekannte Felder (Teil-Update), unbekannte werden ignoriert.
+     *
+     * @param array<string, mixed> $values
+     */
+    public function updateAshtrayState(string $uid, array $values, string $atIso): array {
+        $state = $this->getAshtrayState($uid);
+        foreach (self::ASHTRAY_FIELDS as $key => $type) {
+            if (!array_key_exists($key, $values) || $values[$key] === '' ) {
+                continue;
+            }
+            $v = $values[$key];
+            if ($v === null) {
+                $state[$key] = null;
+            } elseif ($type === 'int' && is_numeric($v)) {
+                $state[$key] = (int)$v;
+            } elseif ($type === 'float' && is_numeric($v)) {
+                $state[$key] = (float)$v;
+            } elseif ($type === 'string') {
+                $state[$key] = mb_substr((string)$v, 0, 64);
+            }
+        }
+        if ($state['battery'] !== null) {
+            $state['battery'] = max(0, min(100, $state['battery']));
+        }
+        $state['updatedAt'] = $atIso;
+        $this->config->setUserValue($uid, 'cigarettecounter', 'ashtray_state', json_encode($state));
+        return $state;
+    }
 }

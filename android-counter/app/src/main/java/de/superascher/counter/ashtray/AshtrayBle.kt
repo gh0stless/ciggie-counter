@@ -35,12 +35,16 @@ object AshtrayBle {
     private val TIME: UUID = UUID.fromString("15770003-0f39-460f-8588-44afa8137b74")
     private val EVENTS: UUID = UUID.fromString("15770004-0f39-460f-8588-44afa8137b74")
     private val CCC: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+    // Standard-Batteriedienst (0x180F / 0x2A19), Wert in Prozent
+    private val BATTERY_SERVICE: UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+    private val BATTERY_LEVEL: UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
     private const val SEQ_TIME_UNKNOWN = 0x80000000L
 
     /** Ein Stempeldruck. [unixTime] = null: Zeit unbekannt (Uhr war nicht gestellt). */
     data class Event(val seq: Long, val unixTime: Long?)
 
-    data class Result(val count: Long, val events: List<Event>)
+    /** [battery] in Prozent, null wenn das Gerät keinen Batteriedienst hat oder das Lesen scheitert */
+    data class Result(val count: Long, val events: List<Event>, val battery: Int? = null)
 
     /** Sucht den Ascher anhand der Service-UUID, liefert seine Adresse oder null. */
     suspend fun scan(context: Context, timeoutMs: Long = 10_000): String? {
@@ -84,6 +88,12 @@ object AshtrayBle {
                 fun ch(uuid: UUID) = service.getCharacteristic(uuid) ?: throw IOException("Characteristic $uuid fehlt")
 
                 val count = u32(link.step("Count lesen") { gatt.readCharacteristic(ch(COUNT)) })
+                // Batterie ist nur Zusatzinfo: scheitert das Lesen, läuft der Abgleich trotzdem weiter
+                val battery = gatt.getService(BATTERY_SERVICE)?.getCharacteristic(BATTERY_LEVEL)?.let { c ->
+                    runCatching {
+                        link.step("Batterie lesen") { gatt.readCharacteristic(c) }.firstOrNull()?.toInt()?.and(0xFF)
+                    }.getOrNull()
+                }
                 val now = le32(System.currentTimeMillis() / 1000)
                 link.step("Uhr stellen") { gatt.writeCharacteristic(ch(TIME), now, WRITE) == WRITE_OK }
 
@@ -108,7 +118,7 @@ object AshtrayBle {
                         else Event(seq, time)
                     }
                 }
-                Result(count, list)
+                Result(count, list, battery)
             } finally {
                 gatt.disconnect()
                 gatt.close()
