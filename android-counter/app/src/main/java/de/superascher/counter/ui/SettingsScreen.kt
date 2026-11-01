@@ -118,6 +118,14 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         SwitchRow(stringResource(R.string.reminder_as_speech), countCheckSpeak) { countCheckSpeak = it }
         if (countCheck || countCheckSpeak) NumberField(stringResource(R.string.count_check_every), countCheckMin) { countCheckMin = it }
         Hint(stringResource(R.string.reminder_speech_hint))
+        Hint(stringResource(R.string.dnd_hint))
+        OutlinedButton(onClick = {
+            // "Nicht stören"/Modi; die Seite heißt je nach Android-Version anders, sonst Ton-Einstellungen
+            val opened = listOf("android.settings.ZEN_MODE_SETTINGS", AndroidSettings.ACTION_SOUND_SETTINGS).any { action ->
+                runCatching { context.startActivity(Intent(action)) }.isSuccess
+            }
+            if (!opened) context.startActivity(Intent(AndroidSettings.ACTION_SETTINGS))
+        }) { Text(stringResource(R.string.dnd_button)) }
         SwitchRow(stringResource(R.string.speak_count), speakCount) { speakCount = it }
         if (speakCount) Hint(stringResource(R.string.speak_count_hint))
         val alarms = context.getSystemService(AlarmManager::class.java)

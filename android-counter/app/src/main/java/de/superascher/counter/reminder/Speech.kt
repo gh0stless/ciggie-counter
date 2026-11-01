@@ -1,5 +1,6 @@
 package de.superascher.counter.reminder
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.res.Configuration
 import android.speech.tts.TextToSpeech
@@ -10,6 +11,8 @@ import java.util.Locale
  * Sprachausgabe auf dem Handy über die System-Engine (z. B. GrapheneOS Speech Services).
  * In der Sprache des Handys, wenn die App sie spricht (Englisch, Deutsch) und die Engine eine
  * Stimme dafür hat. Sonst Englisch: eine englische Stimme bringt jede Engine mit.
+ * Schweigt bei "Nicht stören": Ansagen laufen über die Medienlautstärke, die Android dabei
+ * standardmäßig durchlässt (Benachrichtigungen stellt Android selbst stumm).
  */
 object Speech {
     private val APP_LANGUAGES = setOf("en", "de")
@@ -17,6 +20,7 @@ object Speech {
     /** [onDone] kommt nach dem Sprechen oder bei einem Fehler, genau einmal. */
     fun say(context: Context, textRes: Int, vararg args: Any, onDone: () -> Unit = {}) {
         val app = context.applicationContext
+        if (isDoNotDisturb(app)) return onDone()
         lateinit var tts: TextToSpeech
         val finished = java.util.concurrent.atomic.AtomicBoolean(false)
         fun finish() {
@@ -52,4 +56,11 @@ object Speech {
             if (tts.speak(text, TextToSpeech.QUEUE_ADD, null, "speech") != TextToSpeech.SUCCESS) finish()
         }
     }
+
+    /** "Nicht stören" bzw. ein Modus wie "Schlafenszeit" ist aktiv (keine Berechtigung nötig). */
+    fun isDoNotDisturb(context: Context): Boolean =
+        when (context.getSystemService(NotificationManager::class.java).currentInterruptionFilter) {
+            NotificationManager.INTERRUPTION_FILTER_ALL, NotificationManager.INTERRUPTION_FILTER_UNKNOWN -> false
+            else -> true
+        }
 }

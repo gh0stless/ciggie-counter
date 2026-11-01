@@ -1,0 +1,2 @@
+- Ansagen schweigen, solange „Nicht stören“ oder ein Modus wie „Schlafenszeit“ aktiv ist
+- In den Einstellungen: Hinweis und direkter Link zu „Nicht stören“, um einen Zeitplan für die Nacht einzurichten

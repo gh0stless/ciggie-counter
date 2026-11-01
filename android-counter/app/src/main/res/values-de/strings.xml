@@ -59,6 +59,8 @@
     <string name="speak_count">Jede Eingabe ansagen</string>
     <string name="speak_count_hint">Das Handy sagt nach jeder Eingabe „Zigarette Nummer 12 gezählt.“, auch für den Butt Bin. Lautstärke = Medienlautstärke.</string>
     <string name="speech_counted">Zigarette Nummer %d gezählt.</string>
+    <string name="dnd_hint">Für die Nacht: In Android einen Zeitplan für „Nicht stören“ (oder einen Modus wie „Schlafenszeit“) einrichten. Dann sind Benachrichtigungen stumm und auch die Ansagen der App schweigen.</string>
+    <string name="dnd_button">„Nicht stören“ einrichten</string>
     <string name="reminder_as_notification">Benachrichtigung</string>
     <string name="reminder_as_speech">Ansage</string>
     <string name="reminder_speech_hint">Ansagen in der Sprache des Handys, wenn die Sprachausgabe eine Stimme dafür hat, sonst auf Englisch. Ansagen über Home Assistant stellst du in der Nextcloud-App ein.</string>
