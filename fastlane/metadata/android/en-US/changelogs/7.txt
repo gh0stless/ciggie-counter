@@ -1,0 +1,2 @@
+- Nextcloud sync with unique IDs: several cigarettes in the same second stay separate, deletions reach every device
+- Only changes are transferred instead of the whole list

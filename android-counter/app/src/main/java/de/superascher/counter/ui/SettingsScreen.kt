@@ -286,6 +286,7 @@ private fun DangerZone() {
                 TextButton(onClick = {
                     if (step == 1) step = 2 else {
                         EntryStore.get(context).deleteAll()
+                        AppState(context).syncRev = -1 // mit Nextcloud kommt der Server-Stand beim nächsten Abgleich zurück
                         Reminders.reschedule(context)
                         step = 0
                     }

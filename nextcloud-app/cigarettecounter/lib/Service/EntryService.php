@@ -70,9 +70,170 @@ class EntryService {
     }
 
     /**
+     * Speichert die gewünschte Liste aktiver Einträge. Intern werden die Unterschiede als
+     * Datensätze (mit ID, Löschmarke, Änderungsnummer) geführt, damit sich andere Geräte
+     * per Abgleich v2 (recordsSince/mergeRecords) nur die Änderungen holen können.
+     *
      * @param string[] $entries
      */
-    public function saveEntries(string $uid, array $entries): void {
+    public function saveEntries(string $uid, array $entries, string $source = 'web'): void {
+        $data = $this->loadRecords($uid);
+        $want = [];
+        foreach ($entries as $ts) {
+            $want[$ts] = ($want[$ts] ?? 0) + 1;
+        }
+        // Vorhandene aktive Einträge gegen die gewünschte Anzahl je Zeitpunkt abgleichen
+        foreach ($data['records'] as $i => $r) {
+            if ($r['deleted']) {
+                continue;
+            }
+            if (($want[$r['ts']] ?? 0) > 0) {
+                $want[$r['ts']]--;
+            } else {
+                $data['records'][$i]['deleted'] = true;
+                $data['records'][$i]['rev'] = ++$data['rev'];
+            }
+        }
+        foreach ($want as $ts => $count) {
+            for ($n = 0; $n < $count; $n++) {
+                $data['records'][] = ['id' => self::newId(), 'ts' => (string)$ts, 'source' => $source,
+                    'deleted' => false, 'rev' => ++$data['rev']];
+            }
+        }
+        $this->saveRecords($uid, $data);
+    }
+
+    /**
+     * Alle Datensätze inkl. Löschmarken. Beim ersten Aufruf aus der alten Zeitstempel-Liste übernommen.
+     *
+     * @return array{rev: int, records: array<int, array{id: string, ts: string, source: string, deleted: bool, rev: int}>}
+     */
+    public function loadRecords(string $uid): array {
+        $folder = $this->entriesFolder();
+        try {
+            $data = json_decode($folder->getFile('records-' . $uid . '.json')->getContent(), true);
+            if (is_array($data) && isset($data['rev'], $data['records']) && is_array($data['records'])) {
+                return $data;
+            }
+        } catch (NotFoundException $e) {
+            // noch keine Datensätze: unten aus der Liste übernehmen
+        }
+        $data = ['rev' => 0, 'records' => []];
+        foreach ($this->loadEntries($uid) as $ts) {
+            $data['records'][] = ['id' => self::newId(), 'ts' => $ts, 'source' => 'legacy', 'deleted' => false,
+                'rev' => ++$data['rev']];
+        }
+        // Sofort speichern: sonst bekämen dieselben Einträge bei jedem Abruf neue Zufalls-IDs
+        $this->saveRecords($uid, $data);
+        return $data;
+    }
+
+    /**
+     * Abgleich v2, Abholen: alle Datensätze mit Änderungsnummer > $since (0 = alles).
+     *
+     * @return array{rev: int, entries: array}
+     */
+    public function recordsSince(string $uid, int $since): array {
+        $data = $this->loadRecords($uid);
+        $changed = array_values(array_filter($data['records'], fn (array $r) => $r['rev'] > $since));
+        return ['rev' => $data['rev'], 'entries' => $changed];
+    }
+
+    /**
+     * Abgleich v2, Senden: Datensätze eines anderen Geräts übernehmen. Unbekannte IDs werden
+     * angelegt, eine Löschmarke gewinnt immer (gelöscht bleibt gelöscht). Die Zeit eines
+     * bekannten Eintrags ändert sich nicht.
+     *
+     * @param array<int, mixed> $incoming
+     * @return array{rev: int, added: string[], accepted: int} added = neu angelegte, aktive Zeitpunkte
+     */
+    public function mergeRecords(string $uid, array $incoming): array {
+        $data = $this->loadRecords($uid);
+        $index = [];
+        foreach ($data['records'] as $i => $r) {
+            $index[$r['id']] = $i;
+        }
+        $added = [];
+        $accepted = 0;
+        $changed = false;
+        foreach ($incoming as $in) {
+            if (!is_array($in) || !is_string($in['id'] ?? null) || !preg_match('/^[A-Za-z0-9-]{8,64}$/', $in['id'])) {
+                continue;
+            }
+            $deleted = filter_var($in['deleted'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $accepted++;
+            if (isset($index[$in['id']])) {
+                $i = $index[$in['id']];
+                if ($deleted && !$data['records'][$i]['deleted']) {
+                    $data['records'][$i]['deleted'] = true;
+                    $data['records'][$i]['rev'] = ++$data['rev'];
+                    $changed = true;
+                }
+                continue;
+            }
+            try {
+                $ts = (new \DateTimeImmutable((string)($in['ts'] ?? '')))->format('c');
+            } catch (\Exception $e) {
+                $accepted--;
+                continue;
+            }
+            $data['records'][] = ['id' => $in['id'], 'ts' => $ts,
+                'source' => mb_substr((string)($in['source'] ?? 'device'), 0, 32),
+                'deleted' => $deleted, 'rev' => ++$data['rev']];
+            $index[$in['id']] = count($data['records']) - 1;
+            $changed = true;
+            if (!$deleted) {
+                $added[] = $ts;
+            }
+        }
+        if ($changed) {
+            $this->saveRecords($uid, $data);
+        }
+        return ['rev' => $data['rev'], 'added' => $added, 'accepted' => $accepted];
+    }
+
+    private function saveRecords(string $uid, array $data): void {
+        $this->entriesFolderFile('records-' . $uid . '.json')->putContent(json_encode($data));
+        $active = [];
+        foreach ($data['records'] as $r) {
+            if (!$r['deleted']) {
+                $active[] = $r['ts'];
+            }
+        }
+        $this->writeEntriesFile($uid, $active);
+    }
+
+    private function entriesFolder(): \OCP\Files\SimpleFS\ISimpleFolder {
+        try {
+            return $this->appData->getFolder(self::ENTRIES_FOLDER);
+        } catch (NotFoundException $e) {
+            return $this->appData->newFolder(self::ENTRIES_FOLDER);
+        }
+    }
+
+    private function entriesFolderFile(string $name): ISimpleFile {
+        $folder = $this->entriesFolder();
+        try {
+            return $folder->getFile($name);
+        } catch (NotFoundException $e) {
+            return $folder->newFile($name);
+        }
+    }
+
+    /** Zufällige ID (UUID v4) für einen Eintrag. */
+    public static function newId(): string {
+        $b = random_bytes(16);
+        $b[6] = chr((ord($b[6]) & 0x0f) | 0x40);
+        $b[8] = chr((ord($b[8]) & 0x3f) | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));
+    }
+
+    /**
+     * Abgeleitete Liste der aktiven Zeitstempel (wird von Zähler, Jobs und Abgleich v1 gelesen).
+     *
+     * @param string[] $entries
+     */
+    private function writeEntriesFile(string $uid, array $entries): void {
         $fileName = 'entries-' . $uid . '.json';
         try {
             $folder = $this->appData->getFolder(self::ENTRIES_FOLDER);

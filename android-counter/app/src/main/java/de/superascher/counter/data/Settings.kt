@@ -145,6 +145,11 @@ class AppState(context: Context) {
         set(v) = sp.edit { putBoolean("muted", v) }
 
     // Nextcloud (optional)
+    /** Abgleich v2: zuletzt vom Server geholter Änderungsstand, -1 = noch nicht umgestiegen */
+    var syncRev: Long
+        get() = sp.getLong("sync_rev", -1)
+        set(v) = sp.edit { putLong("sync_rev", v) }
+
     var ncLastSync: Long
         get() = sp.getLong("nc_last_sync", 0)
         set(v) = sp.edit { putLong("nc_last_sync", v) }

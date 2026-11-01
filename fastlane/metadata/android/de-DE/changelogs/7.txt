@@ -1,0 +1,2 @@
+- Abgleich mit Nextcloud über eindeutige IDs: mehrere Zigaretten in derselben Sekunde bleiben getrennt, Löschungen kommen auf allen Geräten an
+- Es werden nur noch Änderungen übertragen statt der kompletten Liste

@@ -141,6 +141,39 @@ class ApiController extends Controller {
     }
 
     /**
+     * Abgleich v2, Abholen: Datensätze (id, ts, source, deleted, rev) mit rev > since.
+     * Antwort {"rev": aktueller Stand, "entries": [...]}; "rev" beim nächsten Mal als since schicken.
+     *
+     * @NoAdminRequired
+     */
+    public function entriesV2(int $since = 0): JSONResponse {
+        return new JSONResponse($this->entryService->recordsSince($this->userId, max(0, $since)));
+    }
+
+    /**
+     * Abgleich v2, Senden: JSON {"entries": [{"id", "ts", "source", "deleted"}, ...]}.
+     * Neue, frische Einträge wirken wie /api/add (Zähl-Erinnerung neu, Ansage).
+     *
+     * @NoAdminRequired
+     */
+    public function pushEntriesV2(): JSONResponse {
+        $incoming = $this->request->getParam('entries');
+        if (!is_array($incoming)) {
+            return new JSONResponse(['error' => 'entries fehlt'], 400);
+        }
+        $result = $this->entryService->mergeRecords($this->userId, $incoming);
+        if ($result['added'] !== []) {
+            $newest = max(array_map(fn (string $ts) => (new \DateTimeImmutable($ts))->getTimestamp(), $result['added']));
+            if ($newest >= time() - 10 * 60) {
+                $this->entryService->setLastCountCheckAt($this->userId, (new \DateTime())->format('c'));
+            }
+            // Mehrere auf einmal (Butt Bin): nur einmal ansagen, mit dem neuesten
+            $this->announceCount($this->entryService->loadEntries($this->userId), date('c', $newest));
+        }
+        return new JSONResponse(['rev' => $result['rev'], 'accepted' => $result['accepted']]);
+    }
+
+    /**
      * @NoAdminRequired
      */
     public function resetAll(): JSONResponse {
@@ -226,8 +259,12 @@ class ApiController extends Controller {
      */
     public function remove(string $ts): JSONResponse {
         $entries = $this->entryService->loadEntries($this->userId);
-        $entries = array_values(array_filter($entries, fn (string $existing) => $existing !== $ts));
-        $this->entryService->saveEntries($this->userId, $entries);
+        // Nur einen Eintrag entfernen: mehrere Zigaretten in derselben Sekunde sind möglich
+        $pos = array_search($ts, $entries, true);
+        if ($pos !== false) {
+            array_splice($entries, $pos, 1);
+            $this->entryService->saveEntries($this->userId, $entries);
+        }
 
         return $this->today();
     }

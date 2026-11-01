@@ -18,6 +18,7 @@ import de.superascher.counter.data.Settings
 import de.superascher.counter.reminder.Reminders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -63,10 +64,106 @@ object Nextcloud {
         )
     }
 
-    /** Ausstehende Änderungen senden (bricht beim ersten Fehler ab, Reihenfolge bleibt), dann Stand holen. */
+    /** Abgleich: v2 (IDs, nur Änderungen) ab Server-App 0.9.11, sonst der alte Weg. */
     fun sync(context: Context): String {
         val settings = Settings.load(context)
         if (!settings.ncEnabled) return context.getString(R.string.nc_not_configured)
+        syncDeviceState(context, settings)
+        return syncV2(context, settings) ?: syncLegacy(context, settings)
+    }
+
+    private class V2(val rev: Long, val records: List<EntryStore.Record>)
+
+    private fun getV2(context: Context, settings: Settings, since: Long): V2? {
+        val json = try {
+            JSONObject(request(context, settings, "GET", "/api/v2/entries?since=$since", null))
+        } catch (e: NotFound) {
+            return null
+        }
+        val arr = json.getJSONArray("entries")
+        return V2(json.getLong("rev"), List(arr.length()) {
+            val o = arr.getJSONObject(it)
+            EntryStore.Record(
+                o.getString("id"), OffsetDateTime.parse(o.getString("ts")).toEpochSecond(),
+                o.optString("source", "server"), o.optBoolean("deleted"),
+            )
+        })
+    }
+
+    /** null = Server kennt v2 nicht (ältere Nextcloud-App) */
+    private fun syncV2(context: Context, settings: Settings): String? {
+        val store = EntryStore.get(context)
+        val state = AppState(context)
+        val res = context.resources
+        var sent = 0
+        if (state.syncRev < 0) {
+            // Umstieg: Server muss v2 können, sonst alter Weg
+            getV2(context, settings, 0) ?: return null
+            // noch Ungesendetes aus der alten Warteschlange vorher abliefern, dann Server-Stand mit IDs übernehmen
+            sent = flushLegacyOutbox(context, settings, store)
+            val all = getV2(context, settings, 0) ?: return null
+            store.replaceAllFromServer(all.records)
+            state.syncRev = all.rev
+        } else {
+            val dirty = store.dirtyRecords()
+            if (dirty.isNotEmpty()) {
+                val body = JSONObject().put("entries", JSONArray().apply {
+                    dirty.forEach {
+                        put(JSONObject().put("id", it.id).put("ts", isoOf(it.ts)).put("source", it.source).put("deleted", it.deleted))
+                    }
+                })
+                try {
+                    request(context, settings, "POST", "/api/v2/entries", body.toString(), json = true)
+                } catch (e: NotFound) {
+                    return null
+                }
+                store.markClean(dirty.map { it.id })
+                sent = dirty.size
+            }
+            val changes = getV2(context, settings, state.syncRev) ?: return null
+            store.mergeFromServer(changes.records)
+            state.syncRev = changes.rev
+        }
+        store.clearOps() // im v2-Betrieb erledigt
+        Reminders.reschedule(context)
+        val total = store.entries.value.size
+        return buildString {
+            if (sent > 0) append(res.getQuantityString(R.plurals.nc_sent, sent, sent) + ", ")
+            append(res.getQuantityString(R.plurals.nc_from_server, total, total))
+        }
+    }
+
+    private fun flushLegacyOutbox(context: Context, settings: Settings, store: EntryStore): Int {
+        var sent = 0
+        while (true) {
+            val op = store.pendingOps().firstOrNull() ?: break
+            try {
+                if (op.op == "add") request(context, settings, "POST", "/api/add", "timestamp=" + enc(isoOf(op.ts)))
+                else request(context, settings, "DELETE", "/api/entries/" + enc(isoOf(op.ts)), null)
+            } catch (e: NotFound) {
+                throw IOException(context.getString(R.string.nc_app_missing))
+            }
+            store.removeOp(op.id)
+            sent++
+        }
+        return sent
+    }
+
+    /** Batterie des Butt Bin melden, Stumm-Schalter holen (ab Server-App 0.9.10). */
+    private fun syncDeviceState(context: Context, settings: Settings) {
+        val state = AppState(context)
+        if (state.ashtrayBattery >= 0 && state.ashtrayBatteryAt > state.ashtrayBatterySentAt) {
+            val at = state.ashtrayBatteryAt
+            runCatching {
+                request(context, settings, "POST", "/api/ashtray", "battery=${state.ashtrayBattery}&at=" + enc(isoOf(at / 1000)))
+                state.ashtrayBatterySentAt = at
+            }
+        }
+        runCatching { state.muted = JSONObject(request(context, settings, "GET", "/api/mute", null)).getBoolean("muted") }
+    }
+
+    /** Alter Weg (Server-App vor 0.9.11): Warteschlange senden, dann komplette Liste übernehmen. */
+    private fun syncLegacy(context: Context, settings: Settings): String {
         val store = EntryStore.get(context)
         var sent = 0
         while (true) {
@@ -80,17 +177,6 @@ object Nextcloud {
             store.removeOp(op.id)
             sent++
         }
-
-        // Gerätestatus und Stumm-Schalter: ab Server-App 0.9.10, ältere kennen die Adressen nicht (404)
-        val state = AppState(context)
-        if (state.ashtrayBattery >= 0 && state.ashtrayBatteryAt > state.ashtrayBatterySentAt) {
-            val at = state.ashtrayBatteryAt
-            runCatching {
-                request(context, settings, "POST", "/api/ashtray", "battery=${state.ashtrayBattery}&at=" + enc(isoOf(at / 1000)))
-                state.ashtrayBatterySentAt = at
-            }
-        }
-        runCatching { state.muted = JSONObject(request(context, settings, "GET", "/api/mute", null)).getBoolean("muted") }
 
         val server = try {
             JSONObject(request(context, settings, "GET", "/api/entries", null)).getJSONArray("entries")
@@ -138,6 +224,7 @@ object Nextcloud {
 
     private fun request(
         context: Context, settings: Settings, method: String, path: String, body: String?, timeoutMs: Int = 0,
+        json: Boolean = false,
     ): String {
         // index.php im Pfad funktioniert auch ohne "hübsche" URLs
         val url = URL(settings.ncUrl.trimEnd('/') + "/index.php/apps/cigarettecounter" + path)
@@ -153,7 +240,7 @@ object Nextcloud {
             conn.setRequestProperty("OCS-APIRequest", "true") // sonst verlangt Nextcloud ein CSRF-Token (HTTP 412)
             if (body != null) {
                 conn.doOutput = true
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                conn.setRequestProperty("Content-Type", if (json) "application/json" else "application/x-www-form-urlencoded")
                 conn.outputStream.use { it.write(body.toByteArray()) }
             }
             return when (val code = conn.responseCode) {

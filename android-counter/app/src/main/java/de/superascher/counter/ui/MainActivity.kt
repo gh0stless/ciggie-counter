@@ -142,6 +142,10 @@ private fun AppScreen() {
             0 -> HomeScreen(entries, settings, modifier, onOpenAshtray = { tab = 2 })
             1 -> StatsScreen(entries, settings, modifier)
             else -> SettingsScreen(settings, modifier) { updated ->
+                // Andere Nextcloud oder anderer Nutzer: beim nächsten Abgleich den Server-Stand komplett übernehmen
+                if (updated.ncUrl.trim().trimEnd('/') != settings.ncUrl || updated.ncUser.trim() != settings.ncUser) {
+                    de.superascher.counter.data.AppState(context).syncRev = -1
+                }
                 Settings.save(context, updated)
                 settings = updated
                 Reminders.reschedule(context)

@@ -30,7 +30,7 @@ The user interface is German for now; an English translation is planned.]]></des
 - **Schnittstelle** für die Android-App (F-Droid/IzzyOnDroid) und Home Assistant (Blueprints liegen bei)
 
 Datensparsam: Alles bleibt in deiner Nextcloud, kein Tracking.]]></description>
-    <version>0.9.10</version>
+    <version>0.9.11</version>
     <licence>agpl</licence>
     <author homepage="https://crazy-midi.de">gh0stless (crazy-midi.de)</author>
     <namespace>CigaretteCounter</namespace>

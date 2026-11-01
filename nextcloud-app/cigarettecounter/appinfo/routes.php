@@ -90,6 +90,16 @@ return [
             'verb' => 'POST',
         ],
         [
+            'name' => 'api#entriesV2',
+            'url' => '/api/v2/entries',
+            'verb' => 'GET',
+        ],
+        [
+            'name' => 'api#pushEntriesV2',
+            'url' => '/api/v2/entries',
+            'verb' => 'POST',
+        ],
+        [
             'name' => 'api#haTest',
             'url' => '/api/ha-test',
             'verb' => 'POST',
