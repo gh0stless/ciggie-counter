@@ -24,16 +24,26 @@ data class Settings(
     /** Nach jedem Zählen "Cigarette number 12 counted." über die Sprachausgabe des Handys */
     val speakCount: Boolean = false,
     val calendarSummary: Boolean = false,
+    /** Abgleich mit [SYNC_NEXTCLOUD] oder [SYNC_HOME_ASSISTANT] (Integration ciggie_counter) */
+    val syncTarget: String = SYNC_NEXTCLOUD,
     /** Optional: eigene Nextcloud mit der App "cigarettecounter" (nextcloud-app/) */
     val ncUrl: String = "",
     val ncUser: String = "",
     /** App-Passwort (Nextcloud: Einstellungen > Sicherheit), nicht das Login-Passwort */
     val ncAppPassword: String = "",
+    /** Optional: Home Assistant mit der Integration ciggie_counter, Adresse und langlebiges Zugangstoken */
+    val haUrl: String = "",
+    val haToken: String = "",
 ) {
-    val ncEnabled: Boolean
-        get() = validUrl(ncUrl) && ncUser.isNotEmpty() && ncAppPassword.isNotEmpty()
+    /** Abgleich eingeschaltet: das gewählte Ziel ist vollständig eingetragen */
+    val syncEnabled: Boolean
+        get() = if (syncTarget == SYNC_HOME_ASSISTANT) validUrl(haUrl) && haToken.isNotEmpty()
+        else validUrl(ncUrl) && ncUser.isNotEmpty() && ncAppPassword.isNotEmpty()
 
     companion object {
+        const val SYNC_NEXTCLOUD = "nextcloud"
+        const val SYNC_HOME_ASSISTANT = "homeassistant"
+
         /** Nur http:// oder https:// mit Hostnamen (fängt Tippfehler wie "htttps://" ab). */
         fun validUrl(url: String): Boolean =
             Regex("^https?://[^/\\s]+.*").matches(url.trim())
@@ -59,6 +69,9 @@ data class Settings(
                 ncUrl = getString("nc_url", "") ?: "",
                 ncUser = getString("nc_user", "") ?: "",
                 ncAppPassword = getString("nc_app_password", "") ?: "",
+                syncTarget = getString("sync_target", SYNC_NEXTCLOUD) ?: SYNC_NEXTCLOUD,
+                haUrl = getString("ha_url", "") ?: "",
+                haToken = getString("ha_token", "") ?: "",
             )
         }
 
@@ -81,6 +94,9 @@ data class Settings(
             putString("nc_url", s.ncUrl.trim().trimEnd('/'))
             putString("nc_user", s.ncUser.trim())
             putString("nc_app_password", s.ncAppPassword.trim())
+            putString("sync_target", s.syncTarget)
+            putString("ha_url", s.haUrl.trim().trimEnd('/'))
+            putString("ha_token", s.haToken.trim())
         }
     }
 }

@@ -109,7 +109,15 @@
     <string name="next">Continue</string>
     <string name="delete_final">Delete permanently</string>
 
-    <string name="section_nc">Nextcloud (optional)</string>
+    <string name="section_sync">Sync (optional)</string>
+    <string name="sync_nextcloud">Nextcloud</string>
+    <string name="sync_home_assistant">Home Assistant</string>
+    <string name="ha_hint">For users of Home Assistant with the integration “Ciggie Counter” (HACS): every entry is sent to Home Assistant and the state is taken over from there, also on the go if your Home Assistant is reachable from outside. Note: when switched on, the Home Assistant state replaces the entries on this device.</string>
+    <string name="ha_server">Home Assistant, e.g. https://home.example.org</string>
+    <string name="ha_token">Long-lived access token</string>
+    <string name="ha_token_hint">Create a token: Home Assistant → your profile → Security → “Long-lived access tokens”.</string>
+    <string name="ha_auth_rejected">Home Assistant rejected the token</string>
+    <string name="ha_integration_missing">Integration “Ciggie Counter” not found in Home Assistant (HTTP 404)</string>
     <string name="nc_hint">For users of their own Nextcloud with the app “cigarettecounter”: every entry is sent to the server; without a network it is queued and sent later. From server app 0.9.3 on, the device also takes over the state from the server, so several devices (e.g. a tablet) can be used in parallel. Note: when switched on, the server state replaces the entries on this device. Only one device should collect from the Butt Bin.</string>
     <string name="nc_server">Server, e.g. https://cloud.example.org</string>
     <string name="nc_user">User</string>
@@ -155,7 +163,7 @@
     <string name="nc_not_configured">Nextcloud not set up</string>
     <string name="nc_app_missing">App “cigarettecounter” not found on the server (HTTP 404)</string>
     <string name="nc_auth_rejected">Login rejected (check user/app password)</string>
-    <string name="nc_http">Nextcloud replied with HTTP %d</string>
+    <string name="nc_http">Server replied with HTTP %d</string>
     <string name="nc_all_sent">Everything sent</string>
     <plurals name="nc_sent">
         <item quantity="one">%d change sent</item>

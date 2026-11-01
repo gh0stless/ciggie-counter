@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Beim Öffnen den Stand der anderen Geräte holen
-        if (Settings.load(this).ncEnabled) de.superascher.counter.sync.Nextcloud.kick(this)
+        if (Settings.load(this).syncEnabled) de.superascher.counter.sync.Nextcloud.kick(this)
     }
 }
 
@@ -143,7 +143,8 @@ private fun AppScreen() {
             1 -> StatsScreen(entries, settings, modifier)
             else -> SettingsScreen(settings, modifier) { updated ->
                 // Andere Nextcloud oder anderer Nutzer: beim nächsten Abgleich den Server-Stand komplett übernehmen
-                if (updated.ncUrl.trim().trimEnd('/') != settings.ncUrl || updated.ncUser.trim() != settings.ncUser) {
+                if (updated.syncTarget != settings.syncTarget || updated.haUrl.trim().trimEnd('/') != settings.haUrl ||
+                    updated.ncUrl.trim().trimEnd('/') != settings.ncUrl || updated.ncUser.trim() != settings.ncUser) {
                     de.superascher.counter.data.AppState(context).syncRev = -1
                 }
                 Settings.save(context, updated)

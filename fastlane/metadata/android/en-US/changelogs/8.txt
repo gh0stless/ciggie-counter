@@ -1,0 +1,1 @@
+- New: sync with Nextcloud or Home Assistant (integration “Ciggie Counter” via HACS), also on the go if Home Assistant is reachable from outside

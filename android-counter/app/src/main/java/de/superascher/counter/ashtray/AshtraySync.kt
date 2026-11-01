@@ -60,7 +60,7 @@ object AshtraySync {
         result.battery?.let {
             state.ashtrayBattery = it
             state.ashtrayBatteryAt = System.currentTimeMillis()
-            if (de.superascher.counter.data.Settings.load(context).ncEnabled) de.superascher.counter.sync.Nextcloud.kick(context)
+            if (de.superascher.counter.data.Settings.load(context).syncEnabled) de.superascher.counter.sync.Nextcloud.kick(context)
         }
 
         var added = 0
@@ -119,7 +119,7 @@ object Background {
             wm.cancelUniqueWork("ashtray")
         }
         Presence.register(context)
-        if (de.superascher.counter.data.Settings.load(context).ncEnabled) {
+        if (de.superascher.counter.data.Settings.load(context).syncEnabled) {
             de.superascher.counter.sync.Nextcloud.kick(context)
         }
     }

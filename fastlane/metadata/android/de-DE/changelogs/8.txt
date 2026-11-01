@@ -1,0 +1,1 @@
+- Neu: Abgleich wahlweise mit Nextcloud oder Home Assistant (Integration „Ciggie Counter“ über HACS), auch unterwegs, wenn Home Assistant von außen erreichbar ist

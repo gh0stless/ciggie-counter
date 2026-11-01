@@ -82,6 +82,9 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
     var ncUrl by remember { mutableStateOf(initial.ncUrl) }
     var ncUser by remember { mutableStateOf(initial.ncUser) }
     var ncPassword by remember { mutableStateOf(initial.ncAppPassword) }
+    var syncTarget by remember { mutableStateOf(initial.syncTarget) }
+    var haUrl by remember { mutableStateOf(initial.haUrl) }
+    var haToken by remember { mutableStateOf(initial.haToken) }
     var saved by remember { mutableStateOf(false) }
 
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -159,7 +162,19 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
         }
         Hint(stringResource(R.string.calendar_hint))
 
-        NextcloudSection(ncUrl, ncUser, ncPassword, { ncUrl = it }, { ncUser = it }, { ncPassword = it })
+        Section(stringResource(R.string.section_sync))
+        listOf(Settings.SYNC_NEXTCLOUD to R.string.sync_nextcloud, Settings.SYNC_HOME_ASSISTANT to R.string.sync_home_assistant)
+            .forEach { (key, label) ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(selected = syncTarget == key, onClick = { syncTarget = key })
+                    Text(stringResource(label))
+                }
+            }
+        if (syncTarget == Settings.SYNC_HOME_ASSISTANT) {
+            HomeAssistantSection(haUrl, haToken, { haUrl = it }, { haToken = it })
+        } else {
+            NextcloudSection(ncUrl, ncUser, ncPassword, { ncUrl = it }, { ncUser = it }, { ncPassword = it })
+        }
 
         Button(onClick = {
             onSave(Settings(
@@ -179,6 +194,9 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
                 ncUrl = ncUrl,
                 ncUser = ncUser,
                 ncAppPassword = ncPassword,
+                syncTarget = syncTarget,
+                haUrl = haUrl,
+                haToken = haToken,
             ))
             saved = true
         }, Modifier.fillMaxWidth()) { Text(stringResource(if (saved) R.string.saved else R.string.save)) }
@@ -328,7 +346,6 @@ private fun NextcloudSection(
     val scope = rememberCoroutineScope()
     var status by remember { mutableStateOf(ncStatus(res, state)) }
 
-    Section(stringResource(R.string.section_nc))
     Hint(stringResource(R.string.nc_hint))
     OutlinedTextField(url, onUrl, Modifier.fillMaxWidth(), singleLine = true,
         label = { Text(stringResource(R.string.nc_server)) },
@@ -350,6 +367,45 @@ private fun NextcloudSection(
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         de.superascher.counter.sync.Nextcloud.test(
                             context, Settings(ncUrl = url.trim(), ncUser = user.trim(), ncAppPassword = password.trim())
+                        )
+                    }
+                    res.getString(R.string.nc_ok)
+                } catch (e: Exception) {
+                    res.getString(R.string.error, e.message)
+                }
+            }
+        }) { Text(stringResource(R.string.nc_test)) }
+    }
+}
+
+@Composable
+private fun HomeAssistantSection(url: String, token: String, onUrl: (String) -> Unit, onToken: (String) -> Unit) {
+    val context = LocalContext.current
+    val res = LocalResources.current
+    val state = remember { AppState(context) }
+    val scope = rememberCoroutineScope()
+    var status by remember { mutableStateOf(ncStatus(res, state)) }
+
+    Hint(stringResource(R.string.ha_hint))
+    OutlinedTextField(url, onUrl, Modifier.fillMaxWidth(), singleLine = true,
+        label = { Text(stringResource(R.string.ha_server)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
+    OutlinedTextField(token, onToken, Modifier.fillMaxWidth(), singleLine = true,
+        label = { Text(stringResource(R.string.ha_token)) },
+        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation())
+    if (url.isNotBlank() && !Settings.validUrl(url)) {
+        Text(stringResource(R.string.nc_url_invalid), color = MaterialTheme.colorScheme.error)
+    }
+    Hint(stringResource(R.string.ha_token_hint))
+    if (status.isNotEmpty()) Text(status, style = MaterialTheme.typography.bodySmall)
+    if (Settings.validUrl(url) && token.isNotEmpty()) {
+        OutlinedButton(onClick = {
+            scope.launch {
+                status = res.getString(R.string.nc_checking)
+                status = try {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        de.superascher.counter.sync.Nextcloud.test(
+                            context, Settings(syncTarget = Settings.SYNC_HOME_ASSISTANT, haUrl = url.trim(), haToken = token.trim())
                         )
                     }
                     res.getString(R.string.nc_ok)

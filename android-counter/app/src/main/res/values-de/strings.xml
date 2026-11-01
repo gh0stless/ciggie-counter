@@ -102,7 +102,15 @@
     <string name="next">Weiter</string>
     <string name="delete_final">Endgültig löschen</string>
 
-    <string name="section_nc">Nextcloud (optional)</string>
+    <string name="section_sync">Abgleich (optional)</string>
+    <string name="sync_nextcloud">Nextcloud</string>
+    <string name="sync_home_assistant">Home Assistant</string>
+    <string name="ha_hint">Für Nutzer von Home Assistant mit der Integration „Ciggie Counter“ (HACS): Jeder Eintrag geht an Home Assistant, der Stand kommt von dort zurück – auch unterwegs, wenn dein Home Assistant von außen erreichbar ist. Achtung: Beim Einschalten ersetzt der Stand aus Home Assistant die Einträge auf diesem Gerät.</string>
+    <string name="ha_server">Home Assistant, z. B. https://home.example.org</string>
+    <string name="ha_token">Langlebiges Zugangstoken</string>
+    <string name="ha_token_hint">Token anlegen: Home Assistant → dein Profil → Sicherheit → „Langlebige Zugangstoken“.</string>
+    <string name="ha_auth_rejected">Home Assistant hat das Token abgelehnt</string>
+    <string name="ha_integration_missing">Integration „Ciggie Counter“ in Home Assistant nicht gefunden (HTTP 404)</string>
     <string name="nc_hint">Für Nutzer einer eigenen Nextcloud mit der App „cigarettecounter“: Jeder Eintrag geht an den Server, ohne Netz wird er vorgemerkt und später nachgeschickt. Ab Server-App 0.9.3 übernimmt das Gerät außerdem den Stand vom Server – so lassen sich mehrere Geräte (z. B. Tablet) parallel nutzen. Achtung: Beim Einschalten ersetzt der Server-Stand die Einträge auf diesem Gerät. Den Butt Bin sollte nur ein Gerät abholen.</string>
     <string name="nc_server">Server, z. B. https://cloud.example.org</string>
     <string name="nc_user">Benutzer</string>
@@ -148,7 +156,7 @@
     <string name="nc_not_configured">Nextcloud nicht eingerichtet</string>
     <string name="nc_app_missing">App „cigarettecounter“ auf dem Server nicht gefunden (HTTP 404)</string>
     <string name="nc_auth_rejected">Anmeldung abgelehnt (Benutzer/App-Passwort prüfen)</string>
-    <string name="nc_http">Nextcloud antwortet mit HTTP %d</string>
+    <string name="nc_http">Server antwortet mit HTTP %d</string>
     <string name="nc_all_sent">Alles übertragen</string>
     <plurals name="nc_sent">
         <item quantity="one">%d Änderung übertragen</item>

@@ -33,7 +33,7 @@ object Reminders {
      * [announce] = false, wenn der Aufrufer mehrere Einträge auf einmal bringt und selbst einmal ansagt.
      */
     fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true) {
-        val nc = Settings.load(context).ncEnabled
+        val nc = Settings.load(context).syncEnabled
         EntryStore.get(context).add(ts, source, forward = nc)
         if (nc) Nextcloud.kick(context)
         // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
@@ -55,7 +55,7 @@ object Reminders {
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
     fun delete(context: Context, ts: Long) {
-        val nc = Settings.load(context).ncEnabled
+        val nc = Settings.load(context).syncEnabled
         EntryStore.get(context).delete(ts, forward = nc)
         if (nc) Nextcloud.kick(context)
         reschedule(context)

@@ -67,9 +67,11 @@ object Nextcloud {
     /** Abgleich: v2 (IDs, nur Änderungen) ab Server-App 0.9.11, sonst der alte Weg. */
     fun sync(context: Context): String {
         val settings = Settings.load(context)
-        if (!settings.ncEnabled) return context.getString(R.string.nc_not_configured)
+        if (!settings.syncEnabled) return context.getString(R.string.nc_not_configured)
         syncDeviceState(context, settings)
-        return syncV2(context, settings) ?: syncLegacy(context, settings)
+        return syncV2(context, settings)
+            ?: if (settings.syncTarget == Settings.SYNC_HOME_ASSISTANT) throw IOException(context.getString(R.string.ha_integration_missing))
+            else syncLegacy(context, settings)
     }
 
     private class V2(val rev: Long, val records: List<EntryStore.Record>)
@@ -200,7 +202,7 @@ object Nextcloud {
     fun currentMuted(context: Context): Boolean {
         val settings = Settings.load(context)
         val state = AppState(context)
-        if (settings.ncEnabled) {
+        if (settings.syncEnabled) {
             runCatching {
                 state.muted = JSONObject(request(context, settings, "GET", "/api/mute", null, timeoutMs = 3_000)).getBoolean("muted")
             }
@@ -212,7 +214,7 @@ object Nextcloud {
     fun setMuted(context: Context, muted: Boolean) {
         AppState(context).muted = muted
         val settings = Settings.load(context)
-        if (settings.ncEnabled) runCatching { request(context, settings, "POST", "/api/mute", "muted=" + if (muted) "1" else "0") }
+        if (settings.syncEnabled) runCatching { request(context, settings, "POST", "/api/mute", "muted=" + if (muted) "1" else "0") }
     }
 
     /** Zugangsdaten prüfen (GET /api/today). */
@@ -226,16 +228,20 @@ object Nextcloud {
         context: Context, settings: Settings, method: String, path: String, body: String?, timeoutMs: Int = 0,
         json: Boolean = false,
     ): String {
-        // index.php im Pfad funktioniert auch ohne "hübsche" URLs
-        val url = URL(settings.ncUrl.trimEnd('/') + "/index.php/apps/cigarettecounter" + path)
-        val auth = Base64.getEncoder().encodeToString("${settings.ncUser}:${settings.ncAppPassword}".toByteArray())
+        val ha = settings.syncTarget == Settings.SYNC_HOME_ASSISTANT
+        // Gleiche Schnittstelle, andere Adresse: Nextcloud /index.php/apps/cigarettecounter/api/…,
+        // Home Assistant /api/ciggie_counter/… (index.php funktioniert auch ohne "hübsche" URLs)
+        val url = if (ha) URL(settings.haUrl.trimEnd('/') + "/api/ciggie_counter" + path.removePrefix("/api"))
+        else URL(settings.ncUrl.trimEnd('/') + "/index.php/apps/cigarettecounter" + path)
+        val auth = if (ha) "Bearer ${settings.haToken}"
+        else "Basic " + Base64.getEncoder().encodeToString("${settings.ncUser}:${settings.ncAppPassword}".toByteArray())
         val conn = url.openConnection() as HttpURLConnection
         try {
             conn.requestMethod = method
             conn.connectTimeout = if (timeoutMs > 0) timeoutMs else 10_000
             conn.readTimeout = if (timeoutMs > 0) timeoutMs else 15_000
             conn.instanceFollowRedirects = false // Umleitung zur Login-Seite = Anmeldung fehlgeschlagen
-            conn.setRequestProperty("Authorization", "Basic $auth")
+            conn.setRequestProperty("Authorization", auth)
             conn.setRequestProperty("Accept", "application/json")
             conn.setRequestProperty("OCS-APIRequest", "true") // sonst verlangt Nextcloud ein CSRF-Token (HTTP 412)
             if (body != null) {
@@ -245,7 +251,7 @@ object Nextcloud {
             }
             return when (val code = conn.responseCode) {
                 200 -> conn.inputStream.bufferedReader().use { it.readText() }
-                401 -> throw IOException(context.getString(R.string.nc_auth_rejected))
+                401 -> throw IOException(context.getString(if (ha) R.string.ha_auth_rejected else R.string.nc_auth_rejected))
                 404 -> throw NotFound()
                 else -> throw IOException(context.getString(R.string.nc_http, code))
             }
