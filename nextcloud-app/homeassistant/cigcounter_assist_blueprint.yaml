@@ -11,6 +11,8 @@ blueprint:
     Zählt Zigaretten per Sprachbefehl oder Telegram und beantwortet Fragen nach
     heute/Monat/Jahr/Kosten/nächster erlaubter Zigarette. Benötigt cigcounter_package.yaml.
   domain: automation
+  author: gh0stless (crazy-midi.de)
+  source_url: https://github.com/gh0stless/ciggie-counter/blob/main/nextcloud-app/homeassistant/cigcounter_assist_blueprint.yaml
   input:
     # ══════════════════════════════════════════════════
     sensors_section:

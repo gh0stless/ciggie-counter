@@ -12,7 +12,8 @@ blueprint:
     übergibt den Text als JSON-Feld "message".
     Unterstützt Nachtruhe, Bitte-nicht-stören und Personen-zu-Hause-Check.
   domain: automation
-  author: Andreas
+  author: gh0stless (crazy-midi.de)
+  source_url: https://github.com/gh0stless/ciggie-counter/blob/main/nextcloud-app/homeassistant/cigcounter_announce_blueprint.yaml
   homeassistant:
     min_version: "2024.10.0"
 

@@ -7,7 +7,7 @@
     <description><![CDATA[Ein Knopf, ein Klick, ein Eintrag. Zeigt die heutige Anzahl gerauchter Zigaretten und eine kurze Verlaufsliste zum Korrigieren. Als PWA auch vom Handy-Homescreen aus nutzbar.]]></description>
     <version>0.9.5</version>
     <licence>agpl</licence>
-    <author>Andreas S.</author>
+    <author homepage="https://crazy-midi.de">gh0stless (crazy-midi.de)</author>
     <namespace>CigaretteCounter</namespace>
     <category>tools</category>
     <dependencies>

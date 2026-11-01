@@ -13,12 +13,14 @@ The YAML files and their UI texts are in German; entity names and sentences can 
 
 ## 1. Announcements (Nextcloud → Home Assistant)
 
-1. Import `cigcounter_announce_blueprint.yaml` (Settings → Automations & scenes → Blueprints → Import, or copy it to `config/blueprints/automation/`).
+1. Import `cigcounter_announce_blueprint.yaml` with this button, or via Settings → Automations & scenes → Blueprints → Import, or copy it to `config/blueprints/automation/`:
+
+   [![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fgh0stless%2Fciggie-counter%2Fblob%2Fmain%2Fnextcloud-app%2Fhomeassistant%2Fcigcounter_announce_blueprint.yaml)
 2. Create an automation from it. Pick a secret **webhook ID** (a long random string; it works like a password), your TTS engine (e.g. Piper) and the speaker. Night schedule, do-not-disturb switch, persons at home and Telegram targets are optional.
 3. In the Nextcloud app (⚙ Settings) enter the webhook URL
    `http://<HA-IP>:8123/api/webhook/<webhook ID>`
    Use the **IP address**: `.local` names never resolve inside the Nextcloud Docker container.
-4. Switch on what should be announced: “Nächste erlaubt”, “Hast du alle gezählt?” and/or “Ansage bei jeder Eingabe”, then save. “🔊 Ansage testen” sends a test message.
+4. Switch on what should be announced: for “Du darfst wieder” and “Hast du alle gezählt?” tick “über Home Assistant” (the browser/PWA tick is separate), and/or “Ansage bei jeder Eingabe”, then save. “🔊 Ansage testen” sends a test message.
 
 The trigger is `local_only`, so Nextcloud and Home Assistant must be in the same network. Home Assistant answers every webhook call with HTTP 200, even for an unknown ID; check the automation trace if nothing is spoken.
 
@@ -34,7 +36,9 @@ The trigger is `local_only`, so Nextcloud and Home Assistant must be in the same
    ```
 
 2. Copy `cigcounter_package.yaml` to `config/packages/` (packages must be enabled: `homeassistant: packages: !include_dir_named packages`) and restart Home Assistant.
-3. Import `cigcounter_assist_blueprint.yaml` and create an automation from it. Default sentences are German (“Zigarette zählen”, “wie viele Zigaretten heute”, “darf ich rauchen” …) and can be changed in the inputs.
+3. Import `cigcounter_assist_blueprint.yaml` (button below) and create an automation from it. Default sentences are German (“Zigarette zählen”, “wie viele Zigaretten heute”, “darf ich rauchen” …) and can be changed in the inputs.
+
+   [![Open your Home Assistant instance and show the blueprint import dialog with this blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fgh0stless%2Fciggie-counter%2Fblob%2Fmain%2Fnextcloud-app%2Fhomeassistant%2Fcigcounter_assist_blueprint.yaml)
 4. Optional: add `cigcounter_dashboard.yaml` as a new dashboard view (raw configuration editor).
 
 If “Ansage bei jeder Eingabe” is on, counting by voice is announced by Nextcloud as well, in addition to Assist's own answer.
