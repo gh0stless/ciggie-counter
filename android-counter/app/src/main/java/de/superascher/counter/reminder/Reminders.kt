@@ -32,9 +32,9 @@ object Reminders {
      * Sprachansagen über Home Assistant macht die Nextcloud-App, wenn der Eintrag dort ankommt.
      * [announce] = false, wenn der Aufrufer mehrere Einträge auf einmal bringt und selbst einmal ansagt.
      */
-    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true) {
+    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true, id: String? = null) {
         val nc = Settings.load(context).syncEnabled
-        EntryStore.get(context).add(ts, source, forward = nc)
+        if (!EntryStore.get(context).add(ts, source, forward = nc, id = id)) return
         if (nc) Nextcloud.kick(context)
         // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
         AppState(context).lastCountCheckAt = Counter.nowSeconds()

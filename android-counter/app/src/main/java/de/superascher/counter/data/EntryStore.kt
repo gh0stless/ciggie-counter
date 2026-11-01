@@ -31,7 +31,7 @@ class EntryStore private constructor(context: Context) :
     val entries: StateFlow<List<Long>> = _entries.asStateFlow()
 
     override fun onCreate(db: SQLiteDatabase) {
-        // source: "manual" (Knopf/Nachtragen) oder "ashtray" (Superascher)
+        // source: "manual" (Knopf/Nachtragen), "ashtray" (Superascher) oder "watch" (Uhr über Gadgetbridge)
         db.execSQL("CREATE TABLE entries (ts INTEGER NOT NULL, source TEXT NOT NULL DEFAULT 'manual')")
         db.execSQL("CREATE INDEX entries_ts ON entries(ts)")
         onUpgrade(db, 1, 2)
@@ -55,13 +55,18 @@ class EntryStore private constructor(context: Context) :
         }
     }
 
+    /**
+     * [id]: Eintrags-ID einer Quelle, die selbst IDs vergibt (Uhr); ein schon bekannter Eintrag
+     * wird dann nicht noch einmal angelegt. Ergebnis: ob ein neuer Eintrag entstanden ist.
+     */
     @Synchronized
-    fun add(ts: Long, source: String = "manual", forward: Boolean = false) {
+    fun add(ts: Long, source: String = "manual", forward: Boolean = false, id: String? = null): Boolean {
+        if (id != null && exists(id)) return false
         writableDatabase.run {
             beginTransaction()
             try {
                 insert("entries", null, ContentValues().apply {
-                    put("id", UUID.randomUUID().toString())
+                    put("id", id ?: UUID.randomUUID().toString())
                     put("ts", ts)
                     put("source", source)
                     put("dirty", if (forward) 1 else 0)
@@ -73,7 +78,12 @@ class EntryStore private constructor(context: Context) :
             }
         }
         _entries.value = load()
+        return true
     }
+
+    /** Auch gelöschte Einträge zählen als bekannt, damit eine Wiederholung sie nicht zurückholt. */
+    fun exists(id: String): Boolean =
+        readableDatabase.rawQuery("SELECT 1 FROM entries WHERE id = ? LIMIT 1", arrayOf(id)).use { it.moveToFirst() }
 
     /** Löscht genau einen Eintrag mit diesem Zeitstempel. */
     @Synchronized

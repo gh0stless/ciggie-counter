@@ -50,6 +50,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- Uhr über Gadgetbridge (PebbleKit-Nachrichten der Ciggie-Counter-Uhren-App) -->
+        <receiver
+            android:name=".watch.WatchReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.getpebble.action.app.RECEIVE" />
+            </intent-filter>
+        </receiver>
+
         <!-- Treffer des Hintergrund-Scans nach dem Superascher (PendingIntent) -->
         <receiver
             android:name=".ashtray.PresenceReceiver"
