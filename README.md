@@ -40,6 +40,8 @@ Requires JDK 17+ (e.g. the one bundled with Android Studio) and the Android SDK.
 
 All texts are in `android-counter/app/src/main/res/values/strings.xml` (English) and `values-de/strings.xml` (German). A new language only needs a translated copy in `values-<code>/`.
 
+> **A small piece of unsolicited advice 🤓:** your phone does not belong in your home network. It runs dozens of apps you cannot look into, so put it in the **guest Wi-Fi** and keep your servers, NAS and smart home in the main network. Ciggie Counter is built for that: the phone talks to Home Assistant or Nextcloud over **HTTPS** like any other device on the internet – no open ports towards the phone, no local network access needed.
+
 ## Butt Bin (firmware)
 
 Prototype on a Telink TLSR825x (dev board TLSR8258DK48, target module Ebyte E104-BT12LSP with TLSR8253).
