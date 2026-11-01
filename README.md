@@ -3,7 +3,7 @@
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
 <p>
-  <img src="design/Design%20%231.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a red glitter plunger knob that lights up, the knob also shown upside down with its USB-C charging port">
+  <img src="design/Design%20%232.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a clear plunger knob and a ring of LEDs, no cable">
   <img src="design/Concept%20%231.jpg" width="49%" alt="Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button">
 </p>
 
