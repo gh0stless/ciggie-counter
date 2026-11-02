@@ -1,0 +1,12 @@
+newmtl Topf
+Kd 0.080 0.080 0.090
+newmtl Deckel
+Kd 0.880 0.890 0.910
+newmtl Drehteller
+Kd 0.860 0.870 0.900
+newmtl Huelse
+Kd 0.100 0.100 0.100
+newmtl Stange
+Kd 0.750 0.750 0.780
+newmtl Griff
+Kd 0.060 0.060 0.060
