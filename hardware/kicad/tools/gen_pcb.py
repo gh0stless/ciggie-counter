@@ -117,7 +117,8 @@ put("SW1", 0, 1.0, 0, bottom=True)  # Stempel-Taster (KSC6) unten mittig, Platin
 R_LED = R_BOARD - 1.6              # LED-Ring am Rand, unter dem Leuchtring
 # Winkel im Uhrzeigersinn (Bildschirm, y nach unten), Luecken an den Abflachungen;
 # daneben der Widerstand: oben zur Mitte (weg von den Modulecken), unten nach aussen
-LED_POS = [(30, -9.5), (65, -9.5), (115, 9.5), (141, -9.5), (230, 9.5), (270, 9.5), (310, -9.5), (350, -9.5)]
+# 6 LEDs spiegelsymmetrisch zur senkrechten Achse (oben 230/310, unten 65/115, seitlich 30/141)
+LED_POS = [(30, -9.5), (65, -9.5), (115, 9.5), (141, -9.5), (230, 9.5), (310, -9.5)]
 N_LED = sum(1 for r in fps if r.startswith("D") and r[1:].isdigit())
 assert N_LED == len(LED_POS), "LED_POS passt nicht zur Zahl der LEDs im Schaltplan"
 for k, (th, side) in enumerate(LED_POS):
@@ -187,7 +188,7 @@ for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
 autoplace("C9", pad_pos("SW1", "1"), bottom=True)
 # Erweiterungs-Reihe VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm
 EXT_ROW = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
-# gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4)
+# gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4); IO3 (PB5) rechts oben, wo frueher D8 sass
 AUX_ROW = ("TP9", "TP10", "TP19", "TP20")
 EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2", "TP11", "TP12")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
 # Erweiterungs-Reihe an der linken Abflachung (mittig), Reserve-Reihe gegenueber
@@ -200,11 +201,14 @@ for i, ref in enumerate(AUX_ROW):
 # feste Plaetze (die automatische Suche weicht hier sonst auf unguenstige Stellen aus):
 # Zelle oben rechts neben der Antennen-Sperrflaeche, externer Taster unten rechts
 # (BTN durchkontaktiert, deshalb rechts neben dem Modul)
-for ref, x, y in (("TP2", 11.0, -8.9), ("TP1", 11.0, -6.1), ("TP11", 10.5, 8.6), ("TP12", 8.0, 11.5)):
+for ref, x, y in (("TP2", 11.0, -8.9), ("TP1", 11.0, -6.1), ("TP11", 10.5, 8.6), ("TP12", 8.0, 11.5), ("TP21", 14.0, -6.2)):
     put(ref, x, y, 0, bottom=True)
     r = rect_of(fps[ref])
     assert not any(overlap(rect_of(fps[ref], 0.15), q) for q in placed[True]), "Pad ueberlappt: " + ref
-    assert all(inside(cx_, cy_, 0.5) for cx_, cy_ in ((r[0], r[1]), (r[2], r[1]), (r[0], r[3]), (r[2], r[3]))), "Pad am Rand: " + ref
+    # Randabstand am Kupfer messen (der Courtyard ist um 0,55 mm groesser und steht am Rand ueber)
+    for c in (p.GetBoundingBox() for p in fps[ref].Pads()):
+        cu = [(c.GetLeft() / 1e6 - CX, c.GetTop() / 1e6 - CY), (c.GetRight() / 1e6 - CX, c.GetBottom() / 1e6 - CY)]
+        assert all(inside(cu[i][0], cu[j][1], 0.5) for i in (0, 1) for j in (0, 1)), "Pad am Rand: " + ref
     placed[True].append(r)
 
 # durchkontaktierte Pads belegen auch die Oberseite: dort weder Modul noch LED-Ring treffen
@@ -525,6 +529,8 @@ for fp in fps.values():
             # Programmier-Reihe: Text senkrecht ueber dem Pad, Richtung Platinenmitte
             val.SetTextAngleDegrees(90)
             val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(1.3 + 0.35 * len(fp.GetValue()))))
+        elif fp.GetReference() == "TP21":
+            val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(1.4)))
         else:
             # neben das Pad, zur Aussenseite der Platine (Erweiterungs-Reihe: nach innen, sonst abgeschnitten)
             side = -1 if pos.x < mm(100) else 1
@@ -536,14 +542,15 @@ for fp in fps.values():
             # also kurze Namen, kleinere Schrift und je Pad die freie Richtung (Modul, LED-Ring)
             name = TOP_NAME.get(fp.GetValue(), fp.GetValue())
             ref = fp.GetReference()
-            dx, dy = ((1, 0) if ref in EXT_ROW else (-1, 0) if ref in AUX_ROW else (0, 1) if ref == "TP11" else (1, 0))
+            dx, dy = ((1, 0) if ref in EXT_ROW else (-1, 0) if ref in AUX_ROW else (0, 1) if ref == "TP11"
+                      else (0, -1) if ref == "TP21" else (1, 0))
             top = pcbnew.PCB_TEXT(board)
             top.SetText(name)
             top.SetLayer(pcbnew.F_SilkS)
             top.SetMirrored(False)
             top.SetTextSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)))
             top.SetTextThickness(mm(0.12))
-            off = 1.0 + 0.3 * len(name) if dx else 1.3
+            off = 1.0 + 0.3 * len(name) if dx else 1.3 if dy > 0 else 1.4
             top.SetPosition(pcbnew.VECTOR2I(pos.x + dx * mm(off), pos.y + dy * mm(off)))
             board.Add(top)
 

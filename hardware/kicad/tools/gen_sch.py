@@ -299,34 +299,34 @@ text("Gesamtstrom geschaetzt 12-20 uA (Werbung alle 1 s) -> CR2450 ca. 2-4 Jahre
      "C1: keramisch 100 uF / 6,3 V (1206), kein Elko: der haette mehr Leckstrom als das ganze Geraet.", 17.78, 78.74, FONT)
 
 # ============ Ring-LEDs ============
-text("Ring: 8 LEDs auf 4 Kanaelen (A B C D A B C D rundherum = Lauflicht)", 17.78, 96.52, TITLE)
-# 4 Kanaele wie beim Dev-Board, jeder mit eigenem PWM-Kanal (dimmbar). Im Ring reihum angeschlossen:
-# schaltet die Firmware A, B, C, D nacheinander, laeuft das Licht rundherum.
-CHANNELS = [("LED_A", "rot", "C2286", "2"),     # PC4, PWM2
-            ("LED_B", "gelb", "C7429912", "19"),        # PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
-            ("LED_C", "gruen", "C7429914", "12"),       # PB4, PWM4
-            ("LED_D", "orange", "C7429913", "13")]      # PB5, PWM5
-N_LED = 8
+text("Ring: 6 LEDs auf 3 Kanaelen (A B C A B C rundherum = Lauflicht)", 17.78, 96.52, TITLE)
+# 3 Kanaele, jeder mit eigenem PWM-Kanal (dimmbar). Im Ring reihum angeschlossen:
+# schaltet die Firmware A, B, C nacheinander, laeuft das Licht rundherum.
+# 6 statt 8 LEDs, damit der Ring spiegelsymmetrisch bleibt; der 4. Kanal (PB5) geht als Pad IO3 heraus.
+CHANNELS = [("LED_A", "rot", "C2286", "2"),         # PC4, PWM2
+            ("LED_B", "gelb", "C7429912", "19"),    # PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
+            ("LED_C", "gruen", "C7429914", "12")]   # PB4, PWM4
+N_LED = 6
 for i in range(N_LED):
-    net, col, lcsc, _ = CHANNELS[i % 4]
+    net, col, lcsc, _ = CHANNELS[i % len(CHANNELS)]
     x = 25.4 + i * 15.24
     place(LED, "D%d" % (i + 1), col, x, 111.76, {"2": net, "1": "W"}, L0603, lcsc, rot=90)
     res("R%d" % (i + 1), "1k", "C11702", x, 119.38, {"1": "W", "2": "GND"})
 text("Nur Farben mit ca. 1,8-2,2 V Flussspannung (kein Blau/Weiss): gleich hell bis zur leeren Zelle.\n"
      "Je LED ein eigener Widerstand (ca. 1 mA), 2 LEDs je Kanal; mehr LEDs pro Kanal gehen genauso.\n"
-     "Pins: LED_A PC4 (PWM2), LED_B PC1 (PWM1_N), LED_C PB4 (PWM4), LED_D PB5 (PWM5).\n"
+     "Pins: LED_A PC4 (PWM2), LED_B PC1 (PWM1_N), LED_C PB4 (PWM4); optionaler 4. Kanal PB5 (PWM5) an IO3.\n"
      "Strom nur waehrend der Animation: Lauflicht ca. 2 s je Stempeln.", 17.78, 142.24, FONT)
 
 # ============ Modul ============
 text("Funkmodul TB-03F (TLSR8253)", 152.4, 25.4, TITLE)
 place(TB03, "U4", "TB-03F-AT_Mesh", 220.98, 71.12,
       dict({"8": "VBAT", "1": "RST", "3": "SWS", "22": "TX", "21": "RX", "9": "NC", "14": "NC", "15": "GND",
-            "7": "BTN",     # PB6: Stempel-Taster (PB5 wird fuer den PWM5-Kanal von LED_D gebraucht)
+            "7": "BTN",     # PB6: Stempel-Taster (PB5 bleibt fuer den optionalen PWM5-Kanal an IO3)
             # alle uebrigen GPIOs offen; Ring, Erweiterungen und Reserve ueberschreiben die Zeilen darunter
             **{p: "NC" for p in ("2", "4", "5", "6", "10", "11", "12", "13", "16", "17", "18", "19", "20")}},
            **{p: net for net, _, _, p in CHANNELS},
            # Erweiterungs-Pads (Prototypen): I2C, 2. Taster, Pumpe; Reserve IO1/IO2
-           **{"11": "SDA", "4": "SCL", "17": "BTN2", "16": "PUMP", "6": "IO1", "18": "IO2"}),
+           **{"11": "SDA", "4": "SCL", "17": "BTN2", "16": "PUMP", "6": "IO1", "18": "IO2", "13": "IO3"}),
       "RF_Module:ESP-12E", "C2764070", "Antenne nach oben in die Harzkuppel, kein Metall darueber")
 cap("C8", "100n", "C1525", 187.96, 48.26, {"1": "VBAT", "2": "GND"})
 text("Modul direkt an der Zelle (1,8-3,6 V). Sendeleistung moeglichst 0 dBm statt 10 dBm:\n"
@@ -375,6 +375,7 @@ for i, (name, net) in enumerate([("VBAT", "VBAT"), ("SWS", "SWS"), ("GND", "GND"
         "TestPoint:TestPoint_Pad_D1.5mm" if i < 4 else TP_THR)   # Programmier-Reihe bleibt SMD (Klemme)
 pad("TP19", "IO1", 81.28 + 6 * 10.16, 165.1, "IO1", TP_THR, "Reserve: PB7, ADC-faehig")
 pad("TP20", "IO2", 81.28 + 7 * 10.16, 165.1, "IO2", TP_THR, "Reserve: PD4, PWM-faehig (PWM2_N)")
+pad("TP21", "IO3", 81.28 + 8 * 10.16, 165.1, "IO3", TP_THR, "optionaler 4. LED-Kanal: PB5 (PWM5), sonst frei")
 text("TX/RX: Debug-UART (PB1/PA0), im fertigen Geraet ebenfalls frei verwendbar.", 81.28, 177.8, FONT)
 
 # ============ Netz-Treiber fuer den ERC ============
@@ -387,7 +388,7 @@ flag("GND", 162.56, 175.26)
 lib = "\n".join(s.text for s in SYMS)
 doc = ('(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0") (uuid %s) (paper "A4")\n'
        '(title_block (title "Butt Bin Traegerplatine") (date "2026-10-31") (rev "0.7 Entwurf") (company "crazy-midi.de")'
-       ' (comment 1 "TB-03F direkt an Knopfzelle CR2450, Stempel-Taster, Ring 8 LEDs auf 4 PWM-Kanaelen") (comment 2 "Knauf: Harzkuppel, Leuchtring, schwimmende Platine auf Feder, Zelle im Unterteil"))\n'
+       ' (comment 1 "TB-03F direkt an Knopfzelle CR2450, Stempel-Taster, Ring 6 LEDs auf 3 PWM-Kanaelen") (comment 2 "Knauf: Harzkuppel, Leuchtring, schwimmende Platine auf Feder, Zelle im Unterteil"))\n'
        '(lib_symbols\n%s\n)\n%s\n(sheet_instances (path "/" (page "1"))))\n') % (ROOT, lib, "\n".join(items))
 os.makedirs(OUT, exist_ok=True)
 open(os.path.join(OUT, PROJECT + ".kicad_sch"), "w", encoding="utf-8", newline="\n").write(doc)
