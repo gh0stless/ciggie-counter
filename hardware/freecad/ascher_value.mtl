@@ -2,6 +2,8 @@ newmtl Topf
 Kd 0.080 0.080 0.090
 newmtl Deckel
 Kd 0.880 0.890 0.910
+newmtl Teller
+Kd 0.860 0.870 0.900
 newmtl Drehteller
 Kd 0.860 0.870 0.900
 newmtl Huelse

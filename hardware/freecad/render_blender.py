@@ -46,6 +46,7 @@ glow.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_valu
 # Teilname enthaelt ... -> Material (erster Treffer gilt)
 MATERIALS = [
     (("Deckel", "Drehteller", "Stange", "Huelse"), principled("Chrom", (0.9, 0.9, 0.92), metal=1.0, rough=0.08)),
+    (("Teller",), principled("Blech_seidenmatt", (0.72, 0.73, 0.75), metal=1.0, rough=0.38)),   # nach "Drehteller"!
     (("Topf",), principled("Schwarz", (0.02, 0.02, 0.022), rough=0.55)),
     (("Griff", "Button_Rand"), principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)),
     (("Knauf_Unterteil", "Knauf_Haube"), principled("Alu", (0.86, 0.87, 0.89), metal=1.0, rough=0.32)),
