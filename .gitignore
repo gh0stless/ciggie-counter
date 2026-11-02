@@ -57,3 +57,4 @@ ciggie-counter-ha/
 # eigener Gadgetbridge-Fork (Zepp-OS-Mini-App-Messaging), eigenes Repo
 gadgetbridge/
 /*.log
+__pycache__/
