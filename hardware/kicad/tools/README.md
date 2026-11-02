@@ -17,11 +17,13 @@ kicad-cli sch export netlist --format kicadsexpr -o bb.net ../buttbin_carrier/bu
 kicad-cli sch erc ../buttbin_carrier/buttbin_carrier.kicad_sch
 kicad-cli pcb drc ../buttbin_carrier/buttbin_carrier.kicad_pcb
 
-# 5. JLCPCB data (plain Python 3): gerber zip, BOM and CPL in ../buttbin_carrier/fertigung/
+# 5. JLCPCB data (plain Python 3): gerber zip in ../buttbin_carrier/fertigung/
 python gen_fab.py ../buttbin_carrier
+#    with --bestueckung also BOM and CPL for JLCPCB assembly
 ```
 
-The CPL takes KiCad's rotations as they are; check them in JLCPCB's placement preview
+The board is meant to be soldered by hand, so only the gerber zip is needed by default.
+For assembly, the CPL takes KiCad's rotations as they are; check them in JLCPCB's placement preview
 (LEDs and the module are the usual suspects). Test pads (TP*) are copper only and are left
 out of BOM and CPL.
 

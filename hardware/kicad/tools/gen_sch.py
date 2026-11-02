@@ -368,8 +368,8 @@ pad("TP19", "IO1", 81.28 + 6 * 10.16, 165.1, "IO1", TP_THR, "Reserve: PB7, ADC-f
 pad("TP20", "IO2", 81.28 + 7 * 10.16, 165.1, "IO2", TP_THR, "Reserve: PD4, PWM-faehig (PWM2_N)")
 pad("TP21", "IO3", 81.28 + 8 * 10.16, 165.1, "IO3", TP_THR, "optionaler 4. LED-Kanal: PB5 (PWM5), sonst frei")
 # zusaetzliche Versorgungs-Pads fuer die Weiterverwendung in anderen Bastelprojekten
-for i, (ref, name, net) in enumerate([("TP22", "VBAT", "VBAT"), ("TP23", "VBAT", "VBAT"),
-                                      ("TP24", "GND", "GND"), ("TP25", "GND", "GND")]):
+for i, (ref, name, net) in enumerate([("TP23", "VBAT", "VBAT"), ("TP24", "GND", "GND"),
+                                      ("TP25", "VBAT", "VBAT")]):
     pad(ref, name, 157.48 + i * 12.7, 182.88, net, TP_THR, "zusaetzliche Versorgung")
 text("TX/RX: Debug-UART (PB1/PA0), im fertigen Geraet ebenfalls frei verwendbar.", 81.28, 177.8, FONT)
 
