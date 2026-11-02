@@ -17,16 +17,17 @@ FONTS = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
 WIDTH = 30.0          # Breite des Aufklebers in mm
 MARGIN = 1.0          # Rand um den Text in mm (Schnittkante)
 COLORS = {"weiss": "#ffffff", "schwarz": "#000000"}   # weiss: fuer die schwarze Haube (Weissdruck)
+ACCENT = "#d0101a"    # Akzentfarbe (rot) fuer das vorangestellte Zeichen
 
 name = TextPath((0, 0), "Butt Bin", size=10, prop=FontProperties(fname=os.path.join(FONTS, "ariblk.ttf")))
-# Variante zur Ansicht: kleines vorangestelltes Zeichen (z. B. AUFKLEBER_PREFIX=i -> "iButt Bin"), eigene Dateien
+# Variante: vorangestelltes Zeichen in Rot (AUFKLEBER_PREFIX=i -> "iButt Bin"), eigene Dateien
 PREFIX = os.environ.get("AUFKLEBER_PREFIX", "")
 SUFFIX = "_" + PREFIX if PREFIX else ""
+pre = None
 if PREFIX:
-    pre = TextPath((0, 0), PREFIX, size=8.0, prop=FontProperties(fname=os.path.join(FONTS, "arialbd.ttf")))
-    pw = pre.vertices[:, 0].max() + 0.5
-    name = Path.make_compound_path(pre, Path(name.vertices + (pw, 0), name.codes))
-tm = TextPath((0, 0), "TM", size=3.6, prop=FontProperties(fname=os.path.join(FONTS, "arialbd.ttf")))
+    pre = TextPath((0, 0), PREFIX, size=10, prop=FontProperties(fname=os.path.join(FONTS, "ariblk.ttf")))   # wie bei Apple: gleiche Schrift und Groesse
+    name = Path(name.vertices + (pre.vertices[:, 0].max() + 0.3, 0), name.codes)
+tm = TextPath((0, 0), "™", size=8.0, prop=FontProperties(fname=os.path.join(FONTS, "arialbd.ttf")))   # Zeichen ™
 by = TextPath((0, 0), "by crazy-midi.de", size=4.6, prop=FontProperties(fname=os.path.join(FONTS, "bahnschrift.ttf")))
 
 
@@ -39,15 +40,18 @@ def moved(p, dx, dy):
     return Path(p.vertices + (dx, dy), p.codes)
 
 
-# Anordnung in Schrift-Einheiten: Name oben, TM hochgestellt dahinter, Zeile darunter rechtsbuendig
+# Anordnung in Schrift-Einheiten: Name oben, ™ hochgestellt dahinter, Zeile darunter rechtsbuendig
 nx0, ny0, nx1, ny1 = extents(name)
 tm = moved(tm, nx1 + 0.4 - extents(tm)[0], ny1 - extents(tm)[3])
+if pre is not None:
+    nx0 = extents(pre)[0]
 bx0, by0, bx1, by1 = extents(by)
 line_w = extents(tm)[2] - nx0
 by = moved(by, nx0 + line_w - bx1, ny0 - 2.2 - by1)
-parts = [name, tm, by]
-x0 = min(extents(p)[0] for p in parts); y0 = min(extents(p)[1] for p in parts)
-x1 = max(extents(p)[2] for p in parts); y1 = max(extents(p)[3] for p in parts)
+# (Pfad, Akzent?) - das vorangestellte Zeichen in Rot, der Rest in der Druckfarbe
+parts = [(name, False), (tm, False), (by, False)] + ([(pre, True)] if pre is not None else [])
+x0 = min(extents(p)[0] for p, _ in parts); y0 = min(extents(p)[1] for p, _ in parts)
+x1 = max(extents(p)[2] for p, _ in parts); y1 = max(extents(p)[3] for p, _ in parts)
 scale = (WIDTH - 2 * MARGIN) / (x1 - x0)
 height = (y1 - y0) * scale + 2 * MARGIN
 
@@ -74,14 +78,16 @@ def svg_path(p):
     return " ".join(out)
 
 
-d = " ".join(svg_path(p) for p in parts)
+d = " ".join(svg_path(p) for p, accent in parts if not accent)
+d_accent = " ".join(svg_path(p) for p, accent in parts if accent)
+accent_svg = '  <path fill="%s" fill-rule="nonzero" d="%s" id="Akzent"/>\n' % (ACCENT, d_accent) if d_accent else ""
 for key, color in COLORS.items():
     svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="%.2fmm" height="%.2fmm" viewBox="0 0 %.2f %.2f">\n'
            '  <!-- Butt Bin Aufkleber, %s auf transparenter Folie; Schnittkante = Rechteck mit runden Ecken -->\n'
            '  <rect x="0.15" y="0.15" width="%.2f" height="%.2f" rx="1.2" fill="none" stroke="#ff00ff" '
            'stroke-width="0.1" id="Schnittkontur"/>\n'
-           '  <path fill="%s" fill-rule="nonzero" d="%s"/>\n</svg>\n'
-           % (WIDTH, height, WIDTH, height, key, WIDTH - 0.3, height - 0.3, color, d))
+           '  <path fill="%s" fill-rule="nonzero" d="%s"/>\n%s</svg>\n'
+           % (WIDTH, height, WIDTH, height, key, WIDTH - 0.3, height - 0.3, color, d, accent_svg))
     with open(os.path.join(HERE, "buttbin_aufkleber%s_%s.svg" % (SUFFIX, key)), "w", encoding="utf-8") as f:
         f.write(svg)
 
@@ -94,8 +100,8 @@ for key, color in COLORS.items():
     ax = fig.add_axes((0, 0, 1, 1)); ax.set_axis_off()
     ax.set_xlim(0, WIDTH); ax.set_ylim(0, height)
     tr = Affine2D().translate(-x0, -y0).scale(scale).translate(MARGIN, MARGIN)
-    for p in parts:
-        ax.add_patch(PathPatch(tr.transform_path(p), facecolor=color, edgecolor="none"))
+    for p, accent in parts:
+        ax.add_patch(PathPatch(tr.transform_path(p), facecolor=ACCENT if accent else color, edgecolor="none"))
     fig.savefig(os.path.join(HERE, "buttbin_aufkleber%s_%s.png" % (SUFFIX, key)), transparent=True)
     plt.close(fig)
 print("Aufkleber %.1f x %.1f mm" % (WIDTH, height))
