@@ -11,6 +11,7 @@ Andere Modelle holen ihn sich mit:  os.environ["ASCHER_MODUL"] = "1"; import asc
                                     info, farben = ascher_value.build(doc)
 Koordinaten: z nach oben, Stempel auf der z-Achse, Standflaeche bei z = 0.
 """
+import math
 import os
 
 import FreeCAD as App
@@ -31,7 +32,7 @@ RIM_H = 17.0              # Chrom-Deckel (Silberblech) aussen, ca.
 FLAT_W = 12.0             # flacher Aussenring oben, ca.
 INNER_D = 100.0           # Innenring, ca.
 DISH_DEPTH = 10.0         # Innenring liegt so viel tiefer als der Aussenring
-SPIN_RISE = DISH_DEPTH    # Drehteller: Kuppel reicht in der Mitte wieder bis etwa zum Aussenring
+DOME_TOP = 0.0            # Kuppeldom in der Mitte: Oberkante etwa auf Hoehe des Aussenrings (relativ dazu)
 ROD_FREE = 12.0           # blanke Stange zwischen Huelse und Griff
 STROKE = 16.0             # Hub beim Druecken, ca. 15-16 mm (Griff laesst sich nicht abziehen)
 # geschaetzt
@@ -41,7 +42,8 @@ RIM_R = 2.0               # Rundung der Deckel-Oberkante
 SHEET = 1.2               # Blechstaerke
 ARM_W = 26.0              # Drehteller: Breite der drei Arme (Foto: fast geschlossen, schmale Oeffnungen)
 ARM_BEND = INNER_D / 4    # Drehteller: Kruemmung der Arme (Bogen von der Mitte bis zum Innenring)
-HUB_R = 8.0               # Nabe in der Mitte
+SPIN_RISE = 4.0           # Drehteller: die Arme steigen zur Mitte hin leicht an
+DOME_D = 40.0             # Kuppeldom: Durchmesser
 ROD_D = 6.0               # Stange
 COLLAR_D = 8.0            # verchromte Huelse unten an der Stange (Hoehe ergibt sich aus Stempel - Griff - Stange)
 GRIP_D_TOP, GRIP_D_BOTTOM = 20.0, 16.0
@@ -72,8 +74,8 @@ def build(doc, prefix="Ascher_", with_grip=True):
     add("Topf", Part.makeCylinder(D / 2, BLACK_H), (0.08, 0.08, 0.09))
     add("Deckel", rim, (0.88, 0.89, 0.91))
 
-    # ---- Drehteller: drei geschwungene Arme (wie Pflugscharen) vom Innenring zur Mitte, leicht gewoelbt;
-    # zwischen den Armen offen - dort fallen die Kippen beim Drehen in den Topf
+    # ---- Drehteller: drei geschwungene Arme (wie Pflugscharen) vom Innenring zur Mitte, leicht gewoelbt,
+    # in der Mitte der Kuppeldom; zwischen den Armen offen - dort fallen die Kippen beim Drehen in den Topf
     r_in = INNER_D / 2
     R_sph = (r_in ** 2 + SPIN_RISE ** 2) / (2 * SPIN_RISE)
     c = V(0, 0, z_dish + SPIN_RISE - R_sph)
@@ -84,16 +86,23 @@ def build(doc, prefix="Ascher_", with_grip=True):
     arm = Part.makeCylinder(ARM_BEND + ARM_W / 2, hz, V(ARM_BEND, 0, z0)).cut(
         Part.makeCylinder(ARM_BEND - ARM_W / 2, hz, V(ARM_BEND, 0, z0))).common(
         Part.makeBox(INNER_D, r_in, hz, V(-r_in, 0, z0)))
-    pattern = Part.makeCylinder(HUB_R, hz, V(0, 0, z0))
+    pattern = Part.makeCylinder(DOME_D / 2, hz, V(0, 0, z0))
     for k in range(3):
         a = arm.copy()
         a.rotate(V(0, 0, 0), V(0, 0, 1), k * 120 + 30)   # +30: weg von der Zylindernaht bei 0 Grad
         pattern = pattern.fuse(a)
-    add("Drehteller", dome.common(pattern), (0.86, 0.87, 0.9))
+    spin = dome.common(pattern)
+    # Kuppeldom: Kugelkalotte auf den Armen, oben etwa auf Hoehe des Aussenrings
+    r_d = DOME_D / 2
+    z_base = c.z + math.sqrt(R_sph ** 2 - r_d ** 2)          # Hoehe der Arm-Woelbung am Domrand
+    z_spin = z_lid + DOME_TOP
+    rise = z_spin - z_base
+    R_d = (r_d ** 2 + rise ** 2) / (2 * rise)
+    cap = Part.makeSphere(R_d, V(0, 0, z_spin - R_d)).common(Part.makeCylinder(r_d, rise + SHEET, V(0, 0, z_base - SHEET)))
+    add("Drehteller", spin.fuse(cap), (0.86, 0.87, 0.9))
 
     # ---- Stempel: Huelse, Stange, schwarzer Griff (with_grip=False: Griff abgezogen)
     z_grip = z_lid + STAMP - GRIP_H
-    z_spin = z_dish + SPIN_RISE
     collar_h = z_grip - ROD_FREE - z_spin
     add("Huelse", Part.makeCylinder(COLLAR_D / 2, collar_h, V(0, 0, z_spin)), (0.8, 0.8, 0.82))
     add("Stange", Part.makeCylinder(ROD_D / 2, z_grip - z_spin + ROD_IN_GRIP, V(0, 0, z_spin)), (0.75, 0.75, 0.78))
