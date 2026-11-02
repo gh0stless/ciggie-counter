@@ -64,3 +64,5 @@ hardware/freecad/konzept.obj
 hardware/freecad/konzept.mtl
 hardware/freecad/konzept_*.obj
 hardware/freecad/konzept_*.mtl
+# fremde 3D-Modelle (z. B. GrabCAD), nicht weiterverteilen
+hardware/freecad/fremd/
