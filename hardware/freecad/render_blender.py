@@ -1,8 +1,8 @@
 """Rendert ein OBJ (aus den FreeCAD-Skripten, Einheit mm) mit Blender zu einem Vorschaubild.
 
 Aufruf:  blender -b -P render_blender.py -- <modell.obj> <bild.png> [Hoehenwinkel] [Drehwinkel] [Breite] [Brennweite]
-Materialien nach Teilnamen (Tabelle MATERIALS): Chrom, mattes und glaenzendes Schwarz, Alu, Leuchtband,
-Orange;
+Materialien nach Teilnamen (Tabelle MATERIALS): Chrom, Blech, mattes und glaenzendes Schwarz, Leuchtband;
+Knauf und Button als glaenzender Lack in der Farbe aus der .mtl;
 sonst die Farbe aus der .mtl. Kamera und Licht richten sich nach der Groesse des Modells.
 """
 import math
@@ -48,16 +48,23 @@ MATERIALS = [
     (("Deckel", "Drehteller", "Stange", "Huelse"), principled("Chrom", (0.9, 0.9, 0.92), metal=1.0, rough=0.08)),
     (("Teller",), principled("Blech_seidenmatt", (0.72, 0.73, 0.75), metal=1.0, rough=0.38)),   # nach "Drehteller"!
     (("Topf",), principled("Schwarz", (0.02, 0.02, 0.022), rough=0.55)),
-    (("Griff", "Button_Rand"), principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)),
-    (("Knauf_Unterteil", "Knauf_Haube"), principled("Alu", (0.86, 0.87, 0.89), metal=1.0, rough=0.32)),
+    (("Griff",), principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)),
     (("Leuchtband",), glow),
-    (("Button_Kappe",), principled("Orange", (1.0, 0.28, 0.0), rough=0.3, coat=0.5)),
 ]
+# Knauf und Button: Farbe aus der .mtl (je nach Farbwahl im Modell), als glaenzender Lack/Kunststoff
+LACQUER = ("Knauf_", "Button_", "Sanwa_Rand", "Sanwa_Kappe")
 for o in objs:
     mat = next((m for keys, m in MATERIALS if any(k in o.name for k in keys)), None)
     if mat:
         o.data.materials.clear()
         o.data.materials.append(mat)
+    elif any(o.name.startswith(k) for k in LACQUER) and o.data.materials:
+        b = o.data.materials[0].node_tree.nodes.get("Principled BSDF")
+        if b:
+            b.inputs["Metallic"].default_value = 0.0
+            b.inputs["Roughness"].default_value = 0.28
+            if "Coat Weight" in b.inputs:
+                b.inputs["Coat Weight"].default_value = 0.5
     for p in o.data.polygons:
         p.use_smooth = True
     try:
