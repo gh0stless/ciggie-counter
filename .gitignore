@@ -60,3 +60,5 @@ ciggie-counter-ha/
 gadgetbridge/
 /*.log
 __pycache__/
+hardware/freecad/konzept.obj
+hardware/freecad/konzept.mtl

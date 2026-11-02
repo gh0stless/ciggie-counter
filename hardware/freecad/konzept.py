@@ -2,7 +2,8 @@
 
 Grobe Formen, keine Konstruktion - die steht in knauf.py. Der Ascher kommt aus ascher_value.py.
 Aufruf: in FreeCAD Makro > Makros ... > konzept.py ausfuehren (mit Farben),
-oder ohne Oberflaeche: freecadcmd konzept.py  (schreibt konzept.FCStd neben das Skript).
+oder ohne Oberflaeche: freecadcmd konzept.py  (schreibt konzept.FCStd und konzept.obj fuer Blender
+neben das Skript).
 """
 import os
 
@@ -20,11 +21,10 @@ sys.path.insert(0, HERE)
 os.environ["ASCHER_MODUL"] = "1"   # nur build() nutzen, nicht als eigenes Modell speichern
 import ascher_value                # Referenzmodell des Aschers (Masse dort)
 
-ORIGINAL_OFF = True                # True: Original-Griff abgezogen, unser Knauf steckt auf der Stange
-# Knauf
-KNOB_D, KNOB_H = 40.0, 75.0        # Hoehe mit Button
-SOCKET = 15.0 if ORIGINAL_OFF else 40.0   # so tief steckt Stange bzw. Original-Griff im Knauf
-BASE_H = 34.0                      # Unterteil (Alu-Optik)
+# Der Original-Griff laesst sich nicht abziehen: der Knauf wird ueber den ganzen Griff gestuelpt
+# (Schacht mit Gummimuffe), seine Unterkante liegt auf Hoehe der Griff-Unterkante.
+KNOB_D, KNOB_H = 40.0, 90.0        # Hoehe mit Button
+BASE_H = 42.0                      # Unterteil (Alu-Optik): Schacht fuer den Griff + Zellenfach
 BAND_H = 3.0                       # Leuchtband (klar)
 TOP_R = 3.0                        # Rundung oben
 BTN_FLANGE_D, BTN_FLANGE_H, BTN_CAP_D, BTN_CAP_H = 33.0, 3.0, 26.0, 7.0
@@ -41,13 +41,12 @@ def add(name, shape, rgb, transp=0):
 
 
 # ---- Ascher aus dem Referenzmodell
-info, ash_colors = ascher_value.build(doc, with_grip=not ORIGINAL_OFF)
+info, ash_colors = ascher_value.build(doc)
 for name, rgb in ash_colors.items():
     COLORS[name] = (rgb, 0)
-z_lid, z_rod_top = info["z_lid"], info["z_rod_top"]
 
-# ---- Knauf: steckt SOCKET tief auf der Stange bzw. dem Original-Griff
-z0 = (z_rod_top if ORIGINAL_OFF else info["z_grip_top"]) - SOCKET
+# ---- Knauf: ueber den Original-Griff gestuelpt
+z0 = info["z_grip"]
 z_band = z0 + BASE_H
 z_hood = z_band + BAND_H
 z_top = z0 + KNOB_H - BTN_FLANGE_H - BTN_CAP_H
@@ -78,5 +77,8 @@ if App.GuiUp:
 else:
     out = os.environ.get("KONZEPT_OUT", os.path.join(HERE, "konzept.FCStd"))
     doc.saveAs(out)
-    print("gespeichert", out, "| Knauf von z = %.1f bis %.1f, Luft ueber der Mulde %.1f mm"
-          % (z0, z0 + KNOB_H, z0 - z_lid))
+    print("gespeichert", out, "| Knauf von z = %.1f bis %.1f; gedrueckt %.1f mm ueber dem Kuppeldom"
+          % (z0, z0 + KNOB_H, z0 - info["stroke"] - info["z_dome"]))
+    # OBJ fuer Blender (render_blender.py)
+    objs = [doc.getObject(n) for n in COLORS]
+    ascher_value.export_obj(objs, {n: rgb for n, (rgb, _) in COLORS.items()}, os.path.splitext(out)[0] + ".obj")

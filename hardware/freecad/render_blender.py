@@ -1,8 +1,8 @@
 """Rendert ein OBJ (aus den FreeCAD-Skripten, Einheit mm) mit Blender zu einem Vorschaubild.
 
 Aufruf:  blender -b -P render_blender.py -- <modell.obj> <bild.png> [Hoehenwinkel] [Drehwinkel] [Breite] [Brennweite]
-Materialien nach Teilnamen: Chrom fuer Deckel/Drehteller/Stange/Huelse, mattes Schwarz fuer den Topf,
-glaenzendes Schwarz fuer den Griff,
+Materialien nach Teilnamen (Tabelle MATERIALS): Chrom, mattes und glaenzendes Schwarz, Alu, Leuchtband,
+Orange;
 sonst die Farbe aus der .mtl. Kamera und Licht richten sich nach der Groesse des Modells.
 """
 import math
@@ -18,10 +18,6 @@ AZIM = float(args[3]) if len(args) > 3 else 0.0
 WIDTH = int(args[4]) if len(args) > 4 else 1200
 LENS = float(args[5]) if len(args) > 5 else 50.0      # Brennweite (mm, Kleinbild): klein = naeher, mehr Perspektive
 
-CHROME = ("Deckel", "Drehteller", "Stange", "Huelse")
-BLACK = ("Topf",)
-GLOSSY_BLACK = ("Griff",)
-ORANGE = ("Button_Kappe",)
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -44,14 +40,20 @@ def principled(name, color, metal=0.0, rough=0.5, coat=0.0):
     return m
 
 
-chrome = principled("Chrom", (0.9, 0.9, 0.92), metal=1.0, rough=0.08)
-black = principled("Schwarz", (0.02, 0.02, 0.022), rough=0.55)
-glossy = principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)
-orange = principled("Orange", (1.0, 0.28, 0.0), rough=0.3, coat=0.5)
+glow = principled("Leuchtband", (1.0, 0.75, 0.35), rough=0.4)
+glow.node_tree.nodes["Principled BSDF"].inputs["Emission Color"].default_value = (1.0, 0.55, 0.15, 1.0)
+glow.node_tree.nodes["Principled BSDF"].inputs["Emission Strength"].default_value = 2.0
+# Teilname enthaelt ... -> Material (erster Treffer gilt)
+MATERIALS = [
+    (("Deckel", "Drehteller", "Stange", "Huelse"), principled("Chrom", (0.9, 0.9, 0.92), metal=1.0, rough=0.08)),
+    (("Topf",), principled("Schwarz", (0.02, 0.02, 0.022), rough=0.55)),
+    (("Griff", "Button_Rand"), principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)),
+    (("Knauf_Unterteil", "Knauf_Haube"), principled("Alu", (0.86, 0.87, 0.89), metal=1.0, rough=0.32)),
+    (("Leuchtband",), glow),
+    (("Button_Kappe",), principled("Orange", (1.0, 0.28, 0.0), rough=0.3, coat=0.5)),
+]
 for o in objs:
-    mat = chrome if any(k in o.name for k in CHROME) else black if any(k in o.name for k in BLACK) \
-        else glossy if any(k in o.name for k in GLOSSY_BLACK) \
-        else orange if any(k in o.name for k in ORANGE) else None
+    mat = next((m for keys, m in MATERIALS if any(k in o.name for k in keys)), None)
     if mat:
         o.data.materials.clear()
         o.data.materials.append(mat)

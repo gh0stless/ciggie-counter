@@ -31,17 +31,19 @@ RIM_H = 17.0              # Chrom-Deckel (Silberblech) aussen, ca.
 FLAT_W = 12.0             # flacher Aussenring oben, ca.
 INNER_D = 100.0           # Innenring, ca.
 DISH_DEPTH = 10.0         # Innenring liegt so viel tiefer als der Aussenring
+SPIN_RISE = DISH_DEPTH    # Drehteller: Kuppel reicht in der Mitte wieder bis etwa zum Aussenring
+ROD_FREE = 12.0           # blanke Stange zwischen Huelse und Griff
+STROKE = 16.0             # Hub beim Druecken, ca. 15-16 mm (Griff laesst sich nicht abziehen)
 # geschaetzt
 BLACK_H = H - RIM_H       # schwarzer Topf
 RIM_OVER = 0.6            # Deckel steht seitlich etwas ueber
 RIM_R = 2.0               # Rundung der Deckel-Oberkante
 SHEET = 1.2               # Blechstaerke
-SPIN_RISE = 5.0           # Drehteller: Woelbung zur Mitte hin
 ARM_W = 26.0              # Drehteller: Breite der drei Arme (Foto: fast geschlossen, schmale Oeffnungen)
 ARM_BEND = INNER_D / 4    # Drehteller: Kruemmung der Arme (Bogen von der Mitte bis zum Innenring)
 HUB_R = 8.0               # Nabe in der Mitte
 ROD_D = 6.0               # Stange
-COLLAR_D, COLLAR_H = 8.0, 14.0    # verchromte Huelse unten an der Stange
+COLLAR_D = 8.0            # verchromte Huelse unten an der Stange (Hoehe ergibt sich aus Stempel - Griff - Stange)
 GRIP_D_TOP, GRIP_D_BOTTOM = 20.0, 16.0
 GRIP_R = 2.0              # Rundung oben am Griff
 ROD_IN_GRIP = 15.0        # so weit steckt die Stange im Griff
@@ -92,13 +94,15 @@ def build(doc, prefix="Ascher_", with_grip=True):
     # ---- Stempel: Huelse, Stange, schwarzer Griff (with_grip=False: Griff abgezogen)
     z_grip = z_lid + STAMP - GRIP_H
     z_spin = z_dish + SPIN_RISE
-    add("Huelse", Part.makeCylinder(COLLAR_D / 2, COLLAR_H, V(0, 0, z_spin)), (0.8, 0.8, 0.82))
+    collar_h = z_grip - ROD_FREE - z_spin
+    add("Huelse", Part.makeCylinder(COLLAR_D / 2, collar_h, V(0, 0, z_spin)), (0.8, 0.8, 0.82))
     add("Stange", Part.makeCylinder(ROD_D / 2, z_grip - z_spin + ROD_IN_GRIP, V(0, 0, z_spin)), (0.75, 0.75, 0.78))
     if with_grip:
         grip = Part.makeCone(GRIP_D_BOTTOM / 2, GRIP_D_TOP / 2, GRIP_H, V(0, 0, z_grip))
         add("Griff", fillet_top(grip, z_grip + GRIP_H, GRIP_R), (0.06, 0.06, 0.06))
-    info = {"z_lid": z_lid, "z_dish": z_dish, "z_grip": z_grip, "z_grip_top": z_grip + GRIP_H,
-            "z_rod_top": z_grip + ROD_IN_GRIP, "rod_d": ROD_D, "grip_d_top": GRIP_D_TOP, "d": D}
+    info = {"z_lid": z_lid, "z_dish": z_dish, "z_dome": z_spin, "z_grip": z_grip, "z_grip_top": z_grip + GRIP_H,
+            "z_rod_top": z_grip + ROD_IN_GRIP, "rod_d": ROD_D, "grip_d_top": GRIP_D_TOP,
+            "grip_d_bottom": GRIP_D_BOTTOM, "grip_h": GRIP_H, "stroke": STROKE, "d": D}
     return info, colors
 
 
