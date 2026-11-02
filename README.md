@@ -3,8 +3,8 @@
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
 <p>
-  <img src="design/Design%20%232.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a clear plunger knob and a ring of LEDs, no cable">
-  <img src="design/Concept%20%231.jpg" width="49%" alt="Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button">
+  <img src="design/ki-entwuerfe/entwurf_2.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a clear plunger knob and a ring of LEDs, no cable">
+  <img src="design/ki-entwuerfe/konzept_1.jpg" width="49%" alt="Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button">
 </p>
 
 *Butt Bin design studies (AI-generated renders, not the real prototype yet).*
