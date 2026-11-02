@@ -2,7 +2,7 @@
 
 Gemessen: Ø 140 mm, Korpus 60 mm hoch, Stempel 50 mm ueber dem Deckel (davon 30 mm Griff);
 Deckel aus Silberblech ca. 17 mm hoch, Aussenring ca. 12 mm, Innenring Ø ca. 100 mm 10 mm tiefer,
-darin ein gewoelbter Stern mit drei schmalen geschwungenen Armen zur Nabe (wie ein 45er-Puck),
+darin ein gewoelbter Stern mit drei geraden, in der Mitte verjuengten Streben zur Nabe (wie ein 45er-Puck),
 darunter eine helle Schuessel mit runder Oeffnung in der Mitte (Fotos von oben, 02.11.2026).
 Alles andere ist nach Foto geschaetzt und steht unten als Konstante.
 Aufruf: in FreeCAD Makro > Makros ... > ascher_value.py ausfuehren (mit Farben),
@@ -42,9 +42,8 @@ RIM_OVER = 0.6            # Deckel steht seitlich etwas ueber
 RIM_R = 2.0               # Rundung der Deckel-Oberkante
 SHEET = 1.2               # Blechstaerke
 HUB_R = 11.0              # Stern: Nabe (Ring um die Stange)
-ARM_W_IN, ARM_W_OUT = 7.0, 15.0   # Stern: Breite eines Arms an der Nabe und am Innenring (Fotos von oben)
-ARM_SWEEP = 45.0          # Stern: so weit (Grad) biegt sich ein Arm von der Nabe bis zum Innenring
-ARM_ANGLES = (270, 30, 150)       # wo die Arme am Innenring ankommen: vorn (-y), rechts hinten, links hinten
+ARM_W_END, ARM_W_MID = 12.0, 8.0  # Stern: Strebenbreite aussen am Rand (und an der Nabe) und in der Mitte, gemessen
+ARM_ANGLES = (270, 30, 150)       # Richtung der Streben: vorn (-y), rechts hinten, links hinten
 PLATE_DEPTH = 7.0         # helle Schuessel unter dem Stern: faellt vom Innenring zur Mitte so weit ab
 PLATE_HOLE_D = 35.0       # runde Oeffnung in der Mitte der Schuessel
 ROD_D = 6.0               # Stange
@@ -84,34 +83,23 @@ def build(doc, prefix="Ascher_", with_grip=True):
     plate = bowl.cut(inner).cut(Part.makeCylinder(PLATE_HOLE_D / 2, PLATE_DEPTH + 2, V(0, 0, z_dish - PLATE_DEPTH - 1)))
     add("Teller", plate, (0.86, 0.87, 0.9))
 
-    # ---- Drehteller: gewoelbter Stern (Kuppeldom) wie ein 45er-Puck: drei geschwungene Arme von der Nabe
-    # zum Innenring, nach aussen breiter werdend
+    # ---- Drehteller: gewoelbter Stern (Kuppeldom) wie ein 45er-Puck: drei gerade Streben von der Nabe
+    # zum Innenring, in der Mitte verjuengt
     R_sph = (r_in ** 2 + SPIN_RISE ** 2) / (2 * SPIN_RISE)
     c = V(0, 0, z_dish + SPIN_RISE - R_sph)
     dome = Part.makeSphere(R_sph, c).cut(Part.makeSphere(R_sph - SHEET, c)).common(
         Part.makeCylinder(r_in, SPIN_RISE + 1, V(0, 0, z_dish - 1)))
     z0, hz = z_dish - 2, SPIN_RISE + 4
-    # ein Arm: Mittellinie von der Nabe zum Innenring, die sich um ARM_SWEEP Grad biegt (endet bei 0 Grad),
-    # Breite waechst von ARM_W_IN auf ARM_W_OUT; Umriss als Polygon aus beiden Kanten
+    # eine Strebe entlang +x von der Nabe zum Innenring: an beiden Enden ARM_W_END breit, in der Mitte ARM_W_MID
     n = 40
-    left, right = [], []
+    x0, x1 = HUB_R * 0.5, r_in + 3
+    upper = []
     for i in range(n + 1):
         t = i / n
-        r = HUB_R * 0.5 + (r_in + 3 - HUB_R * 0.5) * t
-        phi = math.radians(-ARM_SWEEP * (1 - t) ** 2)            # Biegung vor allem nahe der Nabe
-        w = ARM_W_IN + (ARM_W_OUT - ARM_W_IN) * t ** 1.5
-        p = V(r * math.cos(phi), r * math.sin(phi), z0)
-        # Normale zur Mittellinie (numerisch aus dem naechsten Punkt)
-        t2 = min(t + 1e-3, 1.0) if t < 1 else t - 1e-3
-        r2 = HUB_R * 0.5 + (r_in + 3 - HUB_R * 0.5) * t2
-        phi2 = math.radians(-ARM_SWEEP * (1 - t2) ** 2)
-        d = V(r2 * math.cos(phi2), r2 * math.sin(phi2), z0) - p
-        if t >= 1:
-            d = d * -1
-        nrm = V(-d.y, d.x, 0).normalize()
-        left.append(p + nrm * (w / 2))
-        right.append(p - nrm * (w / 2))
-    arm = Part.Face(Part.makePolygon(left + right[::-1] + [left[0]])).extrude(V(0, 0, hz))
+        w = ARM_W_END - (ARM_W_END - ARM_W_MID) * math.sin(math.pi * t)
+        upper.append(V(x0 + (x1 - x0) * t, w / 2, z0))
+    lower = [V(p.x, -p.y, z0) for p in reversed(upper)]
+    arm = Part.Face(Part.makePolygon(upper + lower + [upper[0]])).extrude(V(0, 0, hz))
     star = Part.makeCylinder(HUB_R, hz, V(0, 0, z0))
     for ang in ARM_ANGLES:
         a = arm.copy()
