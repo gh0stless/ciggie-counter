@@ -19,6 +19,13 @@ MARGIN = 1.0          # Rand um den Text in mm (Schnittkante)
 COLORS = {"weiss": "#ffffff", "schwarz": "#000000"}   # weiss: fuer die schwarze Haube (Weissdruck)
 
 name = TextPath((0, 0), "Butt Bin", size=10, prop=FontProperties(fname=os.path.join(FONTS, "ariblk.ttf")))
+# Variante zur Ansicht: kleines vorangestelltes Zeichen (z. B. AUFKLEBER_PREFIX=i -> "iButt Bin"), eigene Dateien
+PREFIX = os.environ.get("AUFKLEBER_PREFIX", "")
+SUFFIX = "_" + PREFIX if PREFIX else ""
+if PREFIX:
+    pre = TextPath((0, 0), PREFIX, size=8.0, prop=FontProperties(fname=os.path.join(FONTS, "arialbd.ttf")))
+    pw = pre.vertices[:, 0].max() + 0.5
+    name = Path.make_compound_path(pre, Path(name.vertices + (pw, 0), name.codes))
 tm = TextPath((0, 0), "TM", size=3.6, prop=FontProperties(fname=os.path.join(FONTS, "arialbd.ttf")))
 by = TextPath((0, 0), "by crazy-midi.de", size=4.6, prop=FontProperties(fname=os.path.join(FONTS, "bahnschrift.ttf")))
 
@@ -75,7 +82,7 @@ for key, color in COLORS.items():
            'stroke-width="0.1" id="Schnittkontur"/>\n'
            '  <path fill="%s" fill-rule="nonzero" d="%s"/>\n</svg>\n'
            % (WIDTH, height, WIDTH, height, key, WIDTH - 0.3, height - 0.3, color, d))
-    with open(os.path.join(HERE, "buttbin_aufkleber_%s.svg" % key), "w", encoding="utf-8") as f:
+    with open(os.path.join(HERE, "buttbin_aufkleber%s_%s.svg" % (SUFFIX, key)), "w", encoding="utf-8") as f:
         f.write(svg)
 
 # Vorschau als PNG (transparent), 600 dpi
@@ -89,6 +96,6 @@ for key, color in COLORS.items():
     tr = Affine2D().translate(-x0, -y0).scale(scale).translate(MARGIN, MARGIN)
     for p in parts:
         ax.add_patch(PathPatch(tr.transform_path(p), facecolor=color, edgecolor="none"))
-    fig.savefig(os.path.join(HERE, "buttbin_aufkleber_%s.png" % key), transparent=True)
+    fig.savefig(os.path.join(HERE, "buttbin_aufkleber%s_%s.png" % (SUFFIX, key)), transparent=True)
     plt.close(fig)
 print("Aufkleber %.1f x %.1f mm" % (WIDTH, height))
