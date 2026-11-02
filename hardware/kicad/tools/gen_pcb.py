@@ -88,7 +88,7 @@ def put(ref, x, y, rot=0.0, bottom=False):
 # links fuer die Klemme an der Erweiterungs-Reihe (6 Pins); zugleich Verdrehschutz im Gehaeuse
 Y_FLAT = R_BOARD - 1.0       # unten
 X_FLAT = R_BOARD - 3.0       # links (Platinenkoordinate -X_FLAT)
-ROW_EDGE = 2.0               # Pad-Mitten 2 mm vor der Abflachung (an die Klemme anpassen)
+ROW_EDGE = 2.0               # Erweiterungs-Reihe: Pad-Mitten 2 mm vor der Abflachung (6er-Klemme, optional)
 
 def outline_pts(shrink=0.0, step=1.0):
     """Kreis, an den Abflachungen auf die Geraden geklemmt, um shrink nach innen versetzt."""
@@ -115,14 +115,16 @@ board.Add(edge)
 put("U4", 0, 0, 0)                 # Antenne zeigt nach oben (-y)
 R_LED = R_BOARD - 1.6              # LED-Ring am Rand, unter dem Leuchtring
 # Winkel im Uhrzeigersinn (Bildschirm, y nach unten), Luecken an den Abflachungen;
-# 6 LEDs spiegelsymmetrisch zur senkrechten Achse (oben 230/310, unten 65/115, seitlich 30/141).
+# 6 LEDs spiegelsymmetrisch zur senkrechten Achse (oben 230/310, unten 65/115, seitlich 30/150).
 # Die Vorwiderstaende (einer je LED) sitzen unten, siehe weiter unten.
-LED_ANG = [30, 65, 115, 141, 230, 310]
+LED_ANG = [30, 65, 115, 150, 230, 310]
 N_LED = sum(1 for r in fps if r.startswith("D") and r[1:].isdigit())
 assert N_LED == len(LED_ANG), "LED_ANG passt nicht zur Zahl der LEDs im Schaltplan"
+LED_IN = {150: 1.0}   # D4 (150 Grad) liegt nah an der linken Abflachung (Pads 0,5 mm Abstand); 1 mm radial sieht man im Ring nicht
 for k, th in enumerate(LED_ANG):
     a = math.radians(th)
-    put("D%d" % (k + 1), R_LED * math.cos(a), R_LED * math.sin(a), -(th + 90))
+    r = R_LED - LED_IN.get(th, 0.0)
+    put("D%d" % (k + 1), r * math.cos(a), r * math.sin(a), -(th + 90))
 
 def rect_of(fp, inflate=0.0):
     cy = fp.GetCourtyard(pcbnew.F_CrtYd if not fp.IsFlipped() else pcbnew.B_CrtYd)
@@ -180,20 +182,26 @@ def autoplace(ref, target, bottom=False):
 
 # unten: Programmier-Pads, Erweiterungs- und Litzen-Pads, Entprell-C am Button-Pad
 # Programmier-Reihe VBAT, SWS, GND, RST im Raster 2,54 mm, 2 mm vor der Abflachung (Pogo-Pin-Klemme)
+# Langloch-Pads 1,5 x 3,5 mm senkrecht zur Kante: die Klemme trifft, egal ob ihre Stifte 1,5 oder 4,5 mm
+# von der Kante sitzen (ihr Mass ist vor der Bestellung nicht bekannt)
+PROG_PAD_L = 3.5
 for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
-    put(ref, (i - 1.5) * 2.54, Y_FLAT - ROW_EDGE, 0, bottom=True)
+    put(ref, (i - 1.5) * 2.54, Y_FLAT - 1.2 - PROG_PAD_L / 2, 0, bottom=True)
+    for pad in fps[ref].Pads():
+        pad.SetShape(pcbnew.PADSTACK.ALL_LAYERS, pcbnew.PAD_SHAPE_OVAL)
+        pad.SetSize(pcbnew.PADSTACK.ALL_LAYERS, pcbnew.VECTOR2I(mm(1.5), mm(PROG_PAD_L)))
     placed[True].append(rect_of(fps[ref]))
-# Erweiterungs-Reihe (VBAT,) VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm;
-# das zusaetzliche VBAT-Pad oben liegt ausserhalb der 6er-Klemme
-EXT_ROW = ("TP22", "TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
+# Erweiterungs-Reihe VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm, eine Teilung
+# ueber der Mitte, damit D4 bei 150 Grad (gespiegelt zu D1) Platz hat
+EXT_ROW = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
 # gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4); IO3 (PB5) rechts oben, wo frueher D8 sass
 AUX_ROW = ("TP9", "TP10", "TP19", "TP20")
-# daneben (aussen) eine zweite Spalte VBAT, GND, GND: mit der Reserve-Reihe ein Block im Raster 2,54 mm
+# daneben (aussen) eine zweite Spalte VBAT, GND, VBAT: mit der Reserve-Reihe ein Block im Raster 2,54 mm
 PWR_COL = ("TP23", "TP24", "TP25")
 EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2", "TP11", "TP12")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
 # Erweiterungs-Reihe an der linken Abflachung (mittig), Reserve-Reihe gegenueber
-for i, ref in enumerate(EXT_ROW, start=-1):
-    put(ref, -X_FLAT + ROW_EDGE, (i - 2.5) * 2.54, 0, bottom=True)
+for i, ref in enumerate(EXT_ROW):
+    put(ref, -X_FLAT + ROW_EDGE, (i - 3.5) * 2.54, 0, bottom=True)
     placed[True].append(rect_of(fps[ref], 0.3))
 for i, ref in enumerate(AUX_ROW):
     put(ref, 12.0, -3.0 + i * 2.54, 0, bottom=True)
@@ -334,7 +342,7 @@ for net, plist in terminals.items():
 DIRS = [(1, 0, 1.0), (-1, 0, 1.0), (0, 1, 1.0), (0, -1, 1.0),
         (1, 1, 1.42), (1, -1, 1.42), (-1, 1, 1.42), (-1, -1, 1.42)]
 VIA_COST = 25.0
-VIA_CHECK = 3   # Zellen Radius, die fuer eine Durchkontaktierung frei sein muessen
+VIA_CHECK = 4   # Zellen Radius, die fuer eine Durchkontaktierung frei sein muessen (3 war knapp: 0,18 statt 0,2 mm)
 
 def passable(L, ix, iy, nid):
     if not (0 <= ix < N and 0 <= iy < N):
@@ -391,7 +399,7 @@ def route(nid, sources, targets, box):
 def commit(net, path):
     nid = netid[net]
     tr_r = TRACK / 2 + CLEAR + TRACK / 2
-    via_r = VIA_D / 2 + CLEAR + TRACK / 2
+    via_r = VIA_D / 2 + CLEAR + TRACK / 2 + 0.05   # +0,05: Rasterrundung, sonst nur 0,18 mm zur naechsten Bahn
     segs, vias = [], []
     start = path[0]
     for a, b in zip(path, path[1:]):
@@ -543,7 +551,7 @@ for fp in fps.values():
         if fp.GetReference() in ("TP5", "TP6", "TP7", "TP8"):
             # Programmier-Reihe: Text senkrecht ueber dem Pad, Richtung Platinenmitte
             val.SetTextAngleDegrees(90)
-            val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(1.3 + 0.35 * len(fp.GetValue()))))
+            val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(PROG_PAD_L / 2 + 0.5 + 0.35 * len(fp.GetValue()))))
         elif fp.GetReference() in PWR_COL:
             # aussen am Rand ist nur Platz fuer ein Zeichen
             val.SetText("+" if fp.GetValue() == "VBAT" else "-")
@@ -567,8 +575,8 @@ for fp in fps.values():
             top.SetText(name)
             top.SetLayer(pcbnew.F_SilkS)
             top.SetMirrored(False)
-            top.SetTextSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)))
-            top.SetTextThickness(mm(0.12))
+            top.SetTextSize(pcbnew.VECTOR2I(mm(0.8), mm(0.8)))     # JLCPCB: mindestens 0,8 mm
+            top.SetTextThickness(mm(0.15))
             off = 1.55 if ref in PWR_COL else 1.0 + 0.3 * len(name) if dx else 1.3 if dy > 0 else 1.4
             top.SetPosition(pcbnew.VECTOR2I(pos.x + dx * mm(off), pos.y + dy * mm(off)))
             board.Add(top)
