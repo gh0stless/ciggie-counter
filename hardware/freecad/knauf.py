@@ -30,8 +30,8 @@ import ascher_value                       # Masse des Original-Griffs
 # ---- Knauf
 D_OUT = 40.0             # Aussendurchmesser
 WALL = 2.0               # Wand der Haube
-SLEEVE_T = 1.5           # Gummimuffe: Wandstaerke
-SLEEVE_SQUEEZE = 0.4     # Muffe innen so viel kleiner als der Griff
+SLEEVE_T = 2.0           # Gummimuffe: Silikonschlauch Innen-Ø 16 x Wand 2 mm (Meterware), 30 mm lang
+SLEEVE_SQUEEZE = 0.4     # Muffe innen so viel kleiner als der Griff (Silikon dehnt sich oben auf Ø 20)
 FLOOR_T = 1.5            # Boden zwischen Schacht und Zellenfach
 # CR2450-Halter mit Drehdeckel (AliExpress 1005013142257052): Gehaeuse Ø29, mit den Loetfahnen 33 mm breit,
 # Fahnen 30,5 mm auseinander; Litzen an die Fahnen geloetet. Hoehe nicht angegeben - am Teil nachmessen.
