@@ -7,7 +7,7 @@ Aufbau von unten (z = 0 = Unterkante Knauf = Unterkante des Original-Griffs):
   Platine     fest im Unterteil (STEP aus KiCad)
   Haube       hohl, oben die Platte mit dem Loch fuer den Arcade-Button
   Button      Sanwa OBSF-30 (fremd/sanwa_obsf30.step, nicht im Repo) oder kompakter Button mit eingebautem
-              Schalter (Standard: roter Button dieser Bauart von AliExpress; Masse nach dem Joy-IT-Datenblatt),
+              Schalter: Standard Retro+ S30 (flachster), KNAUF_BUTTON=kompakt fuer YingLucky/Joy-IT-Bauart,
               mit Flachsteckhuelsen und Kabelbogen; KNAUF_BUTTON=sanwa fuer den Sanwa
 Noch ohne Gewinde und Rundungen. Masse oben als Konstanten; die Hoehen ergeben sich daraus.
 Aufruf: freecadcmd knauf.py  -> knauf.FCStd, knauf.obj (Blender) und die Pruefung der Abstaende.
@@ -42,8 +42,13 @@ LEDGE_W = 1.2            # Auflage der Platine (Ring)
 NECK_H = 6.0             # Hals oben am Unterteil (spaeter Gewinde), ragt in die Haube
 RING_H = 3.0             # Leuchtring
 PANEL_T = 2.5            # Platte fuer den Button (Schnappbefestigung des Sanwa)
-# ---- Button und Anschluss (KNAUF_BUTTON=kompakt | sanwa)
-BUTTON = os.environ.get("KNAUF_BUTTON", "kompakt")
+# ---- Button und Anschluss (KNAUF_BUTTON=retro | kompakt | sanwa)
+BUTTON = os.environ.get("KNAUF_BUTTON", "retro")
+# Gewaehlt: Retro+ "Haute Mechanical Button" S30 (AliExpress), Low-Profile-Tastaturschalter "Wind Engine" auf
+# kleiner Platine, 50 Mio. Schaltspiele. Masse aus der Zeichnung im Angebot abgelesen (+-1 mm): 25,8 mm hoch
+# samt Stiften, davon ca. 7 mm ueber der Platte; Kappe Ø25,8, Rand ca. Ø34,8. Stifte gerade nach unten, Litze
+# direkt angeloetet.
+RETRO = dict(body_d=30.0, body_h=14.2, bezel_d=34.8, bezel_h=3.0, cap_d=25.8, cap_h=4.1, tab_len=4.5, tab_x=3.0)
 # Kompakter 30-mm-Button mit eingebautem Mikroschalter (gewaehlt: rot von AliExpress). Masse nach dem
 # Datenblatt des Joy-IT "Mini Arcade Button" (Reichelt ARC BUTTON M ..), gleiche Bauart:
 # Gehaeuse Ø30 und 17 mm unter der Platte (Schalter innen), Rand Ø33 x 3,5, Kappe Ø24,5 x 5
@@ -131,15 +136,20 @@ def sanwa_button():
     return out
 
 
-def joyit_button():
-    """Aus dem Datenblatt: Gehaeuse mit eingebautem Schalter, Rand, Kappe; dazu die zwei umgebogenen Fahnen."""
-    tabs = Part.makeCompound([Part.makeBox(0.5, 2.8, JOY_TAB_LEN, V(sx * JOY_TAB_X - 0.25, -1.4,
-                                                                    -JOY_BODY_H - JOY_TAB_LEN)) for sx in (-1, 1)])
-    housing = cyl(JOY_BODY_D / 2 - 0.2, JOY_BODY_H, -JOY_BODY_H).fuse(cyl(JOY_BEZEL_D / 2, JOY_BEZEL_H, 0))
-    return [tabs, housing, cyl(JOY_CAP_D / 2, JOY_CAP_H, JOY_BEZEL_H)]
+def simple_button(body_d, body_h, bezel_d, bezel_h, cap_d, cap_h, tab_len, tab_x):
+    """Huelle eines Buttons mit eingebautem Schalter: Gehaeuse unter der Platte, Rand, Kappe; zwei Anschluesse unten."""
+    tabs = Part.makeCompound([Part.makeBox(0.5, 2.8, tab_len, V(sx * tab_x - 0.25, -1.4, -body_h - tab_len))
+                              for sx in (-1, 1)])
+    housing = cyl(body_d / 2 - 0.2, body_h, -body_h).fuse(cyl(bezel_d / 2, bezel_h, 0))
+    return [tabs, housing, cyl(cap_d / 2, cap_h, bezel_h)]
 
 
-sanwa = sanwa_button() if BUTTON == "sanwa" else joyit_button()
+if BUTTON == "sanwa":
+    sanwa = sanwa_button()
+elif BUTTON == "kompakt":
+    sanwa = simple_button(JOY_BODY_D, JOY_BODY_H, JOY_BEZEL_D, JOY_BEZEL_H, JOY_CAP_D, JOY_CAP_H, JOY_TAB_LEN, JOY_TAB_X)
+else:
+    sanwa = simple_button(**RETRO)
 switch, housing, cap = sanwa
 tip = switch.BoundBox.ZMin                           # Ende der Flachsteckzungen (negativ)
 # Mitte jeder Zunge aus einem Schnitt kurz ueber dem Zungenende
