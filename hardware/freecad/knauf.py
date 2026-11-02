@@ -1,237 +1,175 @@
-"""Butt-Bin-Knauf (Entwurf) fuer FreeCAD 1.x - parametrisch.
+"""Butt-Bin-Knauf, vereinfachte Konstruktion (FreeCAD 1.x) - Platzpruefung vor dem Detailentwurf.
 
-Alle Masse stehen in der Tabelle "Parameter" (Objekt P). Wert dort aendern, Strg+R: alles rechnet nach.
-Teile von unten nach oben: Gummimuffe, Unterteil, Knopfzelle, Zellendeckel mit Anschlag, Wellenfeder,
-Oberteil, Platine (STEP aus KiCad), Leuchtring, Kuppel (Positiv) und daneben die Gussform (Negativ).
-
-In der Datei: "Baugruppe" (alles in Einbaulage) und "Einzelteile" (Verknuepfungen, druckfertig nebeneinander).
-Aufruf: in FreeCAD Makro > Makros ... > knauf.py ausfuehren (mit Farben),
-oder ohne Oberflaeche: freecadcmd knauf.py  (schreibt knauf.FCStd und stl/*.stl neben das Skript).
-Platine: liegt buttbin_carrier.step neben dem Skript, wird sie eingesetzt, sonst ein Platzhalter.
-Erzeugen:  kicad-cli pcb export step --user-origin 100x100mm --subst-models -o buttbin_carrier.step
-           ../kicad/buttbin_carrier/buttbin_carrier.kicad_pcb
-Koordinaten: z nach oben, Knauf-Mitte auf der z-Achse, Unterseite des Unterteils bei z = 0.
+Aufbau von unten (z = 0 = Unterkante Knauf = Unterkante des Original-Griffs):
+  Unterteil   Schacht ueber den Original-Griff (mit Gummimuffe), Zellenfach fuer einen CR2450-Halter mit
+              Kabel, Auflage fuer die Platine, oben ein Hals (spaeter mit Gewinde)
+  Leuchtring  klare Scheibe auf der Schulter, wird von der Haube eingeklemmt
+  Platine     fest im Unterteil (STEP aus KiCad)
+  Haube       hohl, oben die Platte mit dem Loch fuer den Arcade-Button
+  Button      Sanwa OBSF-30 (fremd/sanwa_obsf30.step, nicht im Repo), mit Flachsteckhuelsen und Kabelbogen
+Noch ohne Gewinde und Rundungen. Masse oben als Konstanten; die Hoehen ergeben sich daraus.
+Aufruf: freecadcmd knauf.py  -> knauf.FCStd, knauf.obj (Blender) und die Pruefung der Abstaende.
 """
+import math
 import os
+import sys
 
 import FreeCAD as App
+import Part
 
+V = App.Vector
 try:
     HERE = os.path.dirname(os.path.abspath(__file__))
 except NameError:
     HERE = os.getcwd()
+sys.path.insert(0, HERE)
+os.environ["ASCHER_MODUL"] = "1"
+import ascher_value                       # Masse des Original-Griffs
 
-# Name, Wert, Beschreibung. Werte mit "=" sind Formeln aus den anderen Parametern.
-PARAMS = [
-    ("d_out", 40.0, "Aussendurchmesser Knauf"),
-    ("wall", 2.0, "Wandstaerke Oberteil"),
-    ("clr", 0.3, "Spiel der Gleitfuehrung Oberteil/Unterteil (je Seite)"),
-    ("hole_d", 15.0, "Bohrung fuer die Gummimuffe"),
-    ("hole_depth", 20.0, "Tiefe der Bohrung"),
-    ("handle_d", 10.0, "Durchmesser des Original-Griffs"),
-    ("sleeve_squeeze", 0.5, "Uebermass: Muffe innen kleiner als der Griff"),
-    ("floor_t", 1.5, "Boden zwischen Bohrung und Zellenfach"),
-    ("cell_d", 24.5, "Knopfzelle CR2450: Durchmesser"),
-    ("cell_h", 5.0, "Knopfzelle CR2450: Hoehe"),
-    ("cell_clr", 0.4, "Spiel im Zellenfach"),
-    ("lid_t", 1.0, "Zellendeckel: Dicke (liegt buendig in einer Senkung)"),
-    ("lid_extra", 1.5, "Zellendeckel: Rand ueber das Zellenfach hinaus"),
-    ("guide_h", 6.0, "Laenge der Gleitfuehrung oben am Unterteil"),
-    ("spring_od", 34.0, "Wellenfeder: aussen (muss auf die Fuehrung passen: < guide_d)"),
-    ("spring_id", 30.0, "Wellenfeder: innen (liegt unter der Auflagekante, ueber dem Zellendeckel)"),
-    ("spring_h", 3.0, "Wellenfeder: Hoehe eingebaut (vorgespannt)"),
-    ("ledge_w", 1.5, "Auflagekante fuer die Platine im Oberteil"),
-    ("ledge_t", 1.2, "Dicke der Auflagekante"),
-    ("pcb_d", 34.0, "Platine: Durchmesser"),
-    ("pcb_t", 1.6, "Platine: Dicke"),
-    ("sw_h", 3.2, "Taster unter der Platine: KSC621G 3,2 mm (der KSC621J waere 7,7 mm hoch)"),
-    ("gap0", 0.3, "Luft Taster - Anschlag in Ruhe"),
-    ("sw_travel", 0.5, "Schaltweg des Tasters"),
-    ("over_travel", 0.2, "Reserve nach dem Schaltpunkt bis zum harten Anschlag"),
-    ("stop_d", 4.0, "Anschlag-Noppe auf dem Zellendeckel (unter dem Taster)"),
-    ("comp_h", 3.5, "Bauhoehe oben (Modul) - darueber beginnt der Ring"),
-    ("ring_id", 28.0, "Leuchtring: innen"),
-    ("ring_h", 4.0, "Leuchtring: Hoehe"),
-    ("collar_w", 0.8, "Leuchtring: Kragen nach unten, haelt die Platine am Rand und leitet das LED-Licht"),
-    ("dome_h", 14.0, "Kuppel: Hoehe"),
-    ("mold_wall", 4.0, "Gussform: Wandstaerke"),
-    ("mold_x", 70.0, "Gussform: Abstand neben dem Knauf (nur Ansicht)"),
-    ("wire_d", 2.0, "Durchfuehrung der Litzen im Zellendeckel"),
-    ("wire_x", 11.0, "Litzen: x (Pads BAT+/BAT- auf der Platine)"),
-    ("wire_y", 7.5, "Litzen: y"),
-    # abgeleitet
-    ("base_h", "=hole_depth + floor_t + cell_h + cell_clr + lid_t", "Hoehe Unterteil"),
-    ("base_low_h", "=base_h - guide_h", "Unterteil: Hoehe bis zur Gleitfuehrung"),
-    ("guide_d", "=d_out - 2 * wall - 2 * clr", "Durchmesser der Gleitfuehrung"),
-    ("pocket_z", "=hole_depth + floor_t", "Boden des Zellenfachs"),
-    ("lid_d", "=cell_d + cell_clr + 2 * lid_extra", "Zellendeckel: Durchmesser"),
-    ("stop_h", "=spring_h + ledge_t - sw_h - gap0", "Anschlag-Noppe: Hoehe (muss > 0 sein)"),
-    ("stroke", "=gap0 + sw_travel + over_travel", "Hub bis zum harten Anschlag"),
-    ("z_ledge", "=base_h + spring_h", "Unterkante Auflagekante = Oberkante Feder"),
-    ("z_pcb", "=z_ledge + ledge_t", "Unterseite Platine"),
-    ("z_skirt", "=base_low_h + stroke", "Unterkante Oberteil"),
-    ("z_ring", "=z_pcb + pcb_t + comp_h", "Unterkante Leuchtring = Oberkante Oberteil"),
-    ("z_dome", "=z_ring + ring_h", "Unterkante Kuppel"),
-]
+# ---- Knauf
+D_OUT = 40.0             # Aussendurchmesser
+WALL = 2.0               # Wand der Haube
+SLEEVE_T = 1.5           # Gummimuffe: Wandstaerke
+SLEEVE_SQUEEZE = 0.4     # Muffe innen so viel kleiner als der Griff
+FLOOR_T = 1.5            # Boden zwischen Schacht und Zellenfach
+HOLDER_D, HOLDER_H = 30.0, 7.0   # CR2450-Halter mit Kabel (nachmessen, wenn er da ist)
+HOLDER_CLR = 0.5
+BOT_H = 3.0              # Luft unter der Platine: Bauteile unten, Loetstellen, Kabelbogen vom Zellenhalter
+PCB_D, PCB_T = 34.0, 1.6
+LEDGE_W = 1.2            # Auflage der Platine (Ring)
+NECK_H = 6.0             # Hals oben am Unterteil (spaeter Gewinde), ragt in die Haube
+RING_H = 3.0             # Leuchtring
+PANEL_T = 2.5            # Platte fuer den Button (Schnappbefestigung des Sanwa)
+# ---- Button und Anschluss
+SANWA_STEP = os.path.join(HERE, "fremd", "sanwa_obsf30.step")
+SANWA_BEZEL_H = 2.6      # Rand ueber der Platte (aus dem Modell gemessen)
+FASTON_OVER = 7.0        # Flachsteckhuelse steckt so weit auf der Zunge
+FASTON_LEN = 14.0        # Huelse 2,8 mm gerade, mit Isolierung (Winkelhuelsen: deutlich kuerzer nach unten)
+FASTON_W, FASTON_T = 4.0, 3.0
+WIRE_BEND = 5.0          # Kabelbogen unter der Huelse (Silikonlitze ~0,25 mm2)
+GAP = 1.0                # Luft zum Modul
 
 doc = App.newDocument("Knauf")
-P = doc.addObject("Spreadsheet::Sheet", "P")
-P.Label = "Parameter"
-P.set("A1", "Name"); P.set("B1", "Wert"); P.set("C1", "Beschreibung")
-for row, (name, val, text) in enumerate(PARAMS, start=2):
-    P.set("A%d" % row, name)
-    P.set("B%d" % row, str(val))
-    P.set("C%d" % row, text)
-    P.setAlias("B%d" % row, name)
-doc.recompute()
+COLORS = {}
 
 
-def expr(obj, **props):
-    for prop, e in props.items():
-        obj.setExpression(prop, e)
+def add(name, shape, rgb):
+    o = doc.addObject("Part::Feature", name)
+    o.Shape = shape
+    COLORS[name] = rgb
+    return o
 
 
-def cyl(name, d, h, z="0", x="0", y="0"):
-    c = doc.addObject("Part::Cylinder", name)
-    expr(c, **{"Radius": "(%s) / 2" % d, "Height": h,
-               "Placement.Base.x": x, "Placement.Base.y": y, "Placement.Base.z": z})
-    return c
+def cone(r1, r2, h, z):
+    return Part.makeCone(r1, r2, h, V(0, 0, z))
 
 
-def cut(name, base, *tools):
-    tool = tools[0] if len(tools) == 1 else fuse(name + "_Werkzeug", *tools)
-    c = doc.addObject("Part::Cut", name)
-    c.Base, c.Tool = base, tool
-    return c
+def cyl(r, h, z):
+    return Part.makeCylinder(r, h, V(0, 0, z))
 
 
-def fuse(name, *shapes):
-    f = doc.addObject("Part::MultiFuse", name)
-    f.Shapes = list(shapes)
-    return f
+# ---- Original-Griff (nur zur Kontrolle), Gummimuffe und Schacht
+g_bot, g_top, g_h = ascher_value.GRIP_D_BOTTOM / 2, ascher_value.GRIP_D_TOP / 2, ascher_value.GRIP_H
+grip = cone(g_bot, g_top, g_h, 0)
+sl_in = (g_bot - SLEEVE_SQUEEZE / 2, g_top - SLEEVE_SQUEEZE / 2)
+sl_out = (sl_in[0] + SLEEVE_T, sl_in[1] + SLEEVE_T)
+sleeve = cone(sl_out[0], sl_out[1], g_h, 0).cut(cone(sl_in[0], sl_in[1], g_h, 0))
+bore = cone(sl_out[0] + 0.1, sl_out[1] + 0.1, g_h + 1.0, -0.01)
 
+# ---- Unterteil: Schacht, Zellenfach, Platinenauflage, Schulter, Hals
+z_pocket = g_h + 1.0 + FLOOR_T
+z_pocket_top = z_pocket + HOLDER_H + HOLDER_CLR
+z_pcb = z_pocket_top + BOT_H
+z_neck_top = z_pcb + PCB_T + 1.0
+z_shoulder = z_neck_top - NECK_H
+neck_r = D_OUT / 2 - WALL - 0.2                       # passt in die Haube
+base = cyl(D_OUT / 2, z_shoulder, 0).fuse(cyl(neck_r, z_neck_top - z_shoulder, z_shoulder))
+base = base.cut(bore)
+base = base.cut(cyl(HOLDER_D / 2 + HOLDER_CLR, z_pocket_top - z_pocket, z_pocket))         # Zellenfach
+base = base.cut(cyl(PCB_D / 2 - LEDGE_W, z_pcb - z_pocket_top + 0.01, z_pocket_top))       # unter der Platine
+base = base.cut(cyl(PCB_D / 2 + 0.3, z_neck_top - z_pcb + 0.01, z_pcb))                    # Platine von oben
+add("Knauf_Unterteil", base, (0.75, 0.04, 0.03))
+add("Gummimuffe", sleeve, (0.1, 0.1, 0.1))
+add("Original_Griff", grip, (0.06, 0.06, 0.06))
+add("Zellenhalter", cyl(HOLDER_D / 2, HOLDER_H, z_pocket), (0.15, 0.15, 0.15))
+add("Leuchtband", cyl(D_OUT / 2, RING_H, z_shoulder).cut(cyl(neck_r + 0.2, RING_H, z_shoulder)), (1.0, 0.85, 0.4))
 
-def ellipsoid(name, z, x="0", lower=False):
-    e = doc.addObject("Part::Ellipsoid", name)
-    e.Angle1, e.Angle2 = (-90, 0) if lower else (0, 90)
-    expr(e, **{"Radius1": "P.dome_h", "Radius2": "P.d_out / 2", "Placement.Base.x": x, "Placement.Base.z": z})
-    return e
-
-
-# ---------------------------------------------------------------- Unterteil
-# unten voll (d_out), oben die schmalere Gleitfuehrung fuer das Oberteil;
-# von unten die Bohrung fuer die Gummimuffe, oben Zellenfach und Senkung fuer den Deckel
-body = fuse("Unterteil_Koerper",
-            cyl("U_unten", "P.d_out", "P.base_low_h"),
-            cyl("U_Fuehrung", "P.guide_d", "P.guide_h", z="P.base_low_h"))
-base = cut("Unterteil", body,
-           cyl("U_Bohrung", "P.hole_d", "P.hole_depth"),
-           cyl("U_Zellenfach", "P.cell_d + P.cell_clr", "P.cell_h + P.cell_clr + P.lid_t", z="P.pocket_z"),
-           cyl("U_Senkung", "P.lid_d", "P.lid_t", z="P.base_h - P.lid_t"))
-
-sleeve = cut("Gummimuffe", cyl("M_aussen", "P.hole_d", "P.hole_depth"),
-             cyl("M_innen", "P.handle_d - P.sleeve_squeeze", "P.hole_depth"))
-
-cell = cyl("Knopfzelle", "P.cell_d", "P.cell_h", z="P.pocket_z")
-
-# Zellendeckel mit Anschlag-Noppe unter dem Taster und zwei Loechern fuer die Litzen
-lid = cut("Zellendeckel",
-          fuse("D_Koerper", cyl("D_Scheibe", "P.lid_d", "P.lid_t", z="P.base_h - P.lid_t"),
-               cyl("D_Noppe", "P.stop_d", "P.stop_h", z="P.base_h")),
-          cyl("D_Litze1", "P.wire_d", "P.lid_t", z="P.base_h - P.lid_t", x="P.wire_x", y="P.wire_y - 1.5"),
-          cyl("D_Litze2", "P.wire_d", "P.lid_t", z="P.base_h - P.lid_t", x="P.wire_x", y="P.wire_y + 1.5"))
-
-spring = cut("Wellenfeder", cyl("F_aussen", "P.spring_od", "P.spring_h", z="P.base_h"),
-             cyl("F_innen", "P.spring_id", "P.spring_h", z="P.base_h"))
-
-# ---------------------------------------------------------------- Oberteil
-# Rohr vom Rock (gleitet ueber die Fuehrung) bis zum Ring; innen die Auflagekante fuer die Platine,
-# auf deren Unterseite die Feder drueckt. Platine, Ring und Kuppel bilden mit dem Oberteil den Druckknopf.
-top = cut("Oberteil", cyl("O_aussen", "P.d_out", "P.z_ring - P.z_skirt", z="P.z_skirt"),
-          cyl("O_Rock", "P.d_out - 2 * P.wall", "P.z_ledge - P.z_skirt", z="P.z_skirt"),
-          cyl("O_Kante", "P.pcb_d - 2 * P.ledge_w", "P.z_ring - P.z_skirt", z="P.z_skirt"),
-          cyl("O_Platine", "P.pcb_d + 2 * P.clr", "P.z_ring - P.z_pcb", z="P.z_pcb"))
-
-# ---------------------------------------------------------------- Platine
+# ---- Platine aus KiCad (STEP mit Bauteilen), sonst Platzhalter
 step = os.path.join(HERE, "buttbin_carrier.step")
 if os.path.isfile(step):
-    import Import
-    before = set(o.Name for o in doc.Objects)
-    Import.insert(step, doc.Name)
-    pcb = [o for o in doc.Objects if o.Name not in before and not o.InList]
-    for o in pcb:
-        o.Label = "Platine"
-        expr(o, **{"Placement.Base.z": "P.z_pcb"})   # STEP aus KiCad: Unterseite bei z = 0
+    board = Part.read(step)
+    # der KSC6 unten (7,7 mm hoch) wird beim Arcade-Button nicht bestueckt: alles weglassen, was weiter als
+    # 1,5 mm unter die Platine ragt
+    board = Part.makeCompound([s for s in board.Solids if s.BoundBox.ZMin > -1.5])
+    board.translate(V(0, 0, z_pcb))
 else:
-    pcb = [cyl("Platine_Platzhalter", "P.pcb_d", "P.pcb_t", z="P.z_pcb")]
+    board = cyl(PCB_D / 2, PCB_T, z_pcb).fuse(Part.makeBox(16, 24, 3.3, V(-8, -12, z_pcb + PCB_T)))
+add("Platine", board, (0.1, 0.4, 0.15))
+z_parts_top = board.BoundBox.ZMax                    # hoechstes Bauteil oben (Modul)
 
-# Leuchtring mit Kragen: der Kragen steht innen im Oberteil auf dem Platinenrand (ausserhalb der LEDs)
-ring = cut("Leuchtring",
-           fuse("R_Koerper", cyl("R_aussen", "P.d_out", "P.ring_h", z="P.z_ring"),
-                cyl("R_Kragen", "P.pcb_d + 2 * P.clr - 0.1", "P.z_ring - P.z_pcb - P.pcb_t", z="P.z_pcb + P.pcb_t")),
-           cyl("R_innen", "P.ring_id", "P.ring_h", z="P.z_ring"),
-           cyl("R_Kragen_innen", "P.pcb_d + 2 * P.clr - 0.1 - 2 * P.collar_w", "P.z_ring - P.z_pcb - P.pcb_t",
-               z="P.z_pcb + P.pcb_t"))
+# ---- Button (Sanwa) mit Flachsteckhuelsen: Hoehe der Platte ergibt sich aus dem Platz darunter
+solids = sorted(Part.read(SANWA_STEP).Solids, key=lambda s: s.BoundBox.YMax)   # Schalter, Gehaeuse, Kappe
+bb = solids[1].BoundBox
+m = App.Matrix()
+m.rotateX(math.radians(90))                          # im STEP zeigt +y nach oben
+sanwa = []
+for s in solids:
+    s = s.copy()
+    s.translate(V(-(bb.XMin + bb.XMax) / 2, -(bb.YMax - SANWA_BEZEL_H), -(bb.ZMin + bb.ZMax) / 2))
+    sanwa.append(s.transformGeometry(m))             # Platte (Oberkante) bei z = 0
+switch, housing, cap = sanwa
+tip = switch.BoundBox.ZMin                           # Ende der Flachsteckzungen (negativ)
+# Mitte jeder Zunge aus einem Schnitt kurz ueber dem Zungenende (die Zungen sind die schmalen Teile)
+tabs = [w.BoundBox for w in switch.slice(V(0, 0, 1), tip + 9.0)]
+fastons = []
+for t in tabs:
+    fastons.append(Part.makeBox(FASTON_W, FASTON_T, FASTON_LEN,
+                                V(t.Center.x - FASTON_W / 2, t.Center.y - FASTON_T / 2, tip + FASTON_OVER - FASTON_LEN)))
+below = FASTON_LEN - FASTON_OVER + WIRE_BEND         # so weit reicht der Anschluss unter die Zungen
+z_panel = z_parts_top + GAP + below - tip            # Oberkante Platte
+for s, name, rgb in ((switch, "Sanwa_Mikroschalter", (0.6, 0.6, 0.6)), (housing, "Sanwa_Rand", (0.75, 0.04, 0.03)),
+                     (cap, "Sanwa_Kappe", (0.75, 0.04, 0.03))):
+    s.translate(V(0, 0, z_panel))
+    add(name, s, rgb)
+for k, f in enumerate(fastons):
+    f.translate(V(0, 0, z_panel))
+    add("Flachsteckhuelse_%d" % (k + 1), f, (0.2, 0.3, 0.8))
+    bend = Part.makeBox(FASTON_W, FASTON_T, WIRE_BEND, V(f.BoundBox.XMin, f.BoundBox.YMin, f.BoundBox.ZMin - WIRE_BEND))
+    add("Kabelbogen_%d" % (k + 1), bend, (0.9, 0.9, 0.2))
 
-dome = ellipsoid("Kuppel_Positiv", "P.z_dome")
-
-# Gussform: Block mit der Kuppel als Hohlraum, offen nach oben (Harz einfuellen, flache Seite = Unterseite)
-mold = cut("Gussform_Negativ",
-           cyl("G_Block", "P.d_out + 2 * P.mold_wall", "P.dome_h + P.mold_wall", x="P.mold_x"),
-           ellipsoid("G_Hohlraum", "P.dome_h + P.mold_wall", x="P.mold_x", lower=True))
-
+# ---- Haube: Rohr ueber dem Hals bis zur Platte, Loch fuer den Button
+z_hood = z_shoulder + RING_H
+hood = cyl(D_OUT / 2, z_panel - z_hood, z_hood).cut(cyl(D_OUT / 2 - WALL, z_panel - PANEL_T - z_hood, z_hood))
+hood = hood.cut(cyl(15.0, PANEL_T + 1, z_panel - PANEL_T - 0.5))     # 30-mm-Loch
+add("Knauf_Haube", hood, (0.02, 0.02, 0.02))
 doc.recompute()
 
-# ---------------------------------------------------------------- Baugruppe + Einzelteile
-# Baugruppe: die Teile selbst in Einbaulage. Einzelteile: Verknuepfungen darauf, nebeneinander auf z = 0
-# gestellt (Druckbett) - sie folgen jeder Parameteraenderung. Hilfskoerper: Zylinder und Werkzeuge der Booleschen.
-ASM = ["Gummimuffe", "Unterteil", "Knopfzelle", "Zellendeckel", "Wellenfeder", "Oberteil", "Leuchtring",
-       "Kuppel_Positiv"]
-helpers = [o for o in doc.Objects if o.TypeId.startswith("Part::") and o.Name not in ASM + ["Gussform_Negativ"]
-           and o not in pcb]
-asm = doc.addObject("App::DocumentObjectGroup", "Baugruppe")
-for name in ASM:
-    asm.addObject(doc.getObject(name))
-for o in pcb:
-    asm.addObject(o)
-aux = doc.addObject("App::DocumentObjectGroup", "Hilfskoerper")
-for o in helpers:
-    aux.addObject(o)
-# Druckteile mit der Unterkante, auf die sie gestellt werden (Gussform steht schon auf z = 0)
-PRINT = [("Unterteil", "0"), ("Zellendeckel", "P.base_h - P.lid_t"), ("Oberteil", "P.z_skirt"),
-         ("Leuchtring", "P.z_pcb + P.pcb_t"), ("Kuppel_Positiv", "P.z_dome"), ("Gummimuffe", "0")]
-parts = doc.addObject("App::DocumentObjectGroup", "Einzelteile")
-for i, (name, zmin) in enumerate(PRINT):
-    ln = doc.addObject("App::Link", name + "_einzeln")
-    ln.LinkedObject = doc.getObject(name)
-    expr(ln, **{"Placement.Base.x": "%d * (P.d_out + 10)" % i, "Placement.Base.y": "-(P.d_out + 30)",
-                "Placement.Base.z": "-(%s)" % zmin})
-    parts.addObject(ln)
-parts.addObject(doc.getObject("Gussform_Negativ"))
-doc.recompute()
+# ---- Pruefung
+knob_top = max(s.BoundBox.ZMax for s in sanwa)
+hood_in = D_OUT / 2 - WALL
+sw_bb = switch.BoundBox
+r_switch = max(math.hypot(x, y) for x in (sw_bb.XMin, sw_bb.XMax) for y in (sw_bb.YMin, sw_bb.YMax))
+print("Knauf: %.1f mm hoch (Unterkante bis Kappe), mit Ascher gesamt %.1f mm"
+      % (knob_top, knob_top + ascher_value.H + ascher_value.STAMP - ascher_value.GRIP_H))
+print("Platine bei z = %.1f, hoechstes Bauteil %.1f, Platte %.1f; Zungenende %.1f mm ueber dem Modul; %d Zungen"
+      % (z_pcb, z_parts_top, z_panel, z_panel + tip - z_parts_top, len(tabs)))
+print("Schalter: aeusserste Ecke %.1f mm von der Mitte, Haube innen %.1f mm -> %.1f mm seitlich frei"
+      % (r_switch, hood_in, hood_in - r_switch))
+print("Zellenfach Ø%.1f, Wand zum Aussenrand %.1f mm; Boden ueber dem Schacht %.1f mm"
+      % (HOLDER_D + 2 * HOLDER_CLR, D_OUT / 2 - HOLDER_D / 2 - HOLDER_CLR, FLOOR_T))
+names = list(COLORS)
+for i, a in enumerate(names):
+    for b in names[i + 1:]:
+        pair = {a.split("_")[0], b.split("_")[0]}
+        if pair <= {"Original", "Gummimuffe"} or pair <= {"Flachsteckhuelse", "Sanwa"} or "Kabelbogen" in pair \
+                and "Flachsteckhuelse" in pair or {a, b} == {"Sanwa_Rand", "Knauf_Haube"}:
+            continue      # gewollt: Muffe auf dem Griff, Huelsen auf den Zungen, Schnappnasen in der Platte
+        v = doc.getObject(a).Shape.common(doc.getObject(b).Shape).Volume
+        if v > 0.5:
+            print("UEBERSCHNEIDUNG %s / %s: %.1f mm3" % (a, b, v))
 
-PARTS = {"Gummimuffe": (0.2, 0.2, 0.2), "Unterteil": (0.35, 0.22, 0.15), "Knopfzelle": (0.75, 0.75, 0.78),
-         "Zellendeckel": (0.55, 0.4, 0.3), "Wellenfeder": (0.6, 0.6, 0.65), "Oberteil": (0.35, 0.22, 0.15),
-         "Leuchtring": (0.95, 0.95, 0.9), "Kuppel_Positiv": (0.9, 0.75, 0.45), "Gussform_Negativ": (0.3, 0.5, 0.7)}
-if App.GuiUp:
-    import FreeCADGui as Gui
-    for o in helpers:
-        o.ViewObject.Visibility = False
-    for name, rgb in PARTS.items():
-        vo = doc.getObject(name).ViewObject
-        vo.ShapeColor = rgb
-    doc.getObject("Leuchtring").ViewObject.Transparency = 50
-    doc.getObject("Kuppel_Positiv").ViewObject.Transparency = 40
-    Gui.SendMsgToActiveView("ViewFit")
-    Gui.activeDocument().activeView().viewIsometric()
-else:
+if not App.GuiUp:
     out = os.environ.get("KNAUF_OUT", os.path.join(HERE, "knauf.FCStd"))
     doc.saveAs(out)
+    ascher_value.export_obj([doc.getObject(n) for n in COLORS], COLORS, os.path.splitext(out)[0] + ".obj")
     print("gespeichert", out)
-    # STL je Druckteil (Gummimuffe: aus TPU drucken oder als Schlauchstueck kaufen)
-    import Mesh
-    stl = os.path.join(os.path.dirname(out), "stl")
-    os.makedirs(stl, exist_ok=True)
-    for name, _ in PRINT + [("Gussform_Negativ", "0")]:
-        Mesh.export([doc.getObject(name)], os.path.join(stl, name + ".stl"))
-    print("STL in", stl)
