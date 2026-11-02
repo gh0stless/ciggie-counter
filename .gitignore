@@ -59,3 +59,5 @@ ciggie-counter-ha/
 __pycache__/
 hardware/freecad/konzept.obj
 hardware/freecad/konzept.mtl
+hardware/freecad/konzept_*.obj
+hardware/freecad/konzept_*.mtl
