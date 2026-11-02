@@ -1,11 +1,13 @@
 """Rendert ein OBJ (aus den FreeCAD-Skripten, Einheit mm) mit Blender zu einem Vorschaubild.
 
 Aufruf:  blender -b -P render_blender.py -- <modell.obj> <bild.png> [Hoehenwinkel] [Drehwinkel] [Breite] [Brennweite]
+Optional ein Aufkleber auf einer Zylinderwand: Umgebungsvariablen AUFKLEBER und AUFKLEBER_MASS (siehe unten).
 Materialien nach Teilnamen (Tabelle MATERIALS): Chrom, Blech, mattes und glaenzendes Schwarz, Leuchtband;
 Knauf und Button als glaenzender Lack in der Farbe aus der .mtl;
 sonst die Farbe aus der .mtl. Kamera und Licht richten sich nach der Groesse des Modells.
 """
 import math
+import os
 import sys
 
 import bpy
@@ -81,6 +83,44 @@ center, size = (lo + hi) / 2, (hi - lo).length
 for o in objs:
     if o.name.startswith("Hilfe"):
         o.hide_render = True
+
+# Aufkleber (optional): PNG mit Transparenz auf eine senkrechte Zylinderwand, der Rundung folgend.
+# AUFKLEBER=bild.png, AUFKLEBER_MASS="Radius,Hoehe-Mitte,Breite,Winkel" in mm/Grad (Winkel 0 = +x, -90 = vorn)
+if os.environ.get("AUFKLEBER"):
+    import bmesh
+    img = bpy.data.images.load(os.environ["AUFKLEBER"])
+    rad, zc, wid, ang = (float(v) for v in os.environ.get("AUFKLEBER_MASS", "70.2,22,30,-115").split(","))
+    hgt = wid * img.size[1] / img.size[0]
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new()
+    nx = 24
+    grid = []
+    for j in (0, 1):
+        row = []
+        for i in range(nx + 1):
+            s = (i / nx - 0.5) * wid
+            phi = math.radians(ang) + s / rad             # von aussen gesehen links -> rechts
+            row.append(bm.verts.new((rad * math.cos(phi) * 0.001, rad * math.sin(phi) * 0.001,
+                                     (zc + (j - 0.5) * hgt) * 0.001)))
+        grid.append(row)
+    for i in range(nx):
+        f = bm.faces.new((grid[0][i], grid[0][i + 1], grid[1][i + 1], grid[1][i]))
+        for loop, (u, v) in zip(f.loops, ((i / nx, 0), ((i + 1) / nx, 0), ((i + 1) / nx, 1), (i / nx, 1))):
+            loop[uv].uv = (u, v)
+    mesh = bpy.data.meshes.new("Aufkleber")
+    bm.to_mesh(mesh)
+    sticker = bpy.data.objects.new("Aufkleber", mesh)
+    scene.collection.objects.link(sticker)
+    mat = bpy.data.materials.new("Aufkleber")
+    mat.use_nodes = True
+    nt = mat.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    bsdf.inputs["Roughness"].default_value = 0.35
+    tex = nt.nodes.new("ShaderNodeTexImage")
+    tex.image = img
+    nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+    sticker.data.materials.append(mat)
 
 # Studio wie beim Produktfoto: weisser Hintergrund ohne Boden, weiche Flaechenlichter,
 # dunkle Flaechen neben dem Modell (fuer die Kamera unsichtbar), damit Chrom nach Chrom aussieht
