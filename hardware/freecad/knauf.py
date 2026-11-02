@@ -6,7 +6,8 @@ Aufbau von unten (z = 0 = Unterkante Knauf = Unterkante des Original-Griffs):
   Leuchtring  klare Scheibe auf der Schulter, wird von der Haube eingeklemmt
   Platine     fest im Unterteil (STEP aus KiCad)
   Haube       hohl, oben die Platte mit dem Loch fuer den Arcade-Button
-  Button      Sanwa OBSF-30 (fremd/sanwa_obsf30.step, nicht im Repo), mit Flachsteckhuelsen und Kabelbogen
+  Button      Sanwa OBSF-30 (fremd/sanwa_obsf30.step, nicht im Repo) oder kompakter Button mit eingebautem
+              Schalter (Joy-IT/Pimoroni-Bauart, KNAUF_BUTTON=joyit), mit Flachsteckhuelsen und Kabelbogen
 Noch ohne Gewinde und Rundungen. Masse oben als Konstanten; die Hoehen ergeben sich daraus.
 Aufruf: freecadcmd knauf.py  -> knauf.FCStd, knauf.obj (Blender) und die Pruefung der Abstaende.
 """
@@ -40,7 +41,12 @@ LEDGE_W = 1.2            # Auflage der Platine (Ring)
 NECK_H = 6.0             # Hals oben am Unterteil (spaeter Gewinde), ragt in die Haube
 RING_H = 3.0             # Leuchtring
 PANEL_T = 2.5            # Platte fuer den Button (Schnappbefestigung des Sanwa)
-# ---- Button und Anschluss
+# ---- Button und Anschluss (KNAUF_BUTTON=sanwa | joyit)
+BUTTON = os.environ.get("KNAUF_BUTTON", "sanwa")
+# Joy-IT "Mini Arcade Button mit Mikroschalter" (Reichelt ARC BUTTON M ..), Masse aus dem Datenblatt:
+# Gehaeuse Ø30 und 17 mm unter der Platte (Schalter innen), Rand Ø33 x 3,5, Kappe Ø24,5 x 5
+JOY_BODY_D, JOY_BODY_H, JOY_BEZEL_D, JOY_BEZEL_H, JOY_CAP_D, JOY_CAP_H = 30.0, 17.0, 33.0, 3.5, 24.5, 5.0
+JOY_TAB_LEN, JOY_TAB_X = 5.0, 4.0    # Flachsteckzungen unten (nicht im Datenblatt - am Teil nachmessen)
 SANWA_STEP = os.path.join(HERE, "fremd", "sanwa_obsf30.step")
 SANWA_BEZEL_H = 2.6      # Rand ueber der Platte (aus dem Modell gemessen)
 FASTON_OVER = 7.0        # Flachsteckhuelse steckt so weit auf der Zunge
@@ -107,20 +113,33 @@ else:
 add("Platine", board, (0.1, 0.4, 0.15))
 z_parts_top = board.BoundBox.ZMax                    # hoechstes Bauteil oben (Modul)
 
-# ---- Button (Sanwa) mit Flachsteckhuelsen: Hoehe der Platte ergibt sich aus dem Platz darunter
-solids = sorted(Part.read(SANWA_STEP).Solids, key=lambda s: s.BoundBox.YMax)   # Schalter, Gehaeuse, Kappe
-bb = solids[1].BoundBox
-m = App.Matrix()
-m.rotateX(math.radians(90))                          # im STEP zeigt +y nach oben
-sanwa = []
-for s in solids:
-    s = s.copy()
-    s.translate(V(-(bb.XMin + bb.XMax) / 2, -(bb.YMax - SANWA_BEZEL_H), -(bb.ZMin + bb.ZMax) / 2))
-    sanwa.append(s.transformGeometry(m))             # Platte (Oberkante) bei z = 0
+# ---- Button mit Flachsteckhuelsen: Hoehe der Platte ergibt sich aus dem Platz darunter
+def sanwa_button():
+    solids = sorted(Part.read(SANWA_STEP).Solids, key=lambda s: s.BoundBox.YMax)   # Schalter, Gehaeuse, Kappe
+    bb = solids[1].BoundBox
+    m = App.Matrix()
+    m.rotateX(math.radians(90))                      # im STEP zeigt +y nach oben
+    out = []
+    for s in solids:
+        s = s.copy()
+        s.translate(V(-(bb.XMin + bb.XMax) / 2, -(bb.YMax - SANWA_BEZEL_H), -(bb.ZMin + bb.ZMax) / 2))
+        out.append(s.transformGeometry(m))           # Platte (Oberkante) bei z = 0
+    return out
+
+
+def joyit_button():
+    """Aus dem Datenblatt: Gehaeuse mit eingebautem Schalter, Rand, Kappe; dazu zwei Zungen unten."""
+    tabs = Part.makeCompound([Part.makeBox(0.5, 2.8, JOY_TAB_LEN, V(sx * JOY_TAB_X - 0.25, -1.4,
+                                                                    -JOY_BODY_H - JOY_TAB_LEN)) for sx in (-1, 1)])
+    housing = cyl(JOY_BODY_D / 2 - 0.2, JOY_BODY_H, -JOY_BODY_H).fuse(cyl(JOY_BEZEL_D / 2, JOY_BEZEL_H, 0))
+    return [tabs, housing, cyl(JOY_CAP_D / 2, JOY_CAP_H, JOY_BEZEL_H)]
+
+
+sanwa = sanwa_button() if BUTTON == "sanwa" else joyit_button()
 switch, housing, cap = sanwa
 tip = switch.BoundBox.ZMin                           # Ende der Flachsteckzungen (negativ)
-# Mitte jeder Zunge aus einem Schnitt kurz ueber dem Zungenende (die Zungen sind die schmalen Teile)
-tabs = [w.BoundBox for w in switch.slice(V(0, 0, 1), tip + 9.0)]
+# Mitte jeder Zunge aus einem Schnitt kurz ueber dem Zungenende
+tabs = [w.BoundBox for w in switch.slice(V(0, 0, 1), tip + 1.0)]
 fastons = []
 for t in tabs:
     fastons.append(Part.makeBox(FASTON_W, FASTON_T, FASTON_LEN,
