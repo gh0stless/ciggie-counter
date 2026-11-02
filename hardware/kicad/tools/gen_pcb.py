@@ -179,10 +179,7 @@ def autoplace(ref, target, bottom=False):
     put(ref, best[1], best[2], best[3], bottom)
     placed[bottom].append(rect_of(fps[ref]))
 
-# oben: Pufferkondensatoren dicht am Versorgungs-Pin des Moduls
-for ref in ("C8", "C3", "C2", "C1"):
-    autoplace(ref, pad_pos("U4", "8"))
-# unten: Entprell-C am Taster, Litzen-Pads der Zelle, Programmier-Pads
+# unten: Programmier-Pads, Entprell-C am Taster, Erweiterungs- und Litzen-Pads
 # Programmier-Reihe VBAT, SWS, GND, RST im Raster 2,54 mm, 2 mm vor der Abflachung (Pogo-Pin-Klemme)
 for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
     put(ref, (i - 1.5) * 2.54, Y_FLAT - ROW_EDGE, 0, bottom=True)
@@ -202,12 +199,27 @@ for i, ref in enumerate(AUX_ROW):
     placed[True].append(rect_of(fps[ref], 0.3))
 # feste Plaetze (die automatische Suche weicht hier sonst auf unguenstige Stellen aus):
 # Zelle oben rechts neben der Antennen-Sperrflaeche, externer Taster unten rechts
-for ref, x, y in (("TP2", 11.0, -9.6), ("TP1", 11.0, -6.6), ("TP11", 9.8, 7.8), ("TP12", 9.8, 10.7)):
+# (BTN durchkontaktiert, deshalb rechts neben dem Modul)
+for ref, x, y in (("TP2", 11.0, -8.9), ("TP1", 11.0, -6.1), ("TP11", 10.5, 8.6), ("TP12", 8.0, 11.5)):
     put(ref, x, y, 0, bottom=True)
     r = rect_of(fps[ref])
     assert not any(overlap(rect_of(fps[ref], 0.15), q) for q in placed[True]), "Pad ueberlappt: " + ref
     assert all(inside(cx_, cy_, 0.5) for cx_, cy_ in ((r[0], r[1]), (r[2], r[1]), (r[0], r[3]), (r[2], r[3]))), "Pad am Rand: " + ref
     placed[True].append(r)
+
+# durchkontaktierte Pads belegen auch die Oberseite: dort weder Modul noch LED-Ring treffen
+TH = [r for r in fps if r.startswith("TP") and any(p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH for p in fps[r].Pads())]
+top_parts = list(placed[False])
+for ref in TH:
+    r = rect_of(fps[ref])
+    # ohne Zuschlag: der Courtyard laesst schon 0,55 mm um das Kupfer (TP11 sitzt knapp zwischen Modul und D1);
+    # nur gegen Bauteile pruefen - Nachbarn im Raster 2,54 mm beruehren sich mit den Courtyards
+    assert not any(overlap(r, q) for q in top_parts), "Pad trifft Oberseite: " + ref
+    placed[False].append(r)
+# Pufferkondensatoren unten unter dem Modul, dicht am Versorgungs-Pin
+# (oben links neben dem Modul laeuft jetzt die durchkontaktierte Erweiterungs-Reihe)
+for ref in ("C8", "C3", "C2", "C1"):
+    autoplace(ref, pad_pos("U4", "8"), bottom=True)
 
 # ------------------------------------------------------------------ Router
 G = 0.1
@@ -498,6 +510,7 @@ filler = pcbnew.ZONE_FILLER(board)
 filler.Fill(board.Zones())
 
 # Testpunkte: Funktion (BAT+, SWS, TX ...) statt TPx in den Bestueckungsdruck
+TOP_NAME = {"VBAT": "V+", "BTN2": "B2", "PUMP": "PMP", "BAT+": "B+", "BAT-": "B-"}
 for fp in fps.values():
     if fp.GetReference().startswith("TP"):
         fp.Reference().SetVisible(False)
@@ -518,6 +531,21 @@ for fp in fps.values():
             if fp.GetReference() in EXT:
                 side = -side
             val.SetPosition(pcbnew.VECTOR2I(pos.x + side * mm(1.2 + 0.35 * len(fp.GetValue())), pos.y))
+        if fp.GetReference() in TH:
+            # durchkontaktiert: Beschriftung auch oben - dort ist zwischen Pad und Modul nur gut 2 mm Platz,
+            # also kurze Namen, kleinere Schrift und je Pad die freie Richtung (Modul, LED-Ring)
+            name = TOP_NAME.get(fp.GetValue(), fp.GetValue())
+            ref = fp.GetReference()
+            dx, dy = ((1, 0) if ref in EXT_ROW else (-1, 0) if ref in AUX_ROW else (0, 1) if ref == "TP11" else (1, 0))
+            top = pcbnew.PCB_TEXT(board)
+            top.SetText(name)
+            top.SetLayer(pcbnew.F_SilkS)
+            top.SetMirrored(False)
+            top.SetTextSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)))
+            top.SetTextThickness(mm(0.12))
+            off = 1.0 + 0.3 * len(name) if dx else 1.3
+            top.SetPosition(pcbnew.VECTOR2I(pos.x + dx * mm(off), pos.y + dy * mm(off)))
+            board.Add(top)
 
 board.Save(OUT)
 print("gespeichert", OUT, "| Durchkontaktierungen:", nvias, "| fehlgeschlagen:", failed)

@@ -262,6 +262,9 @@ L0603 = "LED_SMD:LED_0603_1608Metric"
 SOD323 = "Diode_SMD:D_SOD-323"
 TP_S = "TestPoint:TestPoint_Pad_1.0x1.0mm"
 TP_L = "TestPoint:TestPoint_Pad_2.0x2.0mm"
+# durchkontaktiert: von beiden Seiten loetbar, Litzen gehen durch das Loch (Zugentlastung)
+TP_TH = "TestPoint:TestPoint_THTPad_1.5x1.5mm_Drill0.7mm"
+TP_THR = "TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm"
 TITLE = 2.0
 
 def res(ref, val, lcsc, x, y, nets, rot=0):
@@ -277,11 +280,11 @@ def pad(ref, value, x, y, net, fp=TP_S, note=""):
 text("Versorgung: Knopfzelle CR2450 (3 V) im Knauf-Unterteil, zwei Litzen zur Platine", 17.78, 25.4, TITLE)
 # Die Zelle sitzt im festen Unterteil (Federkontakte oder fertiger Halter mit Kabel),
 # die Platine schwimmt auf der Feder -> nur zwei Loetpads fuer kurze, flexible Litzen.
-pad("TP1", "BAT+", 30.48, 50.8, "W", "TestPoint:TestPoint_Pad_1.5x1.5mm", "Litze vom Pluskontakt der CR2450")
-pad("TP2", "BAT-", 30.48, 63.5, "GND", "TestPoint:TestPoint_Pad_1.5x1.5mm", "Litze vom Minuskontakt der CR2450")
+pad("TP1", "BAT+", 30.48, 50.8, "W", TP_TH, "Litze vom Pluskontakt der CR2450")
+pad("TP2", "BAT-", 30.48, 63.5, "GND", TP_TH, "Litze vom Minuskontakt der CR2450")
 vcc = pin("TP1", "1")
 # 100 uF keramisch puffert die 10-15-mA-Spitzen beim Senden (Knopfzellen haben hohen Innenwiderstand)
-place(C, "C1", "100u", 45.72, vcc[1] + 3.81, {"1": "W", "2": "GND"}, "Capacitor_SMD:C_1206_3216Metric", "", "keramisch, 6,3 V, X5R")
+place(C, "C1", "100u", 45.72, vcc[1] + 3.81, {"1": "W", "2": "GND"}, "Capacitor_SMD:C_1206_3216Metric", "C15008", "keramisch, 6,3 V, X5R")
 cap("C2", "10u", "C15525", 55.88, vcc[1] + 3.81, {"1": "W", "2": "GND"})
 cap("C3", "100n", "C1525", 66.04, vcc[1] + 3.81, {"1": "W", "2": "GND"})
 wire(vcc, pin("C1", "1"))
@@ -300,9 +303,9 @@ text("Ring: 8 LEDs auf 4 Kanaelen (A B C D A B C D rundherum = Lauflicht)", 17.7
 # 4 Kanaele wie beim Dev-Board, jeder mit eigenem PWM-Kanal (dimmbar). Im Ring reihum angeschlossen:
 # schaltet die Firmware A, B, C, D nacheinander, laeuft das Licht rundherum.
 CHANNELS = [("LED_A", "rot", "C2286", "2"),     # PC4, PWM2
-            ("LED_B", "gelb", "", "19"),        # PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
-            ("LED_C", "gruen", "", "12"),       # PB4, PWM4
-            ("LED_D", "orange", "", "13")]      # PB5, PWM5
+            ("LED_B", "gelb", "C7429912", "19"),        # PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
+            ("LED_C", "gruen", "C7429914", "12"),       # PB4, PWM4
+            ("LED_D", "orange", "C7429913", "13")]      # PB5, PWM5
 N_LED = 8
 for i in range(N_LED):
     net, col, lcsc, _ = CHANNELS[i % 4]
@@ -331,7 +334,7 @@ text("Modul direkt an der Zelle (1,8-3,6 V). Sendeleistung moeglichst 0 dBm stat
      "Batteriestand: intern ueber den VBAT-Kanal des ADC (SDK battery_check.c ohne GPIO_VBAT_DETECT).", 152.4, 109.22, FONT)
 
 # ============ Erweiterungs-Pads ============
-text("Erweiterungs-Pads (Unterseite) fuer Prototypen", 152.4, 137.16, TITLE)
+text("Erweiterungs-Pads (durchkontaktiert, beidseitig beschriftet) fuer Prototypen", 152.4, 137.16, TITLE)
 # Reihe im Raster 2,54 mm: Stiftleiste oder Litzen fuer Erweiterungs-Prototypen
 for i, (ref, name, net, note) in enumerate([("TP17", "VBAT", "VBAT", "Versorgung fuer Erweiterungen"),
                                             ("TP18", "GND", "GND", "Masse fuer Erweiterungen"),
@@ -339,7 +342,7 @@ for i, (ref, name, net, note) in enumerate([("TP17", "VBAT", "VBAT", "Versorgung
                                             ("TP14", "SCL", "SCL", "PC3, I2C-Takt"),
                                             ("TP15", "BTN2", "BTN2", "PD3, 2. Taster nach GND, weckt aus dem Schlaf"),
                                             ("TP16", "PUMP", "PUMP", "PD2 (PWM3), Gate eines MOSFETs fuer Pumpe/Spruehkopf")]):
-    pad(ref, name, 157.48 + i * 12.7, 149.86, net, "TestPoint:TestPoint_Pad_D1.5mm", note)
+    pad(ref, name, 157.48 + i * 12.7, 149.86, net, TP_THR, note)
 text("I2C-Pull-ups (z. B. 4,7k nach VBAT) auf dem Erweiterungs-Board oder intern im Chip.\n"
      "Pumpe, Spruehkopf und Gas-Sensoren brauchen mehr Strom als eine CR2450 liefert:\n"
      "fuer diese Ausbaustufe wieder Akku + Lader (siehe Revision 0.4 in der Git-Historie).", 152.4, 167.64, FONT)
@@ -348,7 +351,7 @@ text("I2C-Pull-ups (z. B. 4,7k nach VBAT) auf dem Erweiterungs-Board oder intern
 text("Stempel-Taster (Unterseite, Mitte) und Programmier-Pads", 17.78, 152.4, TITLE)
 # Platine schwimmt auf der Feder; beim Druecken trifft SW1 auf den Silikonpuffer im Unterteil.
 place(SW, "SW1", "KSC621J", 33.02, 165.1, {"1": "W", "2": "GND"},
-      "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC6xxJ", "",
+      "Button_Switch_SMD:SW_Push_1P1T_NO_CK_KSC6xxJ", "C221760",
       "C&K KSC6 (6,2 x 6,2 mm SMD), IP67 abgedichtet, 300.000 Schaltspiele, 1,7 N; unten mittig")
 cap("C9", "100n", "C1525", 43.18, 168.91, {"1": "W", "2": "GND"})
 wire(pin("SW1", "2"), (pin("SW1", "2")[0], 175.26))
@@ -358,18 +361,20 @@ wire(pin("C9", "1"), (53.34, 165.1))
 lab("BTN", 53.34, 165.1, 0)
 junction(*pin("C9", "1"))
 # Alternative: externer Taster (Mikroschalter, Reed-Kontakt ...) parallel zu SW1 an zwei Litzen
-pad("TP11", "BTN", 60.96, 175.26, "BTN", "TestPoint:TestPoint_Pad_1.5x1.5mm", "externer Taster, parallel zu SW1")
-pad("TP12", "GND", 68.58, 175.26, "GND", "TestPoint:TestPoint_Pad_1.5x1.5mm", "externer Taster, Masse")
+pad("TP11", "BTN", 60.96, 175.26, "BTN", TP_TH, "externer Taster, parallel zu SW1")
+pad("TP12", "GND", 68.58, 175.26, "GND", "TestPoint:TestPoint_Pad_1.5x1.5mm", "externer Taster, Masse (unten)")
 text("PB6 mit internem Pull-up, Taster nach GND, Aufwecken bei Low.\n"
      "Mechanik: Platine mit Kuppel schwimmt auf Wellenfeder, Anschlagring nimmt die Kraft auf.\n"
-     "BTN/GND (TP11/TP12): Loetpads fuer einen externen Taster statt oder parallel zu SW1.", 17.78, 190.5, FONT)
+     "BTN/GND (TP11/TP12): Pads fuer einen externen Taster statt oder parallel zu SW1.\n"
+     "BTN ist durchkontaktiert; oben die Masse vom GND-Pad der Erweiterungs-Reihe nehmen.", 17.78, 190.5, FONT)
 # VBAT/SWS/GND/RST: runde Pads in einer Reihe (2,54 mm) an der Abflachung -> Pogo-Pin-Klemme
 # TX/RX/IO1/IO2: zweite Reihe (2,54 mm) - Debug-UART und zwei Reserve-Pins fuer Unvorhergesehenes
 for i, (name, net) in enumerate([("VBAT", "VBAT"), ("SWS", "SWS"), ("GND", "GND"),
                                  ("RST", "RST"), ("TX", "TX"), ("RX", "RX")]):
-    pad("TP%d" % (5 + i), name, 81.28 + i * 10.16, 165.1, net, "TestPoint:TestPoint_Pad_D1.5mm")
-pad("TP19", "IO1", 81.28 + 6 * 10.16, 165.1, "IO1", "TestPoint:TestPoint_Pad_D1.5mm", "Reserve: PB7, ADC-faehig")
-pad("TP20", "IO2", 81.28 + 7 * 10.16, 165.1, "IO2", "TestPoint:TestPoint_Pad_D1.5mm", "Reserve: PD4, PWM-faehig (PWM2_N)")
+    pad("TP%d" % (5 + i), name, 81.28 + i * 10.16, 165.1, net,
+        "TestPoint:TestPoint_Pad_D1.5mm" if i < 4 else TP_THR)   # Programmier-Reihe bleibt SMD (Klemme)
+pad("TP19", "IO1", 81.28 + 6 * 10.16, 165.1, "IO1", TP_THR, "Reserve: PB7, ADC-faehig")
+pad("TP20", "IO2", 81.28 + 7 * 10.16, 165.1, "IO2", TP_THR, "Reserve: PD4, PWM-faehig (PWM2_N)")
 text("TX/RX: Debug-UART (PB1/PA0), im fertigen Geraet ebenfalls frei verwendbar.", 81.28, 177.8, FONT)
 
 # ============ Netz-Treiber fuer den ERC ============

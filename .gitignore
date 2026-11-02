@@ -21,6 +21,8 @@ keystore.properties
 *.kicad_prl
 fp-info-cache
 *-backups/
+# erzeugte Fertigungsdaten (hardware/kicad/tools/gen_fab.py)
+hardware/kicad/*/fertigung/
 
 # --- Fremdcode, wird per Anleitung geholt ---
 firmware/tc_ble_sdk/

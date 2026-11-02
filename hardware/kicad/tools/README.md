@@ -16,7 +16,14 @@ kicad-cli sch export netlist --format kicadsexpr -o bb.net ../buttbin_carrier/bu
 # 4. checks
 kicad-cli sch erc ../buttbin_carrier/buttbin_carrier.kicad_sch
 kicad-cli pcb drc ../buttbin_carrier/buttbin_carrier.kicad_pcb
+
+# 5. JLCPCB data (plain Python 3): gerber zip, BOM and CPL in ../buttbin_carrier/fertigung/
+python gen_fab.py ../buttbin_carrier
 ```
+
+The CPL takes KiCad's rotations as they are; check them in JLCPCB's placement preview
+(LEDs and the module are the usual suspects). Test pads (TP*) are copper only and are left
+out of BOM and CPL.
 
 The KiCad libraries are found automatically in the usual install locations; otherwise set
 `KICAD_SHARE` to the folder that contains `symbols/` and `footprints/`.
