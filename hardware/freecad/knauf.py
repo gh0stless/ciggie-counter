@@ -33,7 +33,10 @@ WALL = 2.0               # Wand der Haube
 SLEEVE_T = 1.5           # Gummimuffe: Wandstaerke
 SLEEVE_SQUEEZE = 0.4     # Muffe innen so viel kleiner als der Griff
 FLOOR_T = 1.5            # Boden zwischen Schacht und Zellenfach
-HOLDER_D, HOLDER_H = 30.0, 7.0   # CR2450-Halter mit Kabel (nachmessen, wenn er da ist)
+# CR2450-Halter mit Drehdeckel (AliExpress 1005013142257052): Gehaeuse Ø29, mit den Loetfahnen 33 mm breit,
+# Fahnen 30,5 mm auseinander; Litzen an die Fahnen geloetet. Hoehe nicht angegeben - am Teil nachmessen.
+HOLDER_D, HOLDER_H = 29.0, 7.0
+TAB_PITCH, TAB_W, TAB_SPAN = 30.5, 4.0, 33.0     # Fahnen: Abstand, Breite, Gesamtbreite ueber die Fahnen
 HOLDER_CLR = 0.5
 BOT_H = 3.0              # Luft unter der Platine: Bauteile unten, Loetstellen, Kabelbogen vom Zellenhalter
 PCB_D, PCB_T = 34.0, 1.6
@@ -87,12 +90,17 @@ z_ring = z_pcb + PCB_T - PCB_OVER                    # Oberkante Unterteil = Unt
 base = cyl(D_OUT / 2, z_ring, 0)
 base = base.cut(bore)
 base = base.cut(cyl(HOLDER_D / 2 + HOLDER_CLR, z_pocket_top - z_pocket, z_pocket))         # Zellenfach
+tab_slot = Part.makeBox(TAB_SPAN + 2 * HOLDER_CLR, TAB_W + 2 * HOLDER_CLR, z_pocket_top - z_pocket,
+                        V(-(TAB_SPAN / 2 + HOLDER_CLR), -(TAB_W / 2 + HOLDER_CLR), z_pocket))
+base = base.cut(tab_slot)                                                                   # Aussparung fuer die Fahnen
 base = base.cut(cyl(PCB_D / 2 - LEDGE_W, z_pcb - z_pocket_top + 0.01, z_pocket_top))       # unter der Platine
 base = base.cut(cyl(PCB_D / 2 + 0.3, z_ring - z_pcb + 0.01, z_pcb))                        # Platinentasche
 add("Knauf_Unterteil", base, (0.75, 0.04, 0.03))
 add("Gummimuffe", sleeve, (0.1, 0.1, 0.1))
 add("Original_Griff", grip, (0.06, 0.06, 0.06))
-add("Zellenhalter", cyl(HOLDER_D / 2, HOLDER_H, z_pocket), (0.15, 0.15, 0.15))
+holder = cyl(HOLDER_D / 2, HOLDER_H, z_pocket).fuse(
+    Part.makeBox(TAB_SPAN, TAB_W, 0.4, V(-TAB_SPAN / 2, -TAB_W / 2, z_pocket + 1.0)))
+add("Zellenhalter", holder, (0.92, 0.9, 0.85))
 add("Leuchtband", cyl(D_OUT / 2, RING_H, z_ring).cut(cyl(D_OUT / 2 - WALL, RING_H, z_ring)), (1.0, 0.85, 0.4))
 
 # ---- Platine aus KiCad (STEP mit Bauteilen), sonst Platzhalter
@@ -137,8 +145,8 @@ print("Platine bei z = %.1f, hoechstes Bauteil %.1f, Platte %.1f; Kabelbogen end
       % (z_pcb, z_parts_top, z_panel, GAP))
 print("Button: Gehaeuse Ø%.1f, Haube innen Ø%.1f -> %.1f mm seitlich frei"
       % (BTN_BODY_D, 2 * hood_in, hood_in - BTN_BODY_D / 2))
-print("Zellenfach Ø%.1f, Wand zum Aussenrand %.1f mm; Boden ueber dem Schacht %.1f mm"
-      % (HOLDER_D + 2 * HOLDER_CLR, D_OUT / 2 - HOLDER_D / 2 - HOLDER_CLR, FLOOR_T))
+print("Zellenfach Ø%.1f, Wand zum Aussenrand %.1f mm (an den Fahnen %.1f mm); Boden ueber dem Schacht %.1f mm"
+      % (HOLDER_D + 2 * HOLDER_CLR, D_OUT / 2 - HOLDER_D / 2 - HOLDER_CLR, D_OUT / 2 - TAB_SPAN / 2 - HOLDER_CLR, FLOOR_T))
 names = list(COLORS)
 for i, a in enumerate(names):
     for b in names[i + 1:]:
