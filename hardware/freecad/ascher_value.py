@@ -2,7 +2,8 @@
 
 Gemessen: Ø 140 mm, Korpus 60 mm hoch, Stempel 50 mm ueber dem Deckel (davon 30 mm Griff);
 Deckel aus Silberblech ca. 17 mm hoch, Aussenring ca. 12 mm, Innenring Ø ca. 100 mm 10 mm tiefer,
-darin ein Drehteller mit drei geschwungenen Armen zur Mitte, leicht gewoelbt.
+darin ein gewoelbter Stern mit drei schmalen geschwungenen Armen zur Nabe (wie ein 45er-Puck),
+darunter eine helle Schuessel mit runder Oeffnung in der Mitte (Fotos von oben, 02.11.2026).
 Alles andere ist nach Foto geschaetzt und steht unten als Konstante.
 Aufruf: in FreeCAD Makro > Makros ... > ascher_value.py ausfuehren (mit Farben),
 oder ohne Oberflaeche: freecadcmd ascher_value.py  (schreibt ascher_value.FCStd, .step und .obj/.mtl
@@ -32,7 +33,7 @@ RIM_H = 17.0              # Chrom-Deckel (Silberblech) aussen, ca.
 FLAT_W = 12.0             # flacher Aussenring oben, ca.
 INNER_D = 100.0           # Innenring, ca.
 DISH_DEPTH = 10.0         # Innenring liegt so viel tiefer als der Aussenring
-DOME_TOP = 0.0            # Kuppeldom in der Mitte: Oberkante etwa auf Hoehe des Aussenrings (relativ dazu)
+SPIN_RISE = DISH_DEPTH    # Stern (Kuppeldom): gewoelbt, die Mitte liegt wieder etwa auf Hoehe des Aussenrings
 ROD_FREE = 12.0           # blanke Stange zwischen Huelse und Griff
 STROKE = 16.0             # Hub beim Druecken, ca. 15-16 mm (Griff laesst sich nicht abziehen)
 # geschaetzt
@@ -40,10 +41,12 @@ BLACK_H = H - RIM_H       # schwarzer Topf
 RIM_OVER = 0.6            # Deckel steht seitlich etwas ueber
 RIM_R = 2.0               # Rundung der Deckel-Oberkante
 SHEET = 1.2               # Blechstaerke
-ARM_W = 26.0              # Drehteller: Breite der drei Arme (Foto: fast geschlossen, schmale Oeffnungen)
-ARM_BEND = INNER_D / 4    # Drehteller: Kruemmung der Arme (Bogen von der Mitte bis zum Innenring)
-SPIN_RISE = 4.0           # Drehteller: die Arme steigen zur Mitte hin leicht an
-DOME_D = 40.0             # Kuppeldom: Durchmesser
+HUB_R = 11.0              # Stern: Nabe (Ring um die Stange)
+ARM_W_IN, ARM_W_OUT = 7.0, 15.0   # Stern: Breite eines Arms an der Nabe und am Innenring (Fotos von oben)
+ARM_SWEEP = 45.0          # Stern: so weit (Grad) biegt sich ein Arm von der Nabe bis zum Innenring
+ARM_ANGLES = (270, 30, 150)       # wo die Arme am Innenring ankommen: vorn (-y), rechts hinten, links hinten
+PLATE_DEPTH = 7.0         # helle Schuessel unter dem Stern: faellt vom Innenring zur Mitte so weit ab
+PLATE_HOLE_D = 35.0       # runde Oeffnung in der Mitte der Schuessel
 ROD_D = 6.0               # Stange
 COLLAR_D = 8.0            # verchromte Huelse unten an der Stange (Hoehe ergibt sich aus Stempel - Griff - Stange)
 GRIP_D_TOP, GRIP_D_BOTTOM = 20.0, 16.0
@@ -74,34 +77,50 @@ def build(doc, prefix="Ascher_", with_grip=True):
     add("Topf", Part.makeCylinder(D / 2, BLACK_H), (0.08, 0.08, 0.09))
     add("Deckel", rim, (0.88, 0.89, 0.91))
 
-    # ---- Drehteller: drei geschwungene Arme (wie Pflugscharen) vom Innenring zur Mitte, leicht gewoelbt,
-    # in der Mitte der Kuppeldom; zwischen den Armen offen - dort fallen die Kippen beim Drehen in den Topf
+    # ---- helle Schuessel unter dem Stern: faellt vom Innenring zur Mitte ab, dort eine runde Oeffnung
     r_in = INNER_D / 2
+    bowl = Part.makeCone(PLATE_HOLE_D / 2, r_in, PLATE_DEPTH, V(0, 0, z_dish - PLATE_DEPTH))
+    inner = Part.makeCone(PLATE_HOLE_D / 2, r_in, PLATE_DEPTH, V(0, 0, z_dish - PLATE_DEPTH + SHEET))
+    plate = bowl.cut(inner).cut(Part.makeCylinder(PLATE_HOLE_D / 2, PLATE_DEPTH + 2, V(0, 0, z_dish - PLATE_DEPTH - 1)))
+    add("Teller", plate, (0.86, 0.87, 0.9))
+
+    # ---- Drehteller: gewoelbter Stern (Kuppeldom) wie ein 45er-Puck: drei geschwungene Arme von der Nabe
+    # zum Innenring, nach aussen breiter werdend
     R_sph = (r_in ** 2 + SPIN_RISE ** 2) / (2 * SPIN_RISE)
     c = V(0, 0, z_dish + SPIN_RISE - R_sph)
     dome = Part.makeSphere(R_sph, c).cut(Part.makeSphere(R_sph - SHEET, c)).common(
         Part.makeCylinder(r_in, SPIN_RISE + 1, V(0, 0, z_dish - 1)))
     z0, hz = z_dish - 2, SPIN_RISE + 4
-    # ein Arm: Bogen von der Mitte bis zum Innenring (Halbkreis um einen Punkt auf halbem Radius)
-    arm = Part.makeCylinder(ARM_BEND + ARM_W / 2, hz, V(ARM_BEND, 0, z0)).cut(
-        Part.makeCylinder(ARM_BEND - ARM_W / 2, hz, V(ARM_BEND, 0, z0))).common(
-        Part.makeBox(INNER_D, r_in, hz, V(-r_in, 0, z0)))
-    pattern = Part.makeCylinder(DOME_D / 2, hz, V(0, 0, z0))
-    for k in range(3):
+    # ein Arm: Mittellinie von der Nabe zum Innenring, die sich um ARM_SWEEP Grad biegt (endet bei 0 Grad),
+    # Breite waechst von ARM_W_IN auf ARM_W_OUT; Umriss als Polygon aus beiden Kanten
+    n = 40
+    left, right = [], []
+    for i in range(n + 1):
+        t = i / n
+        r = HUB_R * 0.5 + (r_in + 3 - HUB_R * 0.5) * t
+        phi = math.radians(-ARM_SWEEP * (1 - t) ** 2)            # Biegung vor allem nahe der Nabe
+        w = ARM_W_IN + (ARM_W_OUT - ARM_W_IN) * t ** 1.5
+        p = V(r * math.cos(phi), r * math.sin(phi), z0)
+        # Normale zur Mittellinie (numerisch aus dem naechsten Punkt)
+        t2 = min(t + 1e-3, 1.0) if t < 1 else t - 1e-3
+        r2 = HUB_R * 0.5 + (r_in + 3 - HUB_R * 0.5) * t2
+        phi2 = math.radians(-ARM_SWEEP * (1 - t2) ** 2)
+        d = V(r2 * math.cos(phi2), r2 * math.sin(phi2), z0) - p
+        if t >= 1:
+            d = d * -1
+        nrm = V(-d.y, d.x, 0).normalize()
+        left.append(p + nrm * (w / 2))
+        right.append(p - nrm * (w / 2))
+    arm = Part.Face(Part.makePolygon(left + right[::-1] + [left[0]])).extrude(V(0, 0, hz))
+    star = Part.makeCylinder(HUB_R, hz, V(0, 0, z0))
+    for ang in ARM_ANGLES:
         a = arm.copy()
-        a.rotate(V(0, 0, 0), V(0, 0, 1), k * 120 + 30)   # +30: weg von der Zylindernaht bei 0 Grad
-        pattern = pattern.fuse(a)
-    spin = dome.common(pattern)
-    # Kuppeldom: Kugelkalotte auf den Armen, oben etwa auf Hoehe des Aussenrings
-    r_d = DOME_D / 2
-    z_base = c.z + math.sqrt(R_sph ** 2 - r_d ** 2)          # Hoehe der Arm-Woelbung am Domrand
-    z_spin = z_lid + DOME_TOP
-    rise = z_spin - z_base
-    R_d = (r_d ** 2 + rise ** 2) / (2 * rise)
-    cap = Part.makeSphere(R_d, V(0, 0, z_spin - R_d)).common(Part.makeCylinder(r_d, rise + SHEET, V(0, 0, z_base - SHEET)))
-    add("Drehteller", spin.fuse(cap), (0.86, 0.87, 0.9))
+        a.rotate(V(0, 0, 0), V(0, 0, 1), ang)
+        star = star.fuse(a)
+    add("Drehteller", dome.common(star), (0.86, 0.87, 0.9))
 
     # ---- Stempel: Huelse, Stange, schwarzer Griff (with_grip=False: Griff abgezogen)
+    z_spin = z_dish + SPIN_RISE
     z_grip = z_lid + STAMP - GRIP_H
     collar_h = z_grip - ROD_FREE - z_spin
     add("Huelse", Part.makeCylinder(COLLAR_D / 2, collar_h, V(0, 0, z_spin)), (0.8, 0.8, 0.82))
