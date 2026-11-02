@@ -23,6 +23,11 @@ fp-info-cache
 *-backups/
 # erzeugte Fertigungsdaten (hardware/kicad/tools/gen_fab.py)
 hardware/kicad/*/fertigung/
+# erzeugt von hardware/freecad/knauf.py (Modell, STL, Platine als STEP)
+hardware/freecad/*.FCStd
+hardware/freecad/*.FCBak
+hardware/freecad/stl/
+hardware/freecad/*.step
 
 # --- Fremdcode, wird per Anleitung geholt ---
 firmware/tc_ble_sdk/
