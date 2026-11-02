@@ -14,13 +14,14 @@ import java.util.UUID
  * Wie in der Nextcloud-App ereignisbasiert: Statistiken werden immer aus den Einträgen berechnet.
  *
  * Abgleich v2 (Nextcloud ab 0.9.11): jeder Eintrag hat eine ID, gelöschte bleiben als Löschmarke
- * (deleted = 1) stehen, dirty = 1 heißt "noch nicht an Nextcloud gemeldet".
+ * (deleted = 1) stehen, dirty = 1 heißt "noch nicht an Nextcloud gemeldet", ha_dirty = 1
+ * "noch nicht zusätzlich an Home Assistant gemeldet" (Settings.haAlsoNotify).
  *
  * Dazu die alte Warteschlange (Tabelle outbox) für Nextcloud-Versionen ohne v2 und für den
  * einmaligen Umstieg; im v2-Betrieb wird sie nach jedem Abgleich geleert.
  */
 class EntryStore private constructor(context: Context) :
-    SQLiteOpenHelper(context, "entries.db", null, 3) {
+    SQLiteOpenHelper(context, "entries.db", null, 4) {
 
     data class Op(val id: Long, val op: String, val ts: Long)
 
@@ -53,14 +54,18 @@ class EntryStore private constructor(context: Context) :
             )
             db.execSQL("CREATE INDEX entries_id ON entries(id)")
         }
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE entries ADD COLUMN ha_dirty INTEGER NOT NULL DEFAULT 0")
+        }
     }
 
     /**
      * [id]: Eintrags-ID einer Quelle, die selbst IDs vergibt (Uhr); ein schon bekannter Eintrag
      * wird dann nicht noch einmal angelegt. Ergebnis: ob ein neuer Eintrag entstanden ist.
+     * [notifyHa]: zusätzlich an Home Assistant melden.
      */
     @Synchronized
-    fun add(ts: Long, source: String = "manual", forward: Boolean = false, id: String? = null): Boolean {
+    fun add(ts: Long, source: String = "manual", forward: Boolean = false, id: String? = null, notifyHa: Boolean = false): Boolean {
         if (id != null && exists(id)) return false
         writableDatabase.run {
             beginTransaction()
@@ -70,6 +75,7 @@ class EntryStore private constructor(context: Context) :
                     put("ts", ts)
                     put("source", source)
                     put("dirty", if (forward) 1 else 0)
+                    put("ha_dirty", if (notifyHa) 1 else 0)
                 })
                 if (forward) enqueue(this, "add", ts)
                 setTransactionSuccessful()
@@ -87,15 +93,15 @@ class EntryStore private constructor(context: Context) :
 
     /** Löscht genau einen Eintrag mit diesem Zeitstempel. */
     @Synchronized
-    fun delete(ts: Long, forward: Boolean = false) {
+    fun delete(ts: Long, forward: Boolean = false, notifyHa: Boolean = false) {
         writableDatabase.run {
             beginTransaction()
             try {
                 // Löschmarke statt Löschen, damit andere Geräte es per Abgleich erfahren
                 execSQL(
-                    "UPDATE entries SET deleted = 1, dirty = ? WHERE rowid = " +
+                    "UPDATE entries SET deleted = 1, dirty = ?, ha_dirty = ? WHERE rowid = " +
                         "(SELECT rowid FROM entries WHERE ts = ? AND deleted = 0 LIMIT 1)",
-                    arrayOf(if (forward) 1 else 0, ts),
+                    arrayOf(if (forward) 1 else 0, if (notifyHa) 1 else 0, ts),
                 )
                 if (forward) {
                     // Noch nicht gesendet? Dann einfach nicht senden, statt hinzufügen und wieder löschen
@@ -160,6 +166,30 @@ class EntryStore private constructor(context: Context) :
         readableDatabase.rawQuery("SELECT id, ts, source, deleted FROM entries WHERE dirty = 1", null).use { c ->
             List(c.count) { c.moveToNext(); Record(c.getString(0), c.getLong(1), c.getString(2), c.getInt(3) == 1) }
         }
+
+    /** Noch zusätzlich an Home Assistant zu meldende Einträge und Löschmarken */
+    @Synchronized
+    fun haDirtyRecords(): List<Record> =
+        readableDatabase.rawQuery("SELECT id, ts, source, deleted FROM entries WHERE ha_dirty = 1", null).use { c ->
+            List(c.count) { c.moveToNext(); Record(c.getString(0), c.getLong(1), c.getString(2), c.getInt(3) == 1) }
+        }
+
+    @Synchronized
+    fun markHaClean(sent: Collection<Record>) {
+        writableDatabase.run {
+            beginTransaction()
+            try {
+                // nur im gemeldeten Zustand: inzwischen gelöscht = Löschmarke muss noch hinterher
+                sent.forEach {
+                    update("entries", ContentValues().apply { put("ha_dirty", 0) }, "id = ? AND deleted = ?",
+                        arrayOf(it.id, if (it.deleted) "1" else "0"))
+                }
+                setTransactionSuccessful()
+            } finally {
+                endTransaction()
+            }
+        }
+    }
 
     @Synchronized
     fun markClean(ids: Collection<String>) {

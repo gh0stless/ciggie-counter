@@ -1,0 +1,1 @@
+- Neu: Zählen am Handgelenk mit dem Amazfit Band 7 (Zepp OS) über Gadgetbridge

@@ -118,6 +118,8 @@
     <string name="ha_token_hint">Create a token: Home Assistant → your profile → Security → “Long-lived access tokens”.</string>
     <string name="ha_auth_rejected">Home Assistant rejected the token</string>
     <string name="ha_integration_missing">Integration “Ciggie Counter” not found in Home Assistant (HTTP 404)</string>
+    <string name="ha_also_notify">Also report to Home Assistant right away</string>
+    <string name="ha_also_notify_hint">For the integration “Ciggie Counter” (HACS) next to Nextcloud: new and deleted entries and the mute switch also go straight to Home Assistant. It then announces at once and recalculates its reminders, instead of only at its next sync with Nextcloud. The state still comes from Nextcloud.</string>
     <string name="nc_hint">For users of their own Nextcloud with the app “cigarettecounter”: every entry is sent to the server; without a network it is queued and sent later. From server app 0.9.3 on, the device also takes over the state from the server, so several devices (e.g. a tablet) can be used in parallel. Note: when switched on, the server state replaces the entries on this device. Only one device should collect from the Butt Bin.</string>
     <string name="nc_server">Server, e.g. https://cloud.example.org</string>
     <string name="nc_user">User</string>

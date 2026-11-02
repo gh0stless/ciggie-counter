@@ -63,7 +63,10 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Beim Öffnen den Stand der anderen Geräte holen
-        if (Settings.load(this).syncEnabled) de.superascher.counter.sync.Nextcloud.kick(this)
+        val settings = Settings.load(this)
+        if (settings.syncEnabled) de.superascher.counter.sync.Nextcloud.kick(this)
+        // Liegengebliebenes (Home Assistant war nicht erreichbar) nachschicken
+        if (settings.haNotifyEnabled) de.superascher.counter.sync.Nextcloud.kickHomeAssistant(this)
     }
 }
 

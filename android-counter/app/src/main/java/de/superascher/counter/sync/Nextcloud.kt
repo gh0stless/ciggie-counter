@@ -214,8 +214,46 @@ object Nextcloud {
     fun setMuted(context: Context, muted: Boolean) {
         AppState(context).muted = muted
         val settings = Settings.load(context)
-        if (settings.syncEnabled) runCatching { request(context, settings, "POST", "/api/mute", "muted=" + if (muted) "1" else "0") }
+        val body = "muted=" + if (muted) "1" else "0"
+        if (settings.syncEnabled) runCatching { request(context, settings, "POST", "/api/mute", body) }
+        if (settings.haNotifyEnabled) runCatching { request(context, settings.asHomeAssistant(), "POST", "/api/mute", body) }
     }
+
+    /**
+     * Zusätzlich zu Nextcloud: neue Einträge und Löschmarken sofort an Home Assistant, damit die
+     * Integration gleich ansagt und ihre Erinnerungen neu rechnet, statt erst nach ihrem Abgleich.
+     * Nur Senden; den Stand holt das Gerät weiter von Nextcloud.
+     */
+    fun notifyHomeAssistant(context: Context): String {
+        val settings = Settings.load(context)
+        if (!settings.haNotifyEnabled) return ""
+        val store = EntryStore.get(context)
+        val dirty = store.haDirtyRecords()
+        if (dirty.isEmpty()) return context.getString(R.string.nc_all_sent)
+        val body = JSONObject().put("entries", JSONArray().apply {
+            dirty.forEach {
+                put(JSONObject().put("id", it.id).put("ts", isoOf(it.ts)).put("source", it.source).put("deleted", it.deleted))
+            }
+        })
+        try {
+            request(context, settings.asHomeAssistant(), "POST", "/api/v2/entries", body.toString(), json = true)
+        } catch (e: NotFound) {
+            throw IOException(context.getString(R.string.ha_integration_missing))
+        }
+        store.markHaClean(dirty)
+        return context.resources.getQuantityString(R.plurals.nc_sent, dirty.size, dirty.size)
+    }
+
+    fun kickHomeAssistant(context: Context) {
+        val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "homeassistant-now", ExistingWorkPolicy.APPEND_OR_REPLACE,
+            OneTimeWorkRequestBuilder<HomeAssistantWorker>().setConstraints(network)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST).build(),
+        )
+    }
+
+    private fun Settings.asHomeAssistant() = copy(syncTarget = Settings.SYNC_HOME_ASSISTANT)
 
     /** Zugangsdaten prüfen (GET /api/today). */
     fun test(context: Context, settings: Settings) {
@@ -271,5 +309,20 @@ class NextcloudWorker(context: Context, params: WorkerParameters) : CoroutineWor
         }
         state.ncLastSync = System.currentTimeMillis()
         return Result.success()
+    }
+}
+
+/** Zusätzliche Meldung an Home Assistant; ohne Erfolg ein paar neue Versuche, danach kommt es über Nextcloud an. */
+class HomeAssistantWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val state = AppState(applicationContext)
+        state.haLastNotify = System.currentTimeMillis()
+        return try {
+            state.haNotifyStatus = withContext(Dispatchers.IO) { Nextcloud.notifyHomeAssistant(applicationContext) }
+            Result.success()
+        } catch (e: Exception) {
+            state.haNotifyStatus = applicationContext.getString(R.string.nc_retry, e.message ?: e.javaClass.simpleName)
+            if (runAttemptCount < 3) Result.retry() else Result.success()
+        }
     }
 }

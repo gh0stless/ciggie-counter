@@ -29,13 +29,17 @@ object Reminders {
 
     /**
      * Eine Zigarette zählen (Knopf, Nachtragen, Benachrichtigung, Butt Bin).
-     * Sprachansagen über Home Assistant macht die Nextcloud-App, wenn der Eintrag dort ankommt.
+     * Sprachansagen über Home Assistant macht dessen Integration, wenn der Eintrag dort ankommt
+     * (sofort mit [Settings.haAlsoNotify], sonst bei ihrem nächsten Abgleich mit Nextcloud).
      * [announce] = false, wenn der Aufrufer mehrere Einträge auf einmal bringt und selbst einmal ansagt.
      */
     fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true, id: String? = null) {
-        val nc = Settings.load(context).syncEnabled
-        if (!EntryStore.get(context).add(ts, source, forward = nc, id = id)) return
+        val settings = Settings.load(context)
+        val nc = settings.syncEnabled
+        val ha = settings.haNotifyEnabled
+        if (!EntryStore.get(context).add(ts, source, forward = nc, id = id, notifyHa = ha)) return
         if (nc) Nextcloud.kick(context)
+        if (ha) Nextcloud.kickHomeAssistant(context)
         // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
         AppState(context).lastCountCheckAt = Counter.nowSeconds()
         reschedule(context)
@@ -55,9 +59,12 @@ object Reminders {
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
     fun delete(context: Context, ts: Long) {
-        val nc = Settings.load(context).syncEnabled
-        EntryStore.get(context).delete(ts, forward = nc)
+        val settings = Settings.load(context)
+        val nc = settings.syncEnabled
+        val ha = settings.haNotifyEnabled
+        EntryStore.get(context).delete(ts, forward = nc, notifyHa = ha)
         if (nc) Nextcloud.kick(context)
+        if (ha) Nextcloud.kickHomeAssistant(context)
         reschedule(context)
     }
 

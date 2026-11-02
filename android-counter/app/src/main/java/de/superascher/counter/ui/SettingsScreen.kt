@@ -85,6 +85,7 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
     var syncTarget by remember { mutableStateOf(initial.syncTarget) }
     var haUrl by remember { mutableStateOf(initial.haUrl) }
     var haToken by remember { mutableStateOf(initial.haToken) }
+    var haAlsoNotify by remember { mutableStateOf(initial.haAlsoNotify) }
     var saved by remember { mutableStateOf(false) }
 
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -174,6 +175,9 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
             HomeAssistantSection(haUrl, haToken, { haUrl = it }, { haToken = it })
         } else {
             NextcloudSection(ncUrl, ncUser, ncPassword, { ncUrl = it }, { ncUser = it }, { ncPassword = it })
+            SwitchRow(stringResource(R.string.ha_also_notify), haAlsoNotify) { haAlsoNotify = it }
+            Hint(stringResource(R.string.ha_also_notify_hint))
+            if (haAlsoNotify) HomeAssistantSection(haUrl, haToken, { haUrl = it }, { haToken = it }, notifyOnly = true)
         }
 
         Button(onClick = {
@@ -197,6 +201,7 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
                 syncTarget = syncTarget,
                 haUrl = haUrl,
                 haToken = haToken,
+                haAlsoNotify = haAlsoNotify,
             ))
             saved = true
         }, Modifier.fillMaxWidth()) { Text(stringResource(if (saved) R.string.saved else R.string.save)) }
@@ -379,14 +384,18 @@ private fun NextcloudSection(
 }
 
 @Composable
-private fun HomeAssistantSection(url: String, token: String, onUrl: (String) -> Unit, onToken: (String) -> Unit) {
+private fun HomeAssistantSection(
+    url: String, token: String, onUrl: (String) -> Unit, onToken: (String) -> Unit,
+    /** Nur zusätzliche Meldung neben Nextcloud, nicht das Abgleich-Ziel */
+    notifyOnly: Boolean = false,
+) {
     val context = LocalContext.current
     val res = LocalResources.current
     val state = remember { AppState(context) }
     val scope = rememberCoroutineScope()
-    var status by remember { mutableStateOf(ncStatus(res, state)) }
+    var status by remember { mutableStateOf(if (notifyOnly) haNotifyStatus(res, state) else ncStatus(res, state)) }
 
-    Hint(stringResource(R.string.ha_hint))
+    if (!notifyOnly) Hint(stringResource(R.string.ha_hint))
     OutlinedTextField(url, onUrl, Modifier.fillMaxWidth(), singleLine = true,
         label = { Text(stringResource(R.string.ha_server)) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
@@ -415,6 +424,12 @@ private fun HomeAssistantSection(url: String, token: String, onUrl: (String) -> 
             }
         }) { Text(stringResource(R.string.nc_test)) }
     }
+}
+
+private fun haNotifyStatus(res: android.content.res.Resources, state: AppState): String {
+    if (state.haLastNotify == 0L) return ""
+    val time = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(state.haLastNotify))
+    return res.getString(R.string.nc_last, time, state.haNotifyStatus)
 }
 
 private fun ncStatus(res: android.content.res.Resources, state: AppState): String {
