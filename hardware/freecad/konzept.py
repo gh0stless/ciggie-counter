@@ -28,7 +28,10 @@ import ascher_value                # Referenzmodell des Aschers (Masse dort)
 VARIANT = os.environ.get("KONZEPT_VARIANTE", "original")
 # Der Original-Griff laesst sich nicht abziehen: der Knauf wird ueber den ganzen Griff gestuelpt
 # (Schacht mit Gummimuffe), seine Unterkante liegt auf Hoehe der Griff-Unterkante.
-KNOB_D, KNOB_H = 40.0, 90.0        # Hoehe mit Button
+# Hoehe mit Button: der gekaufte Button braucht ca. 20 mm Bautiefe unter der Platte, die gedruckte Kappe
+# sitzt direkt ueber Platine und Modul (nur Tasterhub und etwas Luft) - daher 18 mm niedriger
+KNOB_D = 40.0
+KNOB_H = 90.0 if VARIANT == "original" else 72.0
 BASE_H = 42.0                      # Unterteil (Alu-Optik): Schacht fuer den Griff + Zellenfach
 BAND_H = 3.0                       # Leuchtband (klar), nur beim Original-Button
 TOP_R = 3.0                        # Rundung oben
