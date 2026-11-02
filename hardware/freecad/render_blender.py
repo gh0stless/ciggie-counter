@@ -195,16 +195,20 @@ scene.camera = cam
 cam.data.lens = LENS
 e, a = math.radians(ELEV), math.radians(AZIM)
 half = 0.68 * max(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z)       # halbe Bildbreite mit Rand (Perspektive)
-dist = half / math.tan(cam.data.angle / 2)
-cam.location = center + Vector((math.cos(e) * math.sin(a), -math.cos(e) * math.cos(a), math.sin(e))) * dist
 aim = center - Vector((0, 0, 0.12 * (hi.z - lo.z)))           # etwas tiefer zielen: die Naehe zieht nach oben
+# Nahaufnahmen: KAMERA_ZIEL="x,y,z" (mm) als Bildmitte, KAMERA_ZOOM=f verkleinert den Ausschnitt um f
+if os.environ.get("KAMERA_ZIEL"):
+    aim = Vector([float(v) * 0.001 for v in os.environ["KAMERA_ZIEL"].split(",")])
+half /= float(os.environ.get("KAMERA_ZOOM", "1"))
+dist = half / math.tan(cam.data.angle / 2)
+cam.location = aim + Vector((math.cos(e) * math.sin(a), -math.cos(e) * math.cos(a), math.sin(e))) * dist
 cam.rotation_euler = (aim - cam.location).to_track_quat("-Z", "Y").to_euler()
 
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 96
 scene.cycles.use_denoising = True
 scene.render.resolution_x = WIDTH
-scene.render.resolution_y = WIDTH
+scene.render.resolution_y = int(os.environ.get("BILD_HOEHE", WIDTH))   # BILD_HOEHE: Breitformat fuer Gruppenbilder
 scene.render.film_transparent = False
 scene.view_settings.view_transform = "Standard"     # Weiss bleibt weiss, Schwarz bleibt schwarz
 scene.render.filepath = OUT
