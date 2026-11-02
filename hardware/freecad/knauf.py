@@ -7,7 +7,8 @@ Aufbau von unten (z = 0 = Unterkante Knauf = Unterkante des Original-Griffs):
   Platine     fest im Unterteil (STEP aus KiCad)
   Haube       hohl, oben die Platte mit dem Loch fuer den Arcade-Button
   Button      Sanwa OBSF-30 (fremd/sanwa_obsf30.step, nicht im Repo) oder kompakter Button mit eingebautem
-              Schalter (Joy-IT/Pimoroni-Bauart, KNAUF_BUTTON=joyit), mit Flachsteckhuelsen und Kabelbogen
+              Schalter (Standard: roter Button dieser Bauart von AliExpress; Masse nach dem Joy-IT-Datenblatt),
+              mit Flachsteckhuelsen und Kabelbogen; KNAUF_BUTTON=sanwa fuer den Sanwa
 Noch ohne Gewinde und Rundungen. Masse oben als Konstanten; die Hoehen ergeben sich daraus.
 Aufruf: freecadcmd knauf.py  -> knauf.FCStd, knauf.obj (Blender) und die Pruefung der Abstaende.
 """
@@ -41,9 +42,10 @@ LEDGE_W = 1.2            # Auflage der Platine (Ring)
 NECK_H = 6.0             # Hals oben am Unterteil (spaeter Gewinde), ragt in die Haube
 RING_H = 3.0             # Leuchtring
 PANEL_T = 2.5            # Platte fuer den Button (Schnappbefestigung des Sanwa)
-# ---- Button und Anschluss (KNAUF_BUTTON=sanwa | joyit)
-BUTTON = os.environ.get("KNAUF_BUTTON", "sanwa")
-# Joy-IT "Mini Arcade Button mit Mikroschalter" (Reichelt ARC BUTTON M ..), Masse aus dem Datenblatt:
+# ---- Button und Anschluss (KNAUF_BUTTON=kompakt | sanwa)
+BUTTON = os.environ.get("KNAUF_BUTTON", "kompakt")
+# Kompakter 30-mm-Button mit eingebautem Mikroschalter (gewaehlt: rot von AliExpress). Masse nach dem
+# Datenblatt des Joy-IT "Mini Arcade Button" (Reichelt ARC BUTTON M ..), gleiche Bauart:
 # Gehaeuse Ø30 und 17 mm unter der Platte (Schalter innen), Rand Ø33 x 3,5, Kappe Ø24,5 x 5
 JOY_BODY_D, JOY_BODY_H, JOY_BEZEL_D, JOY_BEZEL_H, JOY_CAP_D, JOY_CAP_H = 30.0, 17.0, 33.0, 3.5, 24.5, 5.0
 JOY_TAB_LEN, JOY_TAB_X = 5.0, 4.0    # Flachsteckzungen unten (nicht im Datenblatt - am Teil nachmessen)
