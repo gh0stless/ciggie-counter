@@ -1,7 +1,7 @@
 """Butt-Bin-Konzept (nur zur Ansicht): Ascher mit aufgestecktem Knauf im Schaltknauf-/Arcade-Stil.
 
 Grobe Formen, keine Konstruktion - die steht in knauf.py. Der Ascher kommt aus ascher_value.py.
-Zwei Varianten (Umgebungsvariable KONZEPT_VARIANTE):
+Zwei Varianten (Umgebungsvariable KONZEPT_VARIANTE), Akzentfarbe rot oder orange (KONZEPT_FARBE):
   original - gekaufter 30-mm-Arcade-Button (Sanwa-Typ): schwarzer Rand, Kappe, Leuchtband in der Mitte
   nachbau  - gedruckter Button: grosse flache Kappe direkt in der Haube, drueckt auf den Taster der
              Platine; ein leuchtender Spaltring um die Kappe statt des Leuchtbands
@@ -34,8 +34,10 @@ BASE_H = 42.0                      # Unterteil: Schacht fuer den Griff + Zellenf
 ELEC_H = 7.0                       # Platine mit Modul und etwas Luft ueber dem Unterteil
 BAND_H = 3.0                       # Leuchtband (klar), nur beim Original-Button
 TOP_R = 3.0                        # Rundung oben
-# Farben: Unterteil, Haube, Button
-COL_BASE, COL_HOOD, COL_BTN = (0.75, 0.04, 0.03), (0.02, 0.02, 0.02), (0.75, 0.04, 0.03)
+# Farben (Umgebungsvariable KONZEPT_FARBE): Unterteil und Button in der Akzentfarbe, Haube schwarz
+ACCENT = {"rot": (0.75, 0.04, 0.03), "orange": (0.9, 0.13, 0.0)}   # linear (Blender), Orange ~ RAL 2004
+FARBE = os.environ.get("KONZEPT_FARBE", "rot")
+COL_BASE, COL_HOOD, COL_BTN = ACCENT[FARBE], (0.02, 0.02, 0.02), ACCENT[FARBE]
 # Original-Button: echtes Modell (Sanwa OBSF-30 von GrabCAD, nicht im Repo) unter fremd/, sonst Platzhalter.
 # Im STEP zeigt die Hochachse nach +y; Panel-Oberkante = Oberkante Rand - SANWA_BEZEL_H (geschaetzt).
 SANWA_STEP = os.path.join(HERE, "fremd", "sanwa_obsf30.step")
@@ -139,7 +141,7 @@ if App.GuiUp:
     Gui.activeDocument().activeView().viewIsometric()
     Gui.SendMsgToActiveView("ViewFit")
 else:
-    name = "konzept" if VARIANT == "original" else "konzept_" + VARIANT
+    name = ("konzept" if VARIANT == "original" else "konzept_" + VARIANT) + ("" if FARBE == "rot" else "_" + FARBE)
     out = os.environ.get("KONZEPT_OUT", os.path.join(HERE, name + ".FCStd"))
     doc.saveAs(out)
     print("gespeichert", out, "| Variante %s, Knauf von z = %.1f bis %.1f; gedrueckt %.1f mm ueber dem Kuppeldom"
