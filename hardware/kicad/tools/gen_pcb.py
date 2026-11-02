@@ -238,6 +238,38 @@ for ref in TH:
     hit = [n for n in top_refs if hits_courtyard(r, fps[n])]
     assert not hit, "Pad trifft Oberseite: %s an %s" % (ref, ", ".join(hit))
     placed[False].append(r)
+# Befestigung im gedruckten Unterteil: die Abflachungen liegen an der Taschenwand (Lage, Verdrehschutz),
+# dazu eine Schraube M2 mitten ueber der Antenne (Nylon - Metall so nah verstimmt die Antenne) und ein
+# Loch fuer eine Nase unten rechts, plus ein Tupfen Heisskleber. Ohne Kupfer, nur Bohrung.
+# Mehr Loecher gehen nicht: oben ueber der Antenne zerschneiden sie die GND-Verbindung auf der Unterseite,
+# unten links und rechts am Rand sperren sie Leiterbahnen (getestet 02.11.2026).
+HOLES = [("H1", 10.5, 11.0, 1.5),
+         ("H2", 0.0, -15.0, 2.2)]
+for ref, x, y, d in HOLES:
+    fp = pcbnew.FOOTPRINT(board)
+    fp.SetReference(ref)
+    fp.SetValue("M2" if d > 2 else "Nase")
+    fp.SetAttributes(pcbnew.FP_BOARD_ONLY | pcbnew.FP_EXCLUDE_FROM_POS_FILES | pcbnew.FP_EXCLUDE_FROM_BOM)
+    fp.Reference().SetVisible(False)
+    fp.Value().SetVisible(False)
+    pad = pcbnew.PAD(fp)
+    pad.SetAttribute(pcbnew.PAD_ATTRIB_NPTH)
+    pad.SetShape(pcbnew.PADSTACK.ALL_LAYERS, pcbnew.PAD_SHAPE_CIRCLE)
+    pad.SetSize(pcbnew.PADSTACK.ALL_LAYERS, pcbnew.VECTOR2I(mm(d), mm(d)))
+    pad.SetDrillSize(pcbnew.VECTOR2I(mm(d), mm(d)))
+    pad.SetLayerSet(pcbnew.PAD.UnplatedHoleMask())
+    fp.Add(pad)
+    board.Add(fp)
+    fps[ref] = fp
+    put(ref, x, y)
+    r = rect_of(fp, 0.4)
+    # gegen das Kupfer der schon gesetzten Pads pruefen (deren Courtyards sind fuer die engen Ecken zu grob)
+    pads = [p.GetBoundingBox() for n, f in fps.items() if n[0] not in "RCH" for p in f.Pads()]
+    assert not any(overlap(r, (b.GetLeft() / 1e6 - CX, b.GetTop() / 1e6 - CY, b.GetRight() / 1e6 - CX,
+                               b.GetBottom() / 1e6 - CY)) for b in pads), "Loch trifft Pad: " + ref
+    assert not [n for n in top_refs if hits_courtyard(r, fps[n])], "Loch trifft Oberseite: " + ref
+    placed[True].append(r)
+    placed[False].append(r)
 # Pufferkondensatoren unten unter dem Modul, dicht am Versorgungs-Pin
 # (oben links neben dem Modul laeuft jetzt die durchkontaktierte Erweiterungs-Reihe)
 for ref in ("C8", "C3", "C2", "C1"):
@@ -314,9 +346,10 @@ for ref, fp in fps.items():
         x0, y0 = bb.GetLeft() / 1e6 - CX, bb.GetTop() / 1e6 - CY
         x1, y1 = bb.GetRight() / 1e6 - CX, bb.GetBottom() / 1e6 - CY
         val = netid[net] if net in netid and len(nets[net]) > 1 else BLOCK
+        inf = INFL + (0.1 if pad.GetAttribute() == pcbnew.PAD_ATTRIB_NPTH else 0)   # Loecher: 0,25 mm Freiraum
         for L, lay in enumerate(LAYERS):
             if pad.IsOnLayer(lay):
-                mark_rect(L, x0 - INFL, y0 - INFL, x1 + INFL, y1 + INFL, val)
+                mark_rect(L, x0 - inf, y0 - inf, x1 + inf, y1 + inf, val)
         if val >= 0:
             # Kernzellen: Zellmitte liegt wirklich im Pad (gedrehte Pads!), mit 0,1 mm Abstand zum Rand
             inner = set()
