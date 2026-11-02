@@ -53,3 +53,5 @@ design/KKK Flagge.jpg
 
 # eigenes Repo (gh0stless/ciggie-counter-ha)
 ciggie-counter-ha/
+
+__pycache__/
