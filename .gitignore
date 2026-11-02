@@ -21,6 +21,7 @@ keystore.properties
 *.kicad_prl
 fp-info-cache
 *-backups/
+.history/
 # erzeugte Fertigungsdaten (hardware/kicad/tools/gen_fab.py)
 hardware/kicad/*/fertigung/
 # erzeugt von hardware/freecad/knauf.py (Modell, STL, Platine als STEP)
