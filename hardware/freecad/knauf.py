@@ -48,7 +48,9 @@ BUTTON = os.environ.get("KNAUF_BUTTON", "kompakt")
 # Datenblatt des Joy-IT "Mini Arcade Button" (Reichelt ARC BUTTON M ..), gleiche Bauart:
 # Gehaeuse Ø30 und 17 mm unter der Platte (Schalter innen), Rand Ø33 x 3,5, Kappe Ø24,5 x 5
 JOY_BODY_D, JOY_BODY_H, JOY_BEZEL_D, JOY_BEZEL_H, JOY_CAP_D, JOY_CAP_H = 30.0, 17.0, 33.0, 3.5, 24.5, 5.0
-JOY_TAB_LEN, JOY_TAB_X = 5.0, 4.0    # Flachsteckzungen unten (nicht im Datenblatt - am Teil nachmessen)
+# Die Fahnen kommen seitlich aus dem Gehaeuse (Fotos des Ali-Angebots, YingLucky) und wuerden die Haube
+# beruehren: nach unten umgebogen, Litze angeloetet. Laenge der gebogenen Fahne unter dem Gehaeuse geschaetzt.
+JOY_TAB_LEN, JOY_TAB_X = 4.0, JOY_BODY_D / 2 - 1.5
 SANWA_STEP = os.path.join(HERE, "fremd", "sanwa_obsf30.step")
 SANWA_BEZEL_H = 2.6      # Rand ueber der Platte (aus dem Modell gemessen)
 FASTON_OVER = 7.0        # Flachsteckhuelse steckt so weit auf der Zunge
@@ -130,7 +132,7 @@ def sanwa_button():
 
 
 def joyit_button():
-    """Aus dem Datenblatt: Gehaeuse mit eingebautem Schalter, Rand, Kappe; dazu zwei Zungen unten."""
+    """Aus dem Datenblatt: Gehaeuse mit eingebautem Schalter, Rand, Kappe; dazu die zwei umgebogenen Fahnen."""
     tabs = Part.makeCompound([Part.makeBox(0.5, 2.8, JOY_TAB_LEN, V(sx * JOY_TAB_X - 0.25, -1.4,
                                                                     -JOY_BODY_H - JOY_TAB_LEN)) for sx in (-1, 1)])
     housing = cyl(JOY_BODY_D / 2 - 0.2, JOY_BODY_H, -JOY_BODY_H).fuse(cyl(JOY_BEZEL_D / 2, JOY_BEZEL_H, 0))
@@ -143,10 +145,15 @@ tip = switch.BoundBox.ZMin                           # Ende der Flachsteckzungen
 # Mitte jeder Zunge aus einem Schnitt kurz ueber dem Zungenende
 tabs = [w.BoundBox for w in switch.slice(V(0, 0, 1), tip + 1.0)]
 fastons = []
-for t in tabs:
-    fastons.append(Part.makeBox(FASTON_W, FASTON_T, FASTON_LEN,
-                                V(t.Center.x - FASTON_W / 2, t.Center.y - FASTON_T / 2, tip + FASTON_OVER - FASTON_LEN)))
-below = FASTON_LEN - FASTON_OVER + WIRE_BEND         # so weit reicht der Anschluss unter die Zungen
+if BUTTON == "sanwa":
+    # Flachsteckhuelsen auf den Zungen, Kabelbogen darunter
+    for t in tabs:
+        fastons.append(Part.makeBox(FASTON_W, FASTON_T, FASTON_LEN, V(t.Center.x - FASTON_W / 2, t.Center.y - FASTON_T / 2,
+                                                                      tip + FASTON_OVER - FASTON_LEN)))
+    below = FASTON_LEN - FASTON_OVER + WIRE_BEND     # so weit reicht der Anschluss unter die Zungen
+else:
+    # angeloetete Litze: nur Loetstelle und Kabelbogen unter der Fahne
+    below = WIRE_BEND
 z_panel = z_parts_top + GAP + below - tip            # Oberkante Platte
 for s, name, rgb in ((switch, "Sanwa_Mikroschalter", (0.6, 0.6, 0.6)), (housing, "Sanwa_Rand", (0.75, 0.04, 0.03)),
                      (cap, "Sanwa_Kappe", (0.75, 0.04, 0.03))):
@@ -155,7 +162,10 @@ for s, name, rgb in ((switch, "Sanwa_Mikroschalter", (0.6, 0.6, 0.6)), (housing,
 for k, f in enumerate(fastons):
     f.translate(V(0, 0, z_panel))
     add("Flachsteckhuelse_%d" % (k + 1), f, (0.2, 0.3, 0.8))
-    bend = Part.makeBox(FASTON_W, FASTON_T, WIRE_BEND, V(f.BoundBox.XMin, f.BoundBox.YMin, f.BoundBox.ZMin - WIRE_BEND))
+# Kabelbogen unter der Huelse (Sanwa) bzw. Loetstelle mit Bogen unter der Fahnenspitze (kompakt)
+ends = [(f.BoundBox.Center, f.BoundBox.ZMin) for f in fastons] or [(t.Center, tip + z_panel) for t in tabs]
+for k, (c, z_end) in enumerate(ends):
+    bend = Part.makeBox(FASTON_W, FASTON_T, WIRE_BEND, V(c.x - FASTON_W / 2, c.y - FASTON_T / 2, z_end - WIRE_BEND))
     add("Kabelbogen_%d" % (k + 1), bend, (0.9, 0.9, 0.2))
 
 # ---- Haube: Rohr ueber dem Hals bis zur Platte, Loch fuer den Button
