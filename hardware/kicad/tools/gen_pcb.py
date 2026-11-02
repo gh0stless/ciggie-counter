@@ -117,9 +117,13 @@ board.Add(edge)
 put("U4", 0, 0, 0)                 # Antenne zeigt nach oben (-y)
 put("SW1", 0, 1.0, 0, bottom=True)  # Stempel-Taster (KSC6) unten mittig, Platine schwimmt auf der Feder
 R_LED = R_BOARD - 1.6              # LED-Ring am Rand, unter dem Leuchtring
-for k in range(9):
-    th = -90 + 40 * k              # Bildschirmwinkel, y nach unten
-    side = -9.5 if 0 < th < 90 else 9.5   # an der Abflachung den Widerstand nach oben setzen
+N_LED = sum(1 for r in fps if r.startswith("D") and r[1:].isdigit())
+for k in range(N_LED):
+    th = -90 + 360 / N_LED * (k + 0.5)   # Bildschirmwinkel (y nach unten), keine LED genau oben/unten
+    t = (th + 180) % 360 - 180            # -180..180
+    # obere Haelfte: Widerstand zur Mitte (weg von den oberen Modulecken);
+    # untere Haelfte: Widerstand nach aussen (unten mittig liegt die Programmier-Reihe)
+    side = (-9.5 if t < 90 else 9.5) if t > 0 else (-9.5 if t > -90 else 9.5)
     for ref, dth in (("D%d" % (k + 1), 0.0), ("R%d" % (k + 1), side)):
         a = math.radians(th + dth)
         put(ref, R_LED * math.cos(a), R_LED * math.sin(a), -(th + dth + 90))
@@ -188,17 +192,20 @@ for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
     placed[True].append(rect_of(fps[ref]))
 autoplace("C9", pad_pos("SW1", "1"), bottom=True)
 # Erweiterungs-Reihe VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm
-EXT = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
-for i, ref in enumerate(EXT):
-    put(ref, -12.0, -4.0 + i * 2.54, 0, bottom=True)
-    placed[True].append(rect_of(fps[ref], 0.3))
-autoplace("TP1", (-7.5, 11.0), bottom=True)
-autoplace("TP2", (11.0, 5.0), bottom=True)
-# externer Taster: zwei Pads nebeneinander links unten, Litzen gehen zum Rand
-autoplace("TP11", (10.0, 7.5), bottom=True)
-autoplace("TP12", (10.0, 10.0), bottom=True)
-for ref, tgt in [("TP9", ("U4", "22")), ("TP10", ("U4", "21"))]:
-    autoplace(ref, pad_pos(*tgt), bottom=True)
+EXT_ROW = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
+# gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4)
+AUX_ROW = ("TP9", "TP10", "TP19", "TP20")
+EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
+for x0, row in ((-12.0, EXT_ROW), (12.0, AUX_ROW)):
+    for i, ref in enumerate(row):
+        put(ref, x0, -4.0 + i * 2.54, 0, bottom=True)
+        placed[True].append(rect_of(fps[ref], 0.3))
+# Litzen-Pads der Zelle oben seitlich (neben der Antennen-Sperrflaeche), unten ist es sonst zu voll
+autoplace("TP1", (-11.0, -7.5), bottom=True)
+autoplace("TP2", (11.0, -7.5), bottom=True)
+# externer Taster: zwei Pads, Litzen gehen zum Rand
+autoplace("TP11", (11.0, 7.0), bottom=True)
+autoplace("TP12", (11.0, 9.5), bottom=True)
 
 # ------------------------------------------------------------------ Router
 G = 0.1
@@ -392,6 +399,7 @@ def commit(net, path):
         t.SetLayer(LAYERS[L])
         t.SetNet(netobj[net])
         board.Add(t)
+        created.append(t)
     for ix, iy in vias:
         v = pcbnew.PCB_VIA(board)
         x, y = xy(ix, iy)
@@ -404,6 +412,7 @@ def commit(net, path):
         v.SetLayerPair(pcbnew.F_Cu, pcbnew.B_Cu)
         v.SetNet(netobj[net])
         board.Add(v)
+        created.append(v)
     return len(vias)
 
 def net_span(plist):
@@ -411,43 +420,64 @@ def net_span(plist):
     ys = [iy for core in plist for _, cells in core for _, iy in cells]
     return max(xs) - min(xs) + max(ys) - min(ys)
 
+created = []
+BASE = [array("h", o) for o in owner]   # Belegung nur mit Pads, fuer neue Versuche
+
+def route_all(order):
+    """Alle Netze in dieser Reihenfolge verlegen; liefert (fehlgeschlagene Netze, Anzahl Durchkontaktierungen)."""
+    for obj in created:
+        board.Remove(obj)
+    created.clear()
+    for L in range(2):
+        owner[L] = array("h", BASE[L])
+    failed, nvias = [], 0
+    for net in order:
+        nid = netid[net]
+        plist = terminals[net]
+        if net == "GND":
+            # GND als Baum ab dem groessten GND-Pad; die Flaechen kommen danach dazu
+            big = max(plist, key=lambda core: sum(len(c) for _, c in core))
+            tree = {(L, ix, iy) for L, cells in big for ix, iy in cells}
+            rest = [core for core in plist if core is not big]
+        else:
+            tree = {(L, ix, iy) for L, cells in plist[0] for ix, iy in cells}
+            rest = plist[1:]
+        while rest:
+            targets = {}
+            for k, core in enumerate(rest):
+                for L, cells in core:
+                    for ix, iy in cells:
+                        targets[(L, ix, iy)] = k
+            allc = list(tree) + list(targets)
+            pad = 60
+            box = (min(c[1] for c in allc) - pad, min(c[2] for c in allc) - pad,
+                   max(c[1] for c in allc) + pad, max(c[2] for c in allc) + pad)
+            path = route(nid, tree, targets, box)
+            if not path:
+                failed.append(net)
+                break
+            k = targets[path[-1]]
+            nvias += commit(net, path)
+            tree |= set(path)
+            for L, cells in rest[k]:
+                tree |= {(L, ix, iy) for ix, iy in cells}
+            rest.pop(k)
+    return failed, nvias
+
 order = sorted((n for n in terminals if len(terminals[n]) > 1 and n != "GND"), key=lambda n: net_span(terminals[n]))
 order.append("GND")
-failed, nvias = [], 0
-for net in order:
-    nid = netid[net]
-    plist = terminals[net]
-    if net == "GND":
-        # GND als Baum ab dem groessten GND-Pad; die Flaechen kommen danach dazu
-        big = max(plist, key=lambda core: sum(len(c) for _, c in core))
-        tree = {(L, ix, iy) for L, cells in big for ix, iy in cells}
-        rest = [core for core in plist if core is not big]
-    else:
-        tree = {(L, ix, iy) for L, cells in plist[0] for ix, iy in cells}
-        rest = plist[1:]
-    while rest:
-        targets = {}
-        for k, core in enumerate(rest):
-            for L, cells in core:
-                for ix, iy in cells:
-                    targets[(L, ix, iy)] = k
-        allc = list(tree) + list(targets)
-        pad = 60
-        box = (min(c[1] for c in allc) - pad, min(c[2] for c in allc) - pad,
-               max(c[1] for c in allc) + pad, max(c[2] for c in allc) + pad)
-        src = tree if net != "GND" else tree
-        path = route(nid, src, targets, box)
-        if not path:
-            failed.append(net)
-            print("NICHT VERLEGT:", net, "(%d Pads offen)" % len(rest))
-            break
-        k = targets[path[-1]]
-        nvias += commit(net, path)
-        tree |= set(path)
-        for L, cells in rest[k]:
-            tree |= {(L, ix, iy) for ix, iy in cells}
-        rest.pop(k)
-    print("verlegt:", net) if net not in failed else None
+# Rip-up and retry: gescheiterte Netze beim naechsten Versuch zuerst verlegen
+best = None
+for attempt in range(8):
+    failed, nvias = route_all(order)
+    print("Versuch %d: %s" % (attempt + 1, "alles verlegt" if not failed else "offen: " + ", ".join(failed)))
+    if best is None or len(failed) < len(best[1]):
+        best = (list(order), failed)
+    if not failed:
+        break
+    order = failed + [n for n in order if n not in failed]
+if failed and best[1] != failed:
+    failed, nvias = route_all(best[0])   # bestes Ergebnis wiederherstellen
 
 # ------------------------------------------------------------------ GND-Flaechen
 for lay in LAYERS:
