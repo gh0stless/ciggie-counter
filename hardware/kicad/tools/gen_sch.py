@@ -277,8 +277,8 @@ def pad(ref, value, x, y, net, fp=TP_S, note=""):
 text("Versorgung: Knopfzelle CR2450 (3 V) im Knauf-Unterteil, zwei Litzen zur Platine", 17.78, 25.4, TITLE)
 # Die Zelle sitzt im festen Unterteil (Federkontakte oder fertiger Halter mit Kabel),
 # die Platine schwimmt auf der Feder -> nur zwei Loetpads fuer kurze, flexible Litzen.
-pad("TP1", "BAT+", 30.48, 50.8, "W", TP_L, "Litze vom Pluskontakt der CR2450")
-pad("TP2", "BAT-", 30.48, 63.5, "GND", TP_L, "Litze vom Minuskontakt der CR2450")
+pad("TP1", "BAT+", 30.48, 50.8, "W", "TestPoint:TestPoint_Pad_1.5x1.5mm", "Litze vom Pluskontakt der CR2450")
+pad("TP2", "BAT-", 30.48, 63.5, "GND", "TestPoint:TestPoint_Pad_1.5x1.5mm", "Litze vom Minuskontakt der CR2450")
 vcc = pin("TP1", "1")
 # 100 uF keramisch puffert die 10-15-mA-Spitzen beim Senden (Knopfzellen haben hohen Innenwiderstand)
 place(C, "C1", "100u", 45.72, vcc[1] + 3.81, {"1": "W", "2": "GND"}, "Capacitor_SMD:C_1206_3216Metric", "", "keramisch, 6,3 V, X5R")

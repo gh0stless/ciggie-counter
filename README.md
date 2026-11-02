@@ -54,7 +54,7 @@ Building needs the [Telink TC BLE SDK](https://github.com/telink-semi/tc_ble_sdk
 
 The firmware is derived from the SDK example `acl_peripheral_demo`; files taken from the SDK keep their Apache-2.0 headers.
 
-A first schematic draft for the board (Ai-Thinker TB-03F module powered directly from a CR2450 coin cell, roughly 2–4 years per cell, plunger switch, eight LEDs on four dimmable channels for a running light in the ring under a cast resin knob, and labelled pads for I2C, a second button, a pump output and two spare pins) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) with a first generated two-layer layout, 34 mm round with a flat for a pogo-pin programming clip (KiCad 10, not yet built or tested).
+A first schematic draft for the board (Ai-Thinker TB-03F module powered directly from a CR2450 coin cell, roughly 2–4 years per cell, plunger switch, eight LEDs on four dimmable channels for a running light in the ring under a cast resin knob, and labelled pads for I2C, a second button, a pump output and two spare pins) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) with a first generated two-layer layout, 34 mm round with two flats for pogo-pin clips (programming row and expansion row) (KiCad 10, not yet built or tested).
 
 ![Butt Bin board draft, top, angled and bottom view](hardware/kicad/buttbin_carrier/render.png)
 

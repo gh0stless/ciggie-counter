@@ -84,27 +84,25 @@ def put(ref, x, y, rot=0.0, bottom=False):
             fp.Flip(fp.GetPosition(), True)
     fp.SetOrientationDegrees(rot)
 
-# Umriss
-Y_FLAT = R_BOARD - 1.0       # Abflachung unten: Pogo-Pin-Klemme fuers Programmieren, Verdrehschutz
+# Umriss: Kreis mit zwei Abflachungen - unten fuer die Programmier-Klemme (4 Pins),
+# links fuer die Klemme an der Erweiterungs-Reihe (6 Pins); zugleich Verdrehschutz im Gehaeuse
+Y_FLAT = R_BOARD - 1.0       # unten
+X_FLAT = R_BOARD - 3.0       # links (Platinenkoordinate -X_FLAT)
+ROW_EDGE = 2.0               # Pad-Mitten 2 mm vor der Abflachung (an die Klemme anpassen)
 
-def outline_pts(shrink=0.0, step=2.0):
-    """Kreis mit Abflachung bei y = Y_FLAT, um shrink nach innen versetzt (Platinenkoordinaten)."""
-    r, yf = R_BOARD - shrink, Y_FLAT - shrink
-    a0 = math.degrees(math.asin(yf / r))      # Winkel, an dem der Kreis die Gerade trifft
-    pts, a = [], a0
-    while a < 180 - a0:
-        a += step
-        aa = min(a, 180 - a0)
-        pts.append((r * math.cos(math.radians(aa)), r * math.sin(math.radians(aa))))
-    a = 180 - a0
-    while a < 360 + a0 - step:
-        a += step
-        pts.append((r * math.cos(math.radians(a)), r * math.sin(math.radians(a))))
-    # Bogen geht oben herum; Gerade unten schliesst die Form
-    return [(x, y) for x, y in pts if y <= yf + 1e-6] + [(r * math.cos(math.radians(a0)), yf)]
+def outline_pts(shrink=0.0, step=1.0):
+    """Kreis, an den Abflachungen auf die Geraden geklemmt, um shrink nach innen versetzt."""
+    r, yf, xf = R_BOARD - shrink, Y_FLAT - shrink, X_FLAT - shrink
+    pts = []
+    for k in range(int(360 / step)):
+        a = math.radians(k * step)
+        x, y = max(r * math.cos(a), -xf), min(r * math.sin(a), yf)
+        if not pts or (abs(pts[-1][0] - x) > 1e-6 or abs(pts[-1][1] - y) > 1e-6):
+            pts.append((x, y))
+    return pts
 
 def inside(x, y, margin):
-    return math.hypot(x, y) <= R_BOARD - margin and y <= Y_FLAT - margin
+    return math.hypot(x, y) <= R_BOARD - margin and y <= Y_FLAT - margin and x >= -X_FLAT + margin
 
 edge = pcbnew.PCB_SHAPE(board)
 edge.SetShape(pcbnew.SHAPE_T_POLY)
@@ -117,13 +115,12 @@ board.Add(edge)
 put("U4", 0, 0, 0)                 # Antenne zeigt nach oben (-y)
 put("SW1", 0, 1.0, 0, bottom=True)  # Stempel-Taster (KSC6) unten mittig, Platine schwimmt auf der Feder
 R_LED = R_BOARD - 1.6              # LED-Ring am Rand, unter dem Leuchtring
+# Winkel im Uhrzeigersinn (Bildschirm, y nach unten), Luecken an den Abflachungen;
+# daneben der Widerstand: oben zur Mitte (weg von den Modulecken), unten nach aussen
+LED_POS = [(30, -9.5), (65, -9.5), (115, 9.5), (141, -9.5), (230, 9.5), (270, 9.5), (310, -9.5), (350, -9.5)]
 N_LED = sum(1 for r in fps if r.startswith("D") and r[1:].isdigit())
-for k in range(N_LED):
-    th = -90 + 360 / N_LED * (k + 0.5)   # Bildschirmwinkel (y nach unten), keine LED genau oben/unten
-    t = (th + 180) % 360 - 180            # -180..180
-    # obere Haelfte: Widerstand zur Mitte (weg von den oberen Modulecken);
-    # untere Haelfte: Widerstand nach aussen (unten mittig liegt die Programmier-Reihe)
-    side = (-9.5 if t < 90 else 9.5) if t > 0 else (-9.5 if t > -90 else 9.5)
+assert N_LED == len(LED_POS), "LED_POS passt nicht zur Zahl der LEDs im Schaltplan"
+for k, (th, side) in enumerate(LED_POS):
     for ref, dth in (("D%d" % (k + 1), 0.0), ("R%d" % (k + 1), side)):
         a = math.radians(th + dth)
         put(ref, R_LED * math.cos(a), R_LED * math.sin(a), -(th + dth + 90))
@@ -160,7 +157,7 @@ def autoplace(ref, target, bottom=False):
     for gx in range(-40, 41):
         for gy in range(-40, 41):
             x, y = gx * 0.5, gy * 0.5
-            if math.hypot(x, y) > rmax or y > Y_FLAT - 3.5:
+            if math.hypot(x, y) > rmax or y > Y_FLAT - 3.5 or x < -X_FLAT + 2.5:
                 continue
             d = math.hypot(x - tx, y - ty)
             if best and d >= best[0]:
@@ -188,24 +185,29 @@ for ref in ("C8", "C3", "C2", "C1"):
 # unten: Entprell-C am Taster, Litzen-Pads der Zelle, Programmier-Pads
 # Programmier-Reihe VBAT, SWS, GND, RST im Raster 2,54 mm, 2 mm vor der Abflachung (Pogo-Pin-Klemme)
 for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
-    put(ref, (i - 1.5) * 2.54, Y_FLAT - 2.0, 0, bottom=True)
+    put(ref, (i - 1.5) * 2.54, Y_FLAT - ROW_EDGE, 0, bottom=True)
     placed[True].append(rect_of(fps[ref]))
 autoplace("C9", pad_pos("SW1", "1"), bottom=True)
 # Erweiterungs-Reihe VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm
 EXT_ROW = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
 # gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4)
 AUX_ROW = ("TP9", "TP10", "TP19", "TP20")
-EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
-for x0, row in ((-12.0, EXT_ROW), (12.0, AUX_ROW)):
-    for i, ref in enumerate(row):
-        put(ref, x0, -4.0 + i * 2.54, 0, bottom=True)
-        placed[True].append(rect_of(fps[ref], 0.3))
-# Litzen-Pads der Zelle oben seitlich (neben der Antennen-Sperrflaeche), unten ist es sonst zu voll
-autoplace("TP1", (-11.0, -7.5), bottom=True)
-autoplace("TP2", (11.0, -7.5), bottom=True)
-# externer Taster: zwei Pads, Litzen gehen zum Rand
-autoplace("TP11", (11.0, 7.0), bottom=True)
-autoplace("TP12", (11.0, 9.5), bottom=True)
+EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2", "TP11", "TP12")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
+# Erweiterungs-Reihe an der linken Abflachung (mittig), Reserve-Reihe gegenueber
+for i, ref in enumerate(EXT_ROW):
+    put(ref, -X_FLAT + ROW_EDGE, (i - 2.5) * 2.54, 0, bottom=True)
+    placed[True].append(rect_of(fps[ref], 0.3))
+for i, ref in enumerate(AUX_ROW):
+    put(ref, 12.0, -3.0 + i * 2.54, 0, bottom=True)
+    placed[True].append(rect_of(fps[ref], 0.3))
+# feste Plaetze (die automatische Suche weicht hier sonst auf unguenstige Stellen aus):
+# Zelle oben rechts neben der Antennen-Sperrflaeche, externer Taster unten rechts
+for ref, x, y in (("TP2", 11.0, -9.6), ("TP1", 11.0, -6.6), ("TP11", 9.8, 7.8), ("TP12", 9.8, 10.7)):
+    put(ref, x, y, 0, bottom=True)
+    r = rect_of(fps[ref])
+    assert not any(overlap(rect_of(fps[ref], 0.15), q) for q in placed[True]), "Pad ueberlappt: " + ref
+    assert all(inside(cx_, cy_, 0.5) for cx_, cy_ in ((r[0], r[1]), (r[2], r[1]), (r[0], r[3]), (r[2], r[3]))), "Pad am Rand: " + ref
+    placed[True].append(r)
 
 # ------------------------------------------------------------------ Router
 G = 0.1
