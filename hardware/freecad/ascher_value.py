@@ -1,6 +1,8 @@
 """Drehascher "Value" als Referenzmodell (FreeCAD 1.x) - zum Anpassen des Knaufs.
 
-Gemessen: Ø 140 mm, Korpus 60 mm hoch, Stempel 50 mm ueber dem Deckel (davon 30 mm Griff).
+Gemessen: Ø 140 mm, Korpus 60 mm hoch, Stempel 50 mm ueber dem Deckel (davon 30 mm Griff);
+Deckel aus Silberblech ca. 17 mm hoch, Aussenring ca. 12 mm, Innenring Ø ca. 100 mm 10 mm tiefer,
+darin ein Drehteller mit drei geschwungenen Armen zur Mitte, leicht gewoelbt.
 Alles andere ist nach Foto geschaetzt und steht unten als Konstante.
 Aufruf: in FreeCAD Makro > Makros ... > ascher_value.py ausfuehren (mit Farben),
 oder ohne Oberflaeche: freecadcmd ascher_value.py  (schreibt ascher_value.FCStd, .step und .obj/.mtl
@@ -25,18 +27,19 @@ D = 140.0                 # Durchmesser
 H = 60.0                  # Korpus mit Deckel
 STAMP = 50.0              # Stempel ueber dem Deckel (Stange + Griff)
 GRIP_H = 30.0             # davon der schwarze Griff
+RIM_H = 17.0              # Chrom-Deckel (Silberblech) aussen, ca.
+FLAT_W = 12.0             # flacher Aussenring oben, ca.
+INNER_D = 100.0           # Innenring, ca.
+DISH_DEPTH = 10.0         # Innenring liegt so viel tiefer als der Aussenring
 # geschaetzt
-BLACK_H = 49.0            # schwarzer Topf (Foto: Chrom zu Schwarz ca. 1 : 4,5)
-RIM_H = 11.0              # Chrom-Deckel aussen (Topf + Deckel = H)
+BLACK_H = H - RIM_H       # schwarzer Topf
 RIM_OVER = 0.6            # Deckel steht seitlich etwas ueber
 RIM_R = 2.0               # Rundung der Deckel-Oberkante
-FLAT_W = 12.0             # flacher Deckelring aussen
-DISH_DEPTH = 6.0          # Mulde: Tiefe
-SPIN_D = 70.0             # Drehteller in der Mulde
-SPIN_RISE = 5.0           # Woelbung des Drehtellers
-SLOT_W = 7.0              # Breite der drei geschwungenen Schlitze zwischen den Speichen
-SLOT_BEND = 12.0          # Kruemmung der Schlitze (Radius des Bogens)
-HUB_R = 9.0               # Nabe in der Mitte bleibt geschlossen
+SHEET = 1.2               # Blechstaerke
+SPIN_RISE = 5.0           # Drehteller: Woelbung zur Mitte hin
+ARM_W = 26.0              # Drehteller: Breite der drei Arme (Foto: fast geschlossen, schmale Oeffnungen)
+ARM_BEND = INNER_D / 4    # Drehteller: Kruemmung der Arme (Bogen von der Mitte bis zum Innenring)
+HUB_R = 8.0               # Nabe in der Mitte
 ROD_D = 6.0               # Stange
 COLLAR_D, COLLAR_H = 8.0, 14.0    # verchromte Huelse unten an der Stange
 GRIP_D_TOP, GRIP_D_BOTTOM = 20.0, 16.0
@@ -57,31 +60,34 @@ def build(doc, prefix="Ascher_", with_grip=True):
         o.Shape = shape
         colors[o.Name] = rgb
 
-    # ---- Topf und Deckel
+    # ---- Topf und Deckel aus Silberblech: flacher Aussenring, Schraege hinunter zum Innenring,
+    # darunter offen (dort sieht man in den Topf)
     z_lid = H
-    rim = fillet_top(Part.makeCylinder(D / 2 + RIM_OVER, RIM_H, V(0, 0, BLACK_H)), z_lid, RIM_R)
-    # Mulde: Kegel vom flachen Ring hinunter zum Drehteller
     z_dish = z_lid - DISH_DEPTH
-    rim = rim.cut(Part.makeCone(SPIN_D / 2, D / 2 - FLAT_W, DISH_DEPTH, V(0, 0, z_dish)))
+    rim = fillet_top(Part.makeCylinder(D / 2 + RIM_OVER, RIM_H, V(0, 0, BLACK_H)), z_lid, RIM_R)
+    rim = rim.cut(Part.makeCone(INNER_D / 2, D / 2 - FLAT_W, DISH_DEPTH, V(0, 0, z_dish)))
+    rim = rim.cut(Part.makeCylinder(INNER_D / 2 - SHEET, z_dish - BLACK_H, V(0, 0, BLACK_H)))
     add("Topf", Part.makeCylinder(D / 2, BLACK_H), (0.08, 0.08, 0.09))
     add("Deckel", rim, (0.88, 0.89, 0.91))
 
-    # ---- Drehteller mit drei geschwungenen Schlitzen zwischen den Speichen (dort fallen die Kippen durch)
-    R_sph = ((SPIN_D / 2) ** 2 + SPIN_RISE ** 2) / (2 * SPIN_RISE)
-    spin = Part.makeSphere(R_sph, V(0, 0, z_dish + SPIN_RISE - R_sph)).common(
-        Part.makeCylinder(SPIN_D / 2, SPIN_RISE, V(0, 0, z_dish)))
-    spin = spin.fuse(Part.makeCylinder(SPIN_D / 2, 1.0, V(0, 0, z_dish - 1.0)))
-    # ein Schlitz: Bogen um einen Punkt neben der Mitte, nur die obere Haelfte, ausserhalb der Nabe
-    z0, hz = z_dish - 1.5, SPIN_RISE + 3
-    arc = Part.makeCylinder(SLOT_BEND + SLOT_W / 2, hz, V(SLOT_BEND, 0, z0)).cut(
-        Part.makeCylinder(SLOT_BEND - SLOT_W / 2, hz, V(SLOT_BEND, 0, z0)))
-    slot = arc.common(Part.makeBox(SPIN_D, SPIN_D / 2, hz, V(-SPIN_D / 2, 0, z0))).common(
-        Part.makeCylinder(SPIN_D / 2 - 3.0, hz, V(0, 0, z0))).cut(Part.makeCylinder(HUB_R, hz, V(0, 0, z0)))
+    # ---- Drehteller: drei geschwungene Arme (wie Pflugscharen) vom Innenring zur Mitte, leicht gewoelbt;
+    # zwischen den Armen offen - dort fallen die Kippen beim Drehen in den Topf
+    r_in = INNER_D / 2
+    R_sph = (r_in ** 2 + SPIN_RISE ** 2) / (2 * SPIN_RISE)
+    c = V(0, 0, z_dish + SPIN_RISE - R_sph)
+    dome = Part.makeSphere(R_sph, c).cut(Part.makeSphere(R_sph - SHEET, c)).common(
+        Part.makeCylinder(r_in, SPIN_RISE + 1, V(0, 0, z_dish - 1)))
+    z0, hz = z_dish - 2, SPIN_RISE + 4
+    # ein Arm: Bogen von der Mitte bis zum Innenring (Halbkreis um einen Punkt auf halbem Radius)
+    arm = Part.makeCylinder(ARM_BEND + ARM_W / 2, hz, V(ARM_BEND, 0, z0)).cut(
+        Part.makeCylinder(ARM_BEND - ARM_W / 2, hz, V(ARM_BEND, 0, z0))).common(
+        Part.makeBox(INNER_D, r_in, hz, V(-r_in, 0, z0)))
+    pattern = Part.makeCylinder(HUB_R, hz, V(0, 0, z0))
     for k in range(3):
-        s3 = slot.copy()
-        s3.rotate(V(0, 0, 0), V(0, 0, 1), k * 120 + 30)   # +30: weg von der Zylindernaht bei 0 Grad
-        spin = spin.cut(s3)
-    add("Drehteller", spin, (0.86, 0.87, 0.9))
+        a = arm.copy()
+        a.rotate(V(0, 0, 0), V(0, 0, 1), k * 120 + 30)   # +30: weg von der Zylindernaht bei 0 Grad
+        pattern = pattern.fuse(a)
+    add("Drehteller", dome.common(pattern), (0.86, 0.87, 0.9))
 
     # ---- Stempel: Huelse, Stange, schwarzer Griff (with_grip=False: Griff abgezogen)
     z_grip = z_lid + STAMP - GRIP_H
