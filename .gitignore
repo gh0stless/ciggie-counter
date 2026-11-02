@@ -28,6 +28,8 @@ hardware/freecad/*.FCStd
 hardware/freecad/*.FCBak
 hardware/freecad/stl/
 hardware/freecad/*.step
+# Ascher-Referenzmodell als Austauschformat (STEP, OBJ fuer Blender) bleibt im Repo
+!hardware/freecad/ascher_value.step
 
 # --- Fremdcode, wird per Anleitung geholt ---
 firmware/tc_ble_sdk/
