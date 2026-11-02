@@ -70,6 +70,10 @@ pts = [o.matrix_world @ Vector(c) for o in objs for c in o.bound_box]
 lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
 hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
 center, size = (lo + hi) / 2, (hi - lo).length
+# Objekte "Hilfe..." zaehlen nur fuer den Bildausschnitt (gleicher Massstab fuer mehrere Bilder), unsichtbar
+for o in objs:
+    if o.name.startswith("Hilfe"):
+        o.hide_render = True
 
 # Studio wie beim Produktfoto: weisser Hintergrund ohne Boden, weiche Flaechenlichter,
 # dunkle Flaechen neben dem Modell (fuer die Kamera unsichtbar), damit Chrom nach Chrom aussieht
