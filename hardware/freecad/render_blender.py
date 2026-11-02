@@ -3,7 +3,7 @@
 Aufruf:  blender -b -P render_blender.py -- <modell.obj> <bild.png> [Hoehenwinkel] [Drehwinkel] [Breite] [Brennweite]
 Optional ein Aufkleber auf einer Zylinderwand: Umgebungsvariablen AUFKLEBER und AUFKLEBER_MASS (siehe unten).
 Materialien nach Teilnamen (Tabelle MATERIALS): Chrom, Blech, mattes und glaenzendes Schwarz, Leuchtband;
-Knauf und Button als glaenzender Lack in der Farbe aus der .mtl;
+gedruckte Knaufteile matt mit Schichtlinien, der Button glaenzend, beide in der Farbe aus der .mtl;
 sonst die Farbe aus der .mtl. Kamera und Licht richten sich nach der Groesse des Modells.
 """
 import math
@@ -53,20 +53,49 @@ MATERIALS = [
     (("Griff",), principled("Schwarz_glaenzend", (0.01, 0.01, 0.01), rough=0.2, coat=0.6)),
     (("Leuchtband",), glow),
 ]
-# Knauf und Button: Farbe aus der .mtl (je nach Farbwahl im Modell), als glaenzender Lack/Kunststoff
-LACQUER = ("Knauf_", "Button_", "Sanwa_Rand", "Sanwa_Kappe")
+# Farbe aus der .mtl (je nach Farbwahl im Modell): gedruckte Knaufteile matt mit Schichtlinien,
+# der gekaufte Button glaenzend (Spritzguss)
+PRINTED = ("Knauf_",)
+MOLDED = ("Button_", "Sanwa_Rand", "Sanwa_Kappe")
+LAYER = 0.2                                    # Schichthoehe des Drucks in mm
+
+
+def layer_lines(mat):
+    """Feine waagrechte Rillen im Abstand LAYER als Bump (Objektkoordinaten sind mm)."""
+    nt = mat.node_tree
+    coord = nt.nodes.new("ShaderNodeTexCoord")
+    wave = nt.nodes.new("ShaderNodeTexWave")
+    wave.wave_type = "BANDS"
+    wave.bands_direction = "Z"
+    wave.inputs["Scale"].default_value = 0.314 / LAYER   # Blender: Periode = 0,314 / Scale
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.12
+    bump.inputs["Distance"].default_value = 0.0001
+    nt.links.new(coord.outputs["Object"], wave.inputs["Vector"])
+    nt.links.new(wave.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], nt.nodes["Principled BSDF"].inputs["Normal"])
+
+
 for o in objs:
     mat = next((m for keys, m in MATERIALS if any(k in o.name for k in keys)), None)
     if mat:
         o.data.materials.clear()
         o.data.materials.append(mat)
-    elif any(o.name.startswith(k) for k in LACQUER) and o.data.materials:
-        b = o.data.materials[0].node_tree.nodes.get("Principled BSDF")
+    elif any(o.name.startswith(k) for k in PRINTED + MOLDED) and o.data.materials:
+        m = o.data.materials[0]
+        b = m.node_tree.nodes.get("Principled BSDF")
         if b:
+            printed = o.name.startswith(PRINTED)
             b.inputs["Metallic"].default_value = 0.0
-            b.inputs["Roughness"].default_value = 0.28
+            b.inputs["Roughness"].default_value = 0.62 if printed else 0.28
             if "Coat Weight" in b.inputs:
-                b.inputs["Coat Weight"].default_value = 0.5
+                b.inputs["Coat Weight"].default_value = 0.0 if printed else 0.5
+            if printed:
+                layer_lines(m)
+            # AKZENT="r,g,b" (linear): Unterteil und Button umfaerben, die Haube bleibt wie im Modell
+            if os.environ.get("AKZENT") and not o.name.startswith("Knauf_Haube"):
+                rgb = [float(v) for v in os.environ["AKZENT"].split(",")]
+                b.inputs["Base Color"].default_value = (*rgb, 1.0)
     for p in o.data.polygons:
         p.use_smooth = True
     try:
