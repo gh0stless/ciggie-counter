@@ -60,12 +60,6 @@ ciggie-counter-ha/
 gadgetbridge/
 /*.log
 __pycache__/
-hardware/freecad/konzept.obj
-hardware/freecad/konzept.mtl
-hardware/freecad/konzept_*.obj
-hardware/freecad/konzept_*.mtl
-# fremde 3D-Modelle (z. B. GrabCAD), nicht weiterverteilen
-hardware/freecad/fremd/
 hardware/freecad/knauf.obj
 hardware/freecad/knauf.mtl
 hardware/freecad/gruppe.obj

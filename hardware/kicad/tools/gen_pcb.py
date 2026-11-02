@@ -113,18 +113,16 @@ board.Add(edge)
 
 # ------------------------------------------------------------------ Platzierung
 put("U4", 0, 0, 0)                 # Antenne zeigt nach oben (-y)
-put("SW1", 0, 1.0, 0, bottom=True)  # Stempel-Taster (KSC6) unten mittig, Platine schwimmt auf der Feder
 R_LED = R_BOARD - 1.6              # LED-Ring am Rand, unter dem Leuchtring
 # Winkel im Uhrzeigersinn (Bildschirm, y nach unten), Luecken an den Abflachungen;
-# daneben der Widerstand: oben zur Mitte (weg von den Modulecken), unten nach aussen
-# 6 LEDs spiegelsymmetrisch zur senkrechten Achse (oben 230/310, unten 65/115, seitlich 30/141)
-LED_POS = [(30, -9.5), (65, -9.5), (115, 9.5), (141, -9.5), (230, 9.5), (310, -9.5)]
+# 6 LEDs spiegelsymmetrisch zur senkrechten Achse (oben 230/310, unten 65/115, seitlich 30/141).
+# Die Vorwiderstaende (einer je LED) sitzen unten, siehe weiter unten.
+LED_ANG = [30, 65, 115, 141, 230, 310]
 N_LED = sum(1 for r in fps if r.startswith("D") and r[1:].isdigit())
-assert N_LED == len(LED_POS), "LED_POS passt nicht zur Zahl der LEDs im Schaltplan"
-for k, (th, side) in enumerate(LED_POS):
-    for ref, dth in (("D%d" % (k + 1), 0.0), ("R%d" % (k + 1), side)):
-        a = math.radians(th + dth)
-        put(ref, R_LED * math.cos(a), R_LED * math.sin(a), -(th + dth + 90))
+assert N_LED == len(LED_ANG), "LED_ANG passt nicht zur Zahl der LEDs im Schaltplan"
+for k, th in enumerate(LED_ANG):
+    a = math.radians(th)
+    put("D%d" % (k + 1), R_LED * math.cos(a), R_LED * math.sin(a), -(th + 90))
 
 def rect_of(fp, inflate=0.0):
     cy = fp.GetCourtyard(pcbnew.F_CrtYd if not fp.IsFlipped() else pcbnew.B_CrtYd)
@@ -142,8 +140,8 @@ for z in fps["U4"].Zones():
     ant = (bb.GetLeft() / 1e6 - CX - 1.5, bb.GetTop() / 1e6 - CY - 1.5,
            bb.GetRight() / 1e6 - CX + 1.5, bb.GetBottom() / 1e6 - CY + 1.5)
 
-placed = {False: [rect_of(fps[r]) for r in fps if r == "U4" or r[0] in "DR"],
-          True: [rect_of(fps["SW1"])]}
+placed = {False: [rect_of(fps[r]) for r in fps if r == "U4" or r[0] == "D"],
+          True: []}
 
 def pad_pos(ref, num):
     for p in fps[ref].Pads():
@@ -180,26 +178,31 @@ def autoplace(ref, target, bottom=False):
     put(ref, best[1], best[2], best[3], bottom)
     placed[bottom].append(rect_of(fps[ref]))
 
-# unten: Programmier-Pads, Entprell-C am Taster, Erweiterungs- und Litzen-Pads
+# unten: Programmier-Pads, Erweiterungs- und Litzen-Pads, Entprell-C am Button-Pad
 # Programmier-Reihe VBAT, SWS, GND, RST im Raster 2,54 mm, 2 mm vor der Abflachung (Pogo-Pin-Klemme)
 for i, ref in enumerate(("TP5", "TP6", "TP7", "TP8")):
     put(ref, (i - 1.5) * 2.54, Y_FLAT - ROW_EDGE, 0, bottom=True)
     placed[True].append(rect_of(fps[ref]))
-autoplace("C9", pad_pos("SW1", "1"), bottom=True)
-# Erweiterungs-Reihe VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm
-EXT_ROW = ("TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
+# Erweiterungs-Reihe (VBAT,) VBAT, GND, SDA, SCL, BTN2, PUMP: senkrecht am Rand, Raster 2,54 mm;
+# das zusaetzliche VBAT-Pad oben liegt ausserhalb der 6er-Klemme
+EXT_ROW = ("TP22", "TP17", "TP18", "TP13", "TP14", "TP15", "TP16")
 # gegenueber: TX, RX und die Reserve-Pins IO1 (PB7), IO2 (PD4); IO3 (PB5) rechts oben, wo frueher D8 sass
 AUX_ROW = ("TP9", "TP10", "TP19", "TP20")
+# daneben (aussen) eine zweite Spalte VBAT, GND, GND: mit der Reserve-Reihe ein Block im Raster 2,54 mm
+PWR_COL = ("TP23", "TP24", "TP25")
 EXT = EXT_ROW + AUX_ROW + ("TP1", "TP2", "TP11", "TP12")   # Beschriftung nach innen (aussen waere sie abgeschnitten)
 # Erweiterungs-Reihe an der linken Abflachung (mittig), Reserve-Reihe gegenueber
-for i, ref in enumerate(EXT_ROW):
+for i, ref in enumerate(EXT_ROW, start=-1):
     put(ref, -X_FLAT + ROW_EDGE, (i - 2.5) * 2.54, 0, bottom=True)
     placed[True].append(rect_of(fps[ref], 0.3))
 for i, ref in enumerate(AUX_ROW):
     put(ref, 12.0, -3.0 + i * 2.54, 0, bottom=True)
     placed[True].append(rect_of(fps[ref], 0.3))
+for i, ref in enumerate(PWR_COL):
+    put(ref, 12.0 + 2.54, -3.0 + i * 2.54, 0, bottom=True)
+    placed[True].append(rect_of(fps[ref], 0.3))
 # feste Plaetze (die automatische Suche weicht hier sonst auf unguenstige Stellen aus):
-# Zelle oben rechts neben der Antennen-Sperrflaeche, externer Taster unten rechts
+# Zelle oben rechts neben der Antennen-Sperrflaeche, Button-Litzen unten rechts
 # (BTN durchkontaktiert, deshalb rechts neben dem Modul)
 for ref, x, y in (("TP2", 11.0, -8.9), ("TP1", 11.0, -6.1), ("TP11", 10.5, 8.6), ("TP12", 8.0, 11.5), ("TP21", 14.0, -6.2)):
     put(ref, x, y, 0, bottom=True)
@@ -213,17 +216,29 @@ for ref, x, y in (("TP2", 11.0, -8.9), ("TP1", 11.0, -6.1), ("TP11", 10.5, 8.6),
 
 # durchkontaktierte Pads belegen auch die Oberseite: dort weder Modul noch LED-Ring treffen
 TH = [r for r in fps if r.startswith("TP") and any(p.GetAttribute() == pcbnew.PAD_ATTRIB_PTH for p in fps[r].Pads())]
-top_parts = list(placed[False])
+def hits_courtyard(r, fp):
+    """Rechteck r gegen den echten (gedrehten) Courtyard von fp, an einem 7x7-Raster von Punkten geprueft."""
+    cy = fp.GetCourtyard(pcbnew.F_CrtYd)
+    return any(cy.Contains(pcbnew.VECTOR2I(mm(CX + r[0] + (r[2] - r[0]) * i / 6), mm(CY + r[1] + (r[3] - r[1]) * j / 6)))
+               for i in range(7) for j in range(7))
+
+top_refs = [n for n in fps if n == "U4" or n[0] == "D"]
 for ref in TH:
     r = rect_of(fps[ref])
     # ohne Zuschlag: der Courtyard laesst schon 0,55 mm um das Kupfer (TP11 sitzt knapp zwischen Modul und D1);
     # nur gegen Bauteile pruefen - Nachbarn im Raster 2,54 mm beruehren sich mit den Courtyards
-    assert not any(overlap(r, q) for q in top_parts), "Pad trifft Oberseite: " + ref
+    hit = [n for n in top_refs if hits_courtyard(r, fps[n])]
+    assert not hit, "Pad trifft Oberseite: %s an %s" % (ref, ", ".join(hit))
     placed[False].append(r)
 # Pufferkondensatoren unten unter dem Modul, dicht am Versorgungs-Pin
 # (oben links neben dem Modul laeuft jetzt die durchkontaktierte Erweiterungs-Reihe)
 for ref in ("C8", "C3", "C2", "C1"):
     autoplace(ref, pad_pos("U4", "8"), bottom=True)
+# Vorwiderstaende unten, jeder moeglichst direkt unter der Kathode seiner LED
+for k in range(N_LED):
+    autoplace("R%d" % (k + 1), pad_pos("D%d" % (k + 1), "1"), bottom=True)
+# Entprell-C unten am Button-Pad (BTN)
+autoplace("C9", pad_pos("TP11", "1"), bottom=True)
 
 # ------------------------------------------------------------------ Router
 G = 0.1
@@ -529,6 +544,10 @@ for fp in fps.values():
             # Programmier-Reihe: Text senkrecht ueber dem Pad, Richtung Platinenmitte
             val.SetTextAngleDegrees(90)
             val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(1.3 + 0.35 * len(fp.GetValue()))))
+        elif fp.GetReference() in PWR_COL:
+            # aussen am Rand ist nur Platz fuer ein Zeichen
+            val.SetText("+" if fp.GetValue() == "VBAT" else "-")
+            val.SetPosition(pcbnew.VECTOR2I(pos.x + mm(1.55), pos.y))
         elif fp.GetReference() == "TP21":
             val.SetPosition(pcbnew.VECTOR2I(pos.x, pos.y - mm(1.4)))
         else:
@@ -540,8 +559,8 @@ for fp in fps.values():
         if fp.GetReference() in TH:
             # durchkontaktiert: Beschriftung auch oben - dort ist zwischen Pad und Modul nur gut 2 mm Platz,
             # also kurze Namen, kleinere Schrift und je Pad die freie Richtung (Modul, LED-Ring)
-            name = TOP_NAME.get(fp.GetValue(), fp.GetValue())
             ref = fp.GetReference()
+            name = val.GetText() if ref in PWR_COL else TOP_NAME.get(fp.GetValue(), fp.GetValue())
             dx, dy = ((1, 0) if ref in EXT_ROW else (-1, 0) if ref in AUX_ROW else (0, 1) if ref == "TP11"
                       else (0, -1) if ref == "TP21" else (1, 0))
             top = pcbnew.PCB_TEXT(board)
@@ -550,7 +569,7 @@ for fp in fps.values():
             top.SetMirrored(False)
             top.SetTextSize(pcbnew.VECTOR2I(mm(0.6), mm(0.6)))
             top.SetTextThickness(mm(0.12))
-            off = 1.0 + 0.3 * len(name) if dx else 1.3 if dy > 0 else 1.4
+            off = 1.55 if ref in PWR_COL else 1.0 + 0.3 * len(name) if dx else 1.3 if dy > 0 else 1.4
             top.SetPosition(pcbnew.VECTOR2I(pos.x + dx * mm(off), pos.y + dy * mm(off)))
             board.Add(top)
 

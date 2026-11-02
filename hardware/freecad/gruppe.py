@@ -28,7 +28,7 @@ names = os.environ.get("GRUPPE", "rot,orange,blau").split(",")
 step = float(os.environ.get("GRUPPE_ABSTAND", "165"))
 back = float(os.environ.get("GRUPPE_VERSATZ", "40"))
 KNOB = {"Knauf_Unterteil": None, "Knauf_Haube": (0.02, 0.02, 0.02), "Leuchtband": (1.0, 0.85, 0.4),
-        "Sanwa_Rand": None, "Sanwa_Kappe": None}       # None = Knauffarbe
+        "Button_Rand": None, "Button_Kappe": None}       # None = Knauffarbe
 
 kn = App.openDocument(os.path.join(HERE, "knauf.FCStd"))
 doc = App.newDocument("Gruppe")

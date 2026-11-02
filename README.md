@@ -3,11 +3,11 @@
 Count your cigarettes, see your patterns, pace yourself, without ads, accounts or tracking.
 
 <p>
-  <img src="design/ki-entwuerfe/entwurf_2.jpg" width="49%" alt="Butt Bin design: a brushed steel ashtray with a clear plunger knob and a ring of LEDs, no cable">
-  <img src="design/ki-entwuerfe/konzept_1.jpg" width="49%" alt="Butt Bin concept: a brushed steel ashtray with a counter display and a plunger button">
+  <img src="design/fotoshooting/01_held.jpg" width="49%" alt="Butt Bin: a spin ashtray with a red and black knob on its plunger, an arcade button on top and a glowing ring in the middle">
+  <img src="design/fotoshooting/11_gruppe_drei.jpg" width="49%" alt="Three Butt Bin ashtrays with orange, red and blue knobs">
 </p>
 
-*Butt Bin design studies (AI-generated renders, not the real prototype yet).*
+*Butt Bin design renders: the counting knob slips over the plunger grip of a spin ashtray (not built yet).*
 
 This repository contains three parts that work on their own or together:
 
@@ -54,7 +54,9 @@ Building needs the [Telink TC BLE SDK](https://github.com/telink-semi/tc_ble_sdk
 
 The firmware is derived from the SDK example `acl_peripheral_demo`; files taken from the SDK keep their Apache-2.0 headers.
 
-A first schematic draft for the board (Ai-Thinker TB-03F module powered directly from a CR2450 coin cell, roughly 2–4 years per cell, plunger switch, six LEDs on three dimmable channels for a running light in the ring under a cast resin knob, and labelled through-hole pads for I2C, a second button, a pump output, an optional fourth LED channel and two spare pins) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) with a first generated two-layer layout, 34 mm round with two flats for pogo-pin clips (programming row and expansion row) (KiCad 10, not yet built or tested).
+A first schematic draft for the board (Ai-Thinker TB-03F module powered directly from a CR2450 coin cell, roughly 2–4 years per cell, button input, six LEDs on three dimmable channels for a running light in the knob's light ring, and labelled through-hole pads for I2C, a second button, a pump output, an optional fourth LED channel and two spare pins) is in [`hardware/kicad/buttbin_carrier/`](hardware/kicad/buttbin_carrier/) with a first generated two-layer layout, 34 mm round with two flats for pogo-pin clips (programming row and expansion row) (KiCad 10, not yet built or tested).
+
+The knob is modelled in FreeCAD in [`hardware/freecad/`](hardware/freecad/): it slips over the plunger grip of the "Value" spin ashtray (rubber sleeve), is 40 mm wide and about 80 mm high, and holds the cell, the board and a clear light ring; on top sits a low-profile mechanical arcade button (Retro+ S30). Hood and base are meant to be 3D-printed. Renders are in [`design/fotoshooting/`](design/fotoshooting/).
 
 ![Butt Bin board draft, top, angled and bottom view](hardware/kicad/buttbin_carrier/render.png)
 

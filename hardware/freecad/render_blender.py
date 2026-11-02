@@ -56,7 +56,7 @@ MATERIALS = [
 # Farbe aus der .mtl (je nach Farbwahl im Modell): gedruckte Knaufteile matt mit Schichtlinien,
 # der gekaufte Button glaenzend (Spritzguss)
 PRINTED = ("Knauf_",)
-MOLDED = ("Button_", "Sanwa_Rand", "Sanwa_Kappe")
+MOLDED = ("Button_",)
 LAYER = 0.2                                    # Schichthoehe des Drucks in mm
 
 
