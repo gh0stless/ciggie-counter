@@ -26,20 +26,19 @@ H = 60.0                  # Korpus mit Deckel
 STAMP = 50.0              # Stempel ueber dem Deckel (Stange + Griff)
 GRIP_H = 30.0             # davon der schwarze Griff
 # geschaetzt
-BLACK_H = 38.0            # schwarzer Topf
-RIM_H = 22.0              # Chrom-Deckel aussen (Topf + Deckel = H)
+BLACK_H = 49.0            # schwarzer Topf (Foto: Chrom zu Schwarz ca. 1 : 4,5)
+RIM_H = 11.0              # Chrom-Deckel aussen (Topf + Deckel = H)
 RIM_OVER = 0.6            # Deckel steht seitlich etwas ueber
 RIM_R = 2.0               # Rundung der Deckel-Oberkante
-FLAT_W = 18.0             # flacher Deckelring aussen
-DISH_D = 96.0             # Mulde: Durchmesser oben
-DISH_DEPTH = 12.0         # Mulde: Tiefe
-SPIN_D = 62.0             # Drehteller in der Mulde
-SPIN_RISE = 4.0           # Woelbung des Drehtellers
+FLAT_W = 12.0             # flacher Deckelring aussen
+DISH_DEPTH = 6.0          # Mulde: Tiefe
+SPIN_D = 70.0             # Drehteller in der Mulde
+SPIN_RISE = 5.0           # Woelbung des Drehtellers
 SLOT_W = 7.0              # Breite der drei geschwungenen Schlitze zwischen den Speichen
 SLOT_BEND = 12.0          # Kruemmung der Schlitze (Radius des Bogens)
 HUB_R = 9.0               # Nabe in der Mitte bleibt geschlossen
 ROD_D = 6.0               # Stange
-COLLAR_D, COLLAR_H = 9.0, 8.0     # Huelse unten an der Stange
+COLLAR_D, COLLAR_H = 8.0, 14.0    # verchromte Huelse unten an der Stange
 GRIP_D_TOP, GRIP_D_BOTTOM = 20.0, 16.0
 GRIP_R = 2.0              # Rundung oben am Griff
 ROD_IN_GRIP = 15.0        # so weit steckt die Stange im Griff
@@ -87,7 +86,7 @@ def build(doc, prefix="Ascher_", with_grip=True):
     # ---- Stempel: Huelse, Stange, schwarzer Griff (with_grip=False: Griff abgezogen)
     z_grip = z_lid + STAMP - GRIP_H
     z_spin = z_dish + SPIN_RISE
-    add("Huelse", Part.makeCylinder(COLLAR_D / 2, COLLAR_H, V(0, 0, z_spin)), (0.1, 0.1, 0.1))
+    add("Huelse", Part.makeCylinder(COLLAR_D / 2, COLLAR_H, V(0, 0, z_spin)), (0.8, 0.8, 0.82))
     add("Stange", Part.makeCylinder(ROD_D / 2, z_grip - z_spin + ROD_IN_GRIP, V(0, 0, z_spin)), (0.75, 0.75, 0.78))
     if with_grip:
         grip = Part.makeCone(GRIP_D_BOTTOM / 2, GRIP_D_TOP / 2, GRIP_H, V(0, 0, z_grip))
