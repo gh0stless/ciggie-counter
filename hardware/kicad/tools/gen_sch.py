@@ -190,6 +190,8 @@ def place(sym, ref, value, x, y, nets, footprint="", lcsc="", note="", rot=0):
     props = [("Reference", ref), ("Value", value), ("Footprint", footprint), ("Datasheet", "")]
     if lcsc:
         props.append(("LCSC", lcsc))
+    if value in REICHELT and footprint in (R0603, C0603, L0603, C1206):
+        props.append(("Reichelt", REICHELT[value]))
     if note:
         props.append(("Hinweis", note))
     small = sym in (R, C, LED, DS, DZ)
@@ -259,12 +261,16 @@ R0603 = "Resistor_SMD:R_0603_1608Metric"
 C0603 = "Capacitor_SMD:C_0603_1608Metric"
 L0603 = "LED_SMD:LED_0603_1608Metric"
 SOD323 = "Diode_SMD:D_SOD-323"
+C1206 = "Capacitor_SMD:C_1206_3216Metric"
 TP_S = "TestPoint:TestPoint_Pad_1.0x1.0mm"
 TP_L = "TestPoint:TestPoint_Pad_2.0x2.0mm"
 # durchkontaktiert: von beiden Seiten loetbar, Litzen gehen durch das Loch (Zugentlastung)
 TP_TH = "TestPoint:TestPoint_THTPad_1.5x1.5mm_Drill0.7mm"
 TP_THR = "TestPoint:TestPoint_THTPad_D1.5mm_Drill0.7mm"
 TITLE = 2.0
+# Bestellnummern bei Reichelt (Platine wird von Hand bestueckt), Einkaufsliste: ../buttbin_carrier/EINKAUF.md
+REICHELT = {"330": "SMD-0603 330", "100n": "WAL 0603B104K500", "10u": "CL10A106KQ8NNNC",
+            "100u": "GRM31CR60J107M", "rot": "LED EL 0603 RT", "gelb": "LED EL 0603 GE", "gruen": "LED EL 0603 GR1"}
 
 def res(ref, val, lcsc, x, y, nets, rot=0):
     place(R, ref, val, x, y, nets, R0603, lcsc, rot=rot)
@@ -283,7 +289,7 @@ pad("TP1", "BAT+", 30.48, 50.8, "W", TP_TH, "Litze vom Pluskontakt der CR2450")
 pad("TP2", "BAT-", 30.48, 63.5, "GND", TP_TH, "Litze vom Minuskontakt der CR2450")
 vcc = pin("TP1", "1")
 # 100 uF keramisch puffert die 10-15-mA-Spitzen beim Senden (Knopfzellen haben hohen Innenwiderstand)
-place(C, "C1", "100u", 45.72, vcc[1] + 3.81, {"1": "W", "2": "GND"}, "Capacitor_SMD:C_1206_3216Metric", "C15008", "keramisch, 6,3 V, X5R")
+place(C, "C1", "100u", 45.72, vcc[1] + 3.81, {"1": "W", "2": "GND"}, C1206, "C15008", "keramisch, 6,3 V, X5R")
 cap("C2", "10u", "C19702", 55.88, vcc[1] + 3.81, {"1": "W", "2": "GND"})
 cap("C3", "100n", "C14663", 66.04, vcc[1] + 3.81, {"1": "W", "2": "GND"})
 wire(vcc, pin("C1", "1"))
@@ -302,9 +308,11 @@ text("Ring: 6 LEDs auf 3 Kanaelen (A B C A B C rundherum = Lauflicht)", 17.78, 9
 # 3 Kanaele, jeder mit eigenem PWM-Kanal (dimmbar). Im Ring reihum angeschlossen:
 # schaltet die Firmware A, B, C nacheinander, laeuft das Licht rundherum.
 # 6 statt 8 LEDs, damit der Ring spiegelsymmetrisch bleibt; der 4. Kanal (PB5) geht als Pad IO3 heraus.
-CHANNELS = [("LED_A", "rot", "C2286", "2"),         # PC4, PWM2
-            ("LED_B", "gelb", "C7429912", "19"),    # PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
-            ("LED_C", "gruen", "C7429914", "12")]   # PB4, PWM4
+# Everlight 19-213 (AlGaInP, max. 2,3-2,4 V): auch Gruen (565 nm) leuchtet noch an der fast leeren Zelle;
+# Smaragdgruen (520 nm, InGaN) braucht ~3 V und bleibt an der CR2450 dunkel
+CHANNELS = [("LED_A", "rot", "", "2"),     # 19-213/R6C-AQ1R2B, PC4, PWM2
+            ("LED_B", "gelb", "", "19"),   # 19-213/Y2C-CQ2R2L/3T, PC1, PWM1_N (PWM1 frei, PC3 ist I2C)
+            ("LED_C", "gruen", "", "12")]  # 19-213/G6C-AP1Q2/3T, PB4, PWM4
 N_LED = 6
 # je LED ein Vorwiderstand (0603, von Hand loetbar) unten direkt unter der LED: die Kathoden-Netze bleiben
 # kurz (ein gemeinsamer Widerstand je Kanal braeuchte Leitungen quer ueber die Platine, um die Antenne herum)
@@ -312,9 +320,9 @@ for i in range(N_LED):
     net, col, lcsc, _ = CHANNELS[i % len(CHANNELS)]
     x = 25.4 + i * 15.24
     place(LED, "D%d" % (i + 1), col, x, 111.76, {"2": net, "1": "W"}, L0603, lcsc, rot=90)
-    res("R%d" % (i + 1), "1k", "C21190", x, 119.38, {"1": "W", "2": "GND"})
+    res("R%d" % (i + 1), "330", "C23138", x, 119.38, {"1": "W", "2": "GND"})
 text("Nur Farben mit ca. 1,8-2,2 V Flussspannung (kein Blau/Weiss): gleich hell bis zur leeren Zelle.\n"
-     "Je LED ein Widerstand 1k (ca. 1 mA), 2 LEDs je Kanal; mehr LEDs pro Kanal gehen genauso.\n"
+     "Je LED ein Widerstand 330R (ca. 2,5-3 mA), 2 LEDs je Kanal; dunkler per PWM. Nie alle 6 voll zugleich (~18 mA).\n"
      "Pins: LED_A PC4 (PWM2), LED_B PC1 (PWM1_N), LED_C PB4 (PWM4); optionaler 4. Kanal PB5 (PWM5) an IO3.\n"
      "Strom nur waehrend der Animation: Lauflicht ca. 2 s je Zaehlung.", 17.78, 142.24, FONT)
 
@@ -382,7 +390,7 @@ flag("GND", 162.56, 175.26)
 # ---------------------------------------------------------------- Ausgabe
 lib = "\n".join(s.text for s in SYMS)
 doc = ('(kicad_sch (version 20250114) (generator "eeschema") (generator_version "9.0") (uuid %s) (paper "A4")\n'
-       '(title_block (title "Butt Bin Traegerplatine") (date "2026-11-02") (rev "0.8 Entwurf") (company "crazy-midi.de")'
+       '(title_block (title "Butt Bin Traegerplatine") (date "2026-11-03") (rev "0.8") (company "crazy-midi.de")'
        ' (comment 1 "TB-03F direkt an Knopfzelle CR2450, Arcade-Button an BTN/GND, Ring 6 LEDs auf 3 PWM-Kanaelen") (comment 2 "Knauf ueber dem Griff des Drehaschers: Zelle unten, Platine, Leuchtring, Button oben"))\n'
        '(lib_symbols\n%s\n)\n%s\n(sheet_instances (path "/" (page "1"))))\n') % (ROOT, lib, "\n".join(items))
 os.makedirs(OUT, exist_ok=True)
