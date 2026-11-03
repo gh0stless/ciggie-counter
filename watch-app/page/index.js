@@ -1,5 +1,5 @@
 import { connect, disconnect, isReady, sendDict } from '../lib/link'
-import { load, save, now, newId, rollDay } from '../lib/store'
+import { load, save, now, newId, rollDay, localDate } from '../lib/store'
 
 // Palette der Projekt-Flagge
 const ESPRESSO = 0x2d0800
@@ -28,9 +28,9 @@ let retryTimer
 
 function hhmm(seconds) {
   if (!seconds) return '--:--'
-  const d = new Date(seconds * 1000)
-  const h = d.getHours()
-  const m = d.getMinutes()
+  const d = localDate(seconds)
+  const h = d.getUTCHours()
+  const m = d.getUTCMinutes()
   return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m
 }
 

@@ -3,13 +3,28 @@
 
 const FILE = 'ciggie.json'
 
-function dayOf(seconds) {
-  const d = new Date(seconds * 1000)
-  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
-}
+let clock = null
 
 export function now() {
   return Math.floor(Date.now() / 1000)
+}
+
+// Das JavaScript des Bandes rechnet in chinesischer Zeit (UTC+8), nicht in der eingestellten.
+// Die richtige Ortszeit kennt nur der Uhr-Sensor; daraus die Verschiebung in Sekunden.
+function offset() {
+  if (!clock) clock = hmSensor.createSensor(hmSensor.id.TIME)
+  const local = Date.UTC(clock.year, clock.month - 1, clock.day, clock.hour, clock.minute, clock.second) / 1000
+  return Math.round((local - now()) / 60) * 60
+}
+
+// Ortszeit als Date, nur mit den getUTC…-Methoden lesen
+export function localDate(seconds) {
+  return new Date((seconds + offset()) * 1000)
+}
+
+function dayOf(seconds) {
+  const d = localDate(seconds)
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
 }
 
 export function load() {

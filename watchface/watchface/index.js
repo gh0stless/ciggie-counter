@@ -30,9 +30,12 @@ function pad(n) {
   return (n < 10 ? '0' : '') + n
 }
 
+// Das JavaScript des Bandes rechnet in chinesischer Zeit (UTC+8); die Ortszeit kennt nur
+// der Uhr-Sensor. Uhrzeit eines Zeitpunkts = jetzt laut Sensor plus Abstand.
 function hhmm(seconds) {
-  const d = new Date(seconds * 1000)
-  return pad(d.getHours()) + ':' + pad(d.getMinutes())
+  const nowLocal = clock.hour * 3600 + clock.minute * 60 + clock.second
+  const t = (((nowLocal + seconds - Math.floor(Date.now() / 1000)) % 86400) + 86400) % 86400
+  return pad(Math.floor(t / 3600)) + ':' + pad(Math.floor(t / 60) % 60)
 }
 
 function readShared() {
