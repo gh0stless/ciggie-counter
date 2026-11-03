@@ -81,6 +81,23 @@ Umgesetzt als `localDate()` in `watch-app/lib/store.js`.
 - Doppeltipp gibt es nicht fertig: zwei `CLICK_UP` innerhalb von 500 ms selbst erkennen.
 - App aus dem Ziffernblatt starten: `hmApp.startApp({ appid: 1077701, url: 'page/index' })`.
 
+## Messen auf Abruf (aus einer App)
+
+Ausprobiert mit einer Probe-App am 03.11.2026. Puls-, Blutsauerstoff- und Stress-Sensor haben
+`start()` und `stop()`; damit misst das Band sofort, nicht erst nach seinem eigenen Zeitplan.
+
+- Werte per Timer abfragen (z. B. jede Sekunde), keine Event-Listener (siehe Absturz oben).
+- **Blutsauerstoff** (`hmSensor.id.SPO2`): Rote LED leuchtet 15–20 s, nach etwa 14 s steht ein
+  neuer Wert in `current`. Fertig ist die Messung, wenn sich `time` ändert; `retcode` blieb
+  dabei unverändert 2 und taugt nicht als Fertig-Meldung.
+- **Stress** (`hmSensor.id.STRESS`): Nach `start()` springen `current` und `time` auf 0, die
+  Messung läuft. Dauer noch nicht gemessen; am Band selbst meist 1–2 Minuten.
+- **Puls** (`hmSensor.id.HEART`): `start()` liefert laufend `current`, `last` ist der letzte
+  feste Wert; daneben `today` und `period`.
+- Nach der Messung und in `onDestroy` immer `stop()` aufrufen, sonst misst das Band weiter.
+- Bildschirm während der Messung anlassen: `hmSetting.setBrightScreen(Sekunden)`, danach
+  `hmSetting.setBrightScreenCancel()` (laut Doku, noch nicht am Band ausprobiert).
+
 ## Verbindung zum Handy (Mini-App-Nachrichten)
 
 - `hmBle.createConnect(cb)`, `hmBle.send(buf, len)`, `hmBle.disConnect()`.
