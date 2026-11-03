@@ -24,3 +24,5 @@ npm run build
 Doppeltipp auf den Ciggie-Kasten öffnet die Band-App.
 
 Texte vorerst nur deutsch.
+
+Erfahrungen und Fallstricke: [docs/zepp-os-band7-tricks.md](../docs/zepp-os-band7-tricks.md).

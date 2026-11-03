@@ -59,3 +59,5 @@ dem nächsten Öffnen der Band-App.
 
 - Die App-ID ist vorläufig selbst gewählt; für eine Veröffentlichung im Zepp-Store
   vergibt die Zepp-Entwicklerseite eine eigene.
+
+Erfahrungen und Fallstricke mit Zepp OS 1.0 auf dem Band 7: [docs/zepp-os-band7-tricks.md](../docs/zepp-os-band7-tricks.md).
