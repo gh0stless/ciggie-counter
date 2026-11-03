@@ -1,4 +1,4 @@
-// Mess-Seite: Puls und Blutsauerstoff (gemessen) und Stress (letzter Firmware-Wert) vor und nach einer Zigarette.
+// Mess-Seite: Puls und Blutsauerstoff vor und nach einer Zigarette.
 // Öffnen startet sofort die Messung: ohne laufende Sitzung "vorher" (danach wird gezählt),
 // mit Sitzung "nachher". Sensoren per start() und Abfrage jede Sekunde, keine Listener
 // (die brachten das Band 7 zum Absturz, siehe docs/zepp-os-band7-tricks.md).
@@ -61,13 +61,8 @@ const STEPS = [
     ready: (s, ctx) => read(s, 'time') !== ctx.t0 && read(s, 'current') > 0,
     value: (s) => read(s, 'current'),
   },
-  {
-    // Stress errechnet die Firmware über längere Zeit; eine erzwungene Messung per start()
-    // ließ das Band nach gut 2 Minuten neu starten. Daher nur den letzten Wert lesen.
-    key: 'stress', label: 'Stress', sensor: 'stress', max: 0, passive: true,
-    ready: () => true,
-    value: (s) => read(s, 'current'),
-  },
+  // Kein Stress: den errechnet die Firmware über längere Zeit, eine erzwungene Messung per
+  // start() ließ das Band neu starten, und current ist außerhalb einer Messung 0.
 ]
 
 function stopSensors() {
@@ -76,13 +71,19 @@ function stopSensors() {
   }
 }
 
-function stopAll() {
+// setBrightScreenCancel() schaltet den Bildschirm sofort aus (und schließt damit die App);
+// nach der Messung stattdessen nur noch kurz anlassen, damit das Ergebnis lesbar ist.
+// [leaving]: beim Schließen der Seite
+function stopAll(leaving) {
   if (poll) {
     timer.stopTimer(poll)
     poll = null
   }
   stopSensors()
-  try { hmSetting.setBrightScreenCancel() } catch (e) {}
+  try {
+    if (leaving) hmSetting.setBrightScreenCancel()
+    else hmSetting.setBrightScreen(20)
+  } catch (e) {}
   measuring = false
 }
 
@@ -100,7 +101,6 @@ function fmt(m) {
   return [
     'Puls ' + (m.hr || '–'),
     'Sauerstoff ' + (m.spo2 ? m.spo2 + ' %' : '–'),
-    'Stress ' + (m.stress || '–'),
   ].join('\n')
 }
 
@@ -130,11 +130,6 @@ function measureAll(title, done) {
     const step = STEPS[index]
     const sensor = sensors[step.sensor]
     ctx = { elapsed: 0, t0: read(sensor, 'time'), l0: read(sensor, 'last') }
-    if (step.passive) {
-      result[step.key] = step.value(sensor)
-      next()
-      return
-    }
     try { sensor.start() } catch (e) {}
   }
 
@@ -176,7 +171,6 @@ function measureAfter() {
     show('Vorher → nachher', '', [
       'Puls ' + arrow(b.hr, m.hr),
       'SpO2 ' + arrow(b.spo2, m.spo2, ' %'),
-      'Stress ' + arrow(b.stress, m.stress),
     ].join('\n'))
   })
 }
@@ -219,7 +213,6 @@ Page({
     sensors = {
       heart: hmSensor.createSensor(hmSensor.id.HEART),
       spo2: hmSensor.createSensor(hmSensor.id.SPO2),
-      stress: hmSensor.createSensor(hmSensor.id.STRESS),
     }
 
     connect(APP_ID, () => { hello(); flush(state) }, (values) => handleData(state, values))
@@ -231,7 +224,7 @@ Page({
   },
 
   onDestroy() {
-    stopAll()
+    stopAll(true)
     if (retryTimer) timer.stopTimer(retryTimer)
     disconnect()
   },

@@ -54,10 +54,16 @@ Handy → Band
 - `state` + 3 + 4 + 5 – aktueller Stand, Antwort auf `hello`
 - `mack` + 1 + 6 – Messung übernommen
 
+## Schnellzählen
+
+Doppeltipp aufs Ziffernblatt öffnet `page/index` mit dem Parameter `count`: Die Seite zählt
+sofort (Vibration), wartet auf die Quittung des Handys und kehrt dann zum Ziffernblatt zurück,
+ohne Quittung nach 8 Sekunden. Unquittiertes bleibt vorgemerkt und wird später gesendet.
+
 ## Mess-Seite
 
 `page/measure` (Dreifachtipp aufs Ziffernblatt): misst beim Öffnen Puls und Blutsauerstoff
-nacheinander und nimmt den letzten Stresswert der Firmware dazu (kurzes Vibrieren am Anfang und Ende, Bildschirm bleibt an), zählt dann
+nacheinander (kurzes Vibrieren am Anfang und Ende, Bildschirm bleibt an), zählt dann
 die Zigarette („Jetzt rauchen“). Beim nächsten Öffnen innerhalb von 3 Stunden, oder über den
 Knopf „Nachher messen“, folgt die zweite Messung und der Vergleich vorher → nachher.
 

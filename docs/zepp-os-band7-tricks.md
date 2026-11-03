@@ -98,8 +98,12 @@ Ausprobiert mit einer Probe-App am 03.11.2026. Puls-, Blutsauerstoff- und Stress
   bleibt ohne Event-Listener 0. Die fertige Messung steht in `last`: warten, bis sich `last`
   ändert (etwa 12 s), sonst den bisherigen `last` als jüngsten Wert nehmen.
 - Nach der Messung und in `onDestroy` immer `stop()` aufrufen, sonst misst das Band weiter.
-- Bildschirm während der Messung anlassen: `hmSetting.setBrightScreen(Sekunden)`, danach
-  `hmSetting.setBrightScreenCancel()` (laut Doku, noch nicht am Band ausprobiert).
+- Bildschirm während der Messung anlassen: `hmSetting.setBrightScreen(Sekunden)`.
+  **Nicht** `hmSetting.setBrightScreenCancel()` zum Beenden nehmen: Das schaltet den
+  Bildschirm sofort aus und schließt damit die App. Stattdessen `setBrightScreen(20)` für
+  eine kurze Restzeit; `setBrightScreenCancel()` nur in `onDestroy`.
+- App mit Parameter starten: `hmApp.startApp({ appid, url: 'page/index', param: 'count' })`,
+  die Seite bekommt ihn in `onInit(param)`. Zurück zum Ziffernblatt mit `hmApp.goBack()`.
 
 ## Verbindung zum Handy (Mini-App-Nachrichten)
 

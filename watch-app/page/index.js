@@ -16,6 +16,18 @@ let lastText
 let statusText
 let vibrate
 let retryTimer
+// Schnellzählen vom Ziffernblatt (Doppeltipp): zählen, quittieren lassen, zurück
+let quick = false
+let backTimer = null
+
+function goBack(delay) {
+  if (backTimer) timer.stopTimer(backTimer)
+  backTimer = timer.createTimer(delay, delay, () => {
+    timer.stopTimer(backTimer)
+    backTimer = null
+    hmApp.goBack()
+  })
+}
 
 function hhmm(seconds) {
   if (!seconds) return '--:--'
@@ -54,9 +66,14 @@ function onReady() {
 function onData(values) {
   handleData(state, values)
   render()
+  if (quick && !state.pending.length) goBack(1500)
 }
 
 Page({
+  onInit(param) {
+    quick = param === 'count'
+  },
+
   build() {
     state = load()
 
@@ -91,6 +108,11 @@ Page({
 
     render()
     connect(APP_ID, onReady, onData)
+    if (quick) {
+      stamp()
+      // ohne Quittung trotzdem zurück; der Eintrag bleibt vorgemerkt
+      goBack(8000)
+    }
 
     // Unbestätigte Einträge und Messungen regelmäßig erneut senden
     retryTimer = timer.createTimer(15000, 15000, () => {
@@ -101,6 +123,7 @@ Page({
 
   onDestroy() {
     if (retryTimer) timer.stopTimer(retryTimer)
+    if (backTimer) timer.stopTimer(backTimer)
     disconnect()
   }
 })

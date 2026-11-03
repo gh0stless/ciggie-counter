@@ -11,7 +11,7 @@ const ASCHE = 0xa1a1a1
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-// Band-App: Doppeltipp auf den Ciggie-Kasten öffnet die Zählseite, Dreifachtipp die Mess-Seite
+// Band-App: Doppeltipp auf den Ciggie-Kasten zählt sofort, Dreifachtipp öffnet die Mess-Seite
 const APP_ID = 1077701
 const TAP_MS = 450
 
@@ -122,13 +122,13 @@ function update() {
   updateCiggie()
 }
 
-function openApp(page) {
+function openApp(page, param) {
   try {
-    hmApp.startApp({ appid: APP_ID, url: page })
+    hmApp.startApp({ appid: APP_ID, url: page, param })
   } catch (e) {}
 }
 
-// Tipps zählen; TAP_MS nach dem letzten entscheiden (zwei = Zählen, drei = Messen)
+// Tipps zählen; TAP_MS nach dem letzten entscheiden (zwei = eine zählen, drei = messen)
 function onPanelTap() {
   taps += 1
   if (tapTimer) timer.stopTimer(tapTimer)
@@ -141,7 +141,7 @@ function onPanelTap() {
   tapTimer = timer.createTimer(TAP_MS, TAP_MS, () => {
     timer.stopTimer(tapTimer)
     tapTimer = null
-    if (taps === 2) openApp('page/index')
+    if (taps === 2) openApp('page/index', 'count')
     taps = 0
   })
 }
