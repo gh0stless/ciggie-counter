@@ -113,6 +113,22 @@ for o in objs:
     if o.name.startswith("Hilfe"):
         o.hide_render = True
 
+# Schnitt (optional): SCHNITT=y in mm schneidet alles vor der Ebene y = SCHNITT weg (Blick von vorn hinein).
+# In Blender statt in FreeCAD: OpenCASCADE scheitert an den Gewinde-Helixflaechen. Platine und Stifte bleiben ganz.
+if os.environ.get("SCHNITT"):
+    cut_y = float(os.environ["SCHNITT"]) * 0.001
+    bpy.ops.mesh.primitive_cube_add(size=2.0, location=(0.0, cut_y - 1.0, 0.0))
+    cutter = bpy.context.active_object
+    cutter.hide_render = True
+    cutter.display_type = "WIRE"
+    for o in objs:
+        if o.name.startswith(("Platine", "Button_Stifte", "Hilfe")):
+            continue
+        mod = o.modifiers.new("Schnitt", "BOOLEAN")
+        mod.operation = "DIFFERENCE"
+        mod.solver = "EXACT"
+        mod.object = cutter
+
 # Aufkleber (optional): PNG mit Transparenz auf eine senkrechte Zylinderwand, der Rundung folgend.
 # AUFKLEBER=bild.png, AUFKLEBER_MASS="Radius,Hoehe-Mitte,Breite,Winkel" in mm/Grad (Winkel 0 = +x, -90 = vorn)
 if os.environ.get("AUFKLEBER"):
