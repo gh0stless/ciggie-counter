@@ -61,9 +61,11 @@ object Speech {
         }
     }
 
-    /** Kurzer Quittungston über die Medienlautstärke wie die Ansagen, schweigt ebenso bei "Nicht stören". */
+    /**
+     * Kurzer Quittungston über die Medienlautstärke wie die Ansagen. Auch bei "Nicht stören":
+     * man hat gerade selbst gezählt und will nur wissen, dass es angekommen ist.
+     */
     fun ack(context: Context) {
-        if (isDoNotDisturb(context.applicationContext)) return
         val tone = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 60) }.getOrNull() ?: return
         tone.startTone(ToneGenerator.TONE_PROP_ACK, 150)
         Handler(Looper.getMainLooper()).postDelayed({ tone.release() }, 400)

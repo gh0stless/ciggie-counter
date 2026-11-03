@@ -48,7 +48,8 @@ object Reminders {
 
     /**
      * "Cigarette number 12 counted." auf dem Handy, nur für Einträge des heutigen Zähltags.
-     * Bei "Alles stumm" nur ein kurzer Quittungston, damit man trotzdem merkt, dass gezählt wurde.
+     * Bei "Alles stumm" oder "Nicht stören" nur ein kurzer Quittungston, damit man trotzdem merkt,
+     * dass gezählt wurde.
      */
     fun announceCount(context: Context, ts: Long) {
         val settings = Settings.load(context)
@@ -57,7 +58,7 @@ object Reminders {
         val counter = Counter(settings)
         val today = counter.today()
         if (counter.logicalDate(ts) != today) return
-        if (muted) return Speech.ack(context)
+        if (muted || Speech.isDoNotDisturb(context.applicationContext)) return Speech.ack(context)
         val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
         Speech.say(context, R.string.speech_counted, number)
     }

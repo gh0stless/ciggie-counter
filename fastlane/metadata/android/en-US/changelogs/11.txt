@@ -1,1 +1,1 @@
-- "Mute everything": counting is confirmed with a short beep instead of the announcement
+- "Mute everything" and Do Not Disturb: counting is confirmed with a short beep instead of the announcement
