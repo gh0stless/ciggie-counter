@@ -11,6 +11,11 @@ from array import array
 import pcbnew
 
 NET_FILE, OUT = sys.argv[1], sys.argv[2]
+# Rev 0.8 ist bei JLCPCB bestellt (03.11.2026, Git-Tag buttbin-pcb-0.8): der Router ist nicht
+# deterministisch, ein neuer Lauf ergaebe eine andere Platine. Aenderungen werden Rev 0.9.
+if os.path.basename(OUT) == "buttbin_carrier.kicad_pcb" and "--neue-revision" not in sys.argv:
+    raise SystemExit("Rev 0.8 ist eingefroren (bestellt). Fuer Rev 0.9 mit --neue-revision aufrufen "
+                     "und in gen_sch.py die Revision hochzaehlen.")
 def _kicad_share():
     """KiCad-Bibliotheken: Umgebungsvariable KICAD_SHARE, sonst die ueblichen Installationsorte (KiCad 10)."""
     cands = [os.environ.get("KICAD_SHARE", ""),
