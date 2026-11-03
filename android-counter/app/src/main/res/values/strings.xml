@@ -71,7 +71,7 @@
     <string name="dnd_hint">At night: set up a schedule for Do Not Disturb (or a mode like “Bedtime”) in Android. Notifications are then silenced and the app stays quiet too, including the announcements.</string>
     <string name="dnd_button">Open Do Not Disturb settings</string>
     <string name="mute_all">Mute everything</string>
-    <string name="mute_all_hint">No reminders and no announcements on any device, until switched off. Counting keeps working. With Nextcloud the switch is shared: the Nextcloud app and Home Assistant can switch it too.</string>
+    <string name="mute_all_hint">No reminders and no announcements on any device, until switched off. Counting keeps working, the phone just confirms it with a short beep. With Nextcloud the switch is shared: the Nextcloud app and Home Assistant can switch it too.</string>
     <string name="ashtray_battery">Battery: %1$d %%</string>
     <string name="reminder_as_notification">Notification</string>
     <string name="reminder_as_speech">Say it aloud</string>

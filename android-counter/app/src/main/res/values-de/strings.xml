@@ -64,7 +64,7 @@
     <string name="dnd_hint">Für die Nacht: In Android einen Zeitplan für „Nicht stören“ (oder einen Modus wie „Schlafenszeit“) einrichten. Dann sind Benachrichtigungen stumm und auch die Ansagen der App schweigen.</string>
     <string name="dnd_button">„Nicht stören“ einrichten</string>
     <string name="mute_all">Alles stumm</string>
-    <string name="mute_all_hint">Keine Erinnerungen und keine Ansagen auf allen Geräten, bis du es wieder ausschaltest. Zählen geht weiter. Mit Nextcloud ist der Schalter gemeinsam: Nextcloud-App und Home Assistant können ihn auch umlegen.</string>
+    <string name="mute_all_hint">Keine Erinnerungen und keine Ansagen auf allen Geräten, bis du es wieder ausschaltest. Zählen geht weiter, das Handy quittiert es nur mit einem kurzen Ton. Mit Nextcloud ist der Schalter gemeinsam: Nextcloud-App und Home Assistant können ihn auch umlegen.</string>
     <string name="ashtray_battery">Batterie: %1$d %%</string>
     <string name="reminder_as_notification">Benachrichtigung</string>
     <string name="reminder_as_speech">Ansage</string>

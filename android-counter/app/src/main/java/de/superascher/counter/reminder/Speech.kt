@@ -3,6 +3,10 @@ package de.superascher.counter.reminder
 import android.app.NotificationManager
 import android.content.Context
 import android.content.res.Configuration
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
@@ -55,6 +59,14 @@ object Speech {
             })
             if (tts.speak(text, TextToSpeech.QUEUE_ADD, null, "speech") != TextToSpeech.SUCCESS) finish()
         }
+    }
+
+    /** Kurzer Quittungston über die Medienlautstärke wie die Ansagen, schweigt ebenso bei "Nicht stören". */
+    fun ack(context: Context) {
+        if (isDoNotDisturb(context.applicationContext)) return
+        val tone = runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 60) }.getOrNull() ?: return
+        tone.startTone(ToneGenerator.TONE_PROP_ACK, 150)
+        Handler(Looper.getMainLooper()).postDelayed({ tone.release() }, 400)
     }
 
     /** "Nicht stören" bzw. ein Modus wie "Schlafenszeit" ist aktiv (keine Berechtigung nötig). */
