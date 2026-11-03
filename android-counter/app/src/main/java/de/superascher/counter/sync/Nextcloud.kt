@@ -153,11 +153,10 @@ object Nextcloud {
     }
 
     /**
-     * Regeln (Settings.sameRules) mit Nextcloud abgleichen (ab Server-App 0.11.0): die jüngste
-     * Änderung gilt. Home Assistant als Ziel kennt das noch nicht; ältere Server: nichts tun.
+     * Regeln (Settings.sameRules) abgleichen, mit Nextcloud ab Server-App 0.11.0 bzw. der
+     * HA-Integration ab 0.3.0: die jüngste Änderung gilt. Ältere Server: nichts tun.
      */
     private fun syncRules(context: Context, settings: Settings) {
-        if (settings.syncTarget != Settings.SYNC_NEXTCLOUD) return
         val server = try {
             JSONObject(request(context, settings, "GET", "/api/v2/settings", null))
         } catch (e: NotFound) {
