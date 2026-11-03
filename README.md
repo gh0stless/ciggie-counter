@@ -42,6 +42,8 @@ All texts are in `android-counter/app/src/main/res/values/strings.xml` (English)
 
 > **A small piece of unsolicited advice 🤓:** your phone does not belong in your home network. It runs dozens of apps you cannot look into, so put it in the **guest Wi-Fi** and keep your servers, NAS and smart home in the main network. Ciggie Counter is built for that: the phone talks to Home Assistant or Nextcloud over **HTTPS** like any other device on the internet – no open ports towards the phone, no local network access needed.
 
+> **Keep the clocks in sync ⏱️:** with several systems (phone, Nextcloud, Home Assistant, watch) every entry carries the time of the device that counted it. Reminders ("you may smoke again", "did you count them all?") and announcements are computed from those times, and Home Assistant only announces entries younger than 10 minutes. A server clock that is a few minutes off is enough for announcements to go missing or reminders to come early. Check that every server really synchronises its time (on Home Assistant OS: `timedatectl status` in the host shell must say `System clock synchronized: yes`).
+
 ## Butt Bin (firmware)
 
 Prototype on a Telink TLSR825x (dev board TLSR8258DK48, target module Ebyte E104-BT12LSP with TLSR8253).
