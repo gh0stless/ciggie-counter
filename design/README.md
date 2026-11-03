@@ -5,7 +5,7 @@
 | `brand-flag.jpg` | Project flag; source of the app colours (referenced from the Android and Nextcloud code) |
 | `screenshots/` | App screenshots (the Nextcloud app store loads some of them by URL, so keep the names) |
 | `ascher/` | Photos of the ashtrays the knob is made for (Value spin ashtray, a cheap one) |
-| `fotoshooting/` | Renders of the current knob design on the Value ashtray: single shots from several angles and distances, close-ups, group shots in different button colours |
+| `fotoshooting/` | Renders of the current knob design on the Value ashtray: single shots from several angles and distances, close-ups, group shots in different button colours. Root: red base, black hood, red button; `shooting2_haube_rot/`: black base, red hood, black button; `shooting3_schwarz/`: all black with a red button (plus a group in all button colours); `14_`/`15_vergleich_*`: the three schemes side by side |
 | `aufkleber/` | "Butt Bin by crazy-midi.de" sticker: print-ready SVGs (text as outlines), PNG previews, generator `gen_aufkleber.py` |
 
 The renders come from the FreeCAD scripts in `hardware/freecad/` (`knauf.py`, `gruppe.py`, `ascher_value.py`)
