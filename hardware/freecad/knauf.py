@@ -284,4 +284,7 @@ if not App.GuiUp:
             s.exportStep(os.path.join(dd, n + ".step"))
             MeshPart.meshFromShape(Shape=s, LinearDeflection=0.02, AngularDeflection=0.2).write(
                 os.path.join(dd, n + ".stl"))
+        # Platine mit Bauteilen als Referenz (Ansehen, Probe-Passung, Dummy drucken), in Einbaulage
+        MeshPart.meshFromShape(Shape=doc.getObject("Platine").Shape, LinearDeflection=0.02,
+                               AngularDeflection=0.2).write(os.path.join(dd, "Platine_Referenz.stl"))
     print("gespeichert", out)

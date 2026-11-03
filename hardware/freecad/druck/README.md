@@ -8,6 +8,7 @@ Es gibt jede Datei als STL für den Druckdienst und als STEP zum Weiterbearbeite
 | Unterteil | `Knauf_Unterteil` | MJF/SLS PA12, eingefärbt (rot oder schwarz) | ca. 48 cm³ |
 | Leuchtring | `Leuchtband` | Klares Resin (SLA), innen nicht geschliffen | ca. 6 cm³ |
 | Haube | `Knauf_Haube` | MJF/SLS PA12, eingefärbt | ca. 6 cm³ |
+| Platine (nur Referenz) | `Platine_Referenz.stl` | nicht drucken, oder als Dummy zur Passprobe | |
 
 Der Knauf hat Ø 44 mm und ist mit Button etwa 80 mm hoch. Auf dem Value-Drehascher kommt alles
 zusammen auf etwa 160 mm.
@@ -34,6 +35,14 @@ zusammen auf etwa 160 mm.
 - **Haube:**
   - Unten das Innengewinde.
   - Oben die Platte mit dem 30-mm-Loch für den Retro+-Button S30. Der Button schnappt von oben ein.
+
+## Baugruppe zum Auseinanderziehen
+
+`../explosion.py` legt `knauf_explosion.FCStd` an. Darin ist jedes Bauteil einzeln enthalten, auch die
+Platine und die Nylon-Schraube. In der Tabelle „Steuerung“ stellt die Zelle `Explosion` ein, wie weit
+die Teile auseinanderstehen: 0 heißt zusammengebaut, 1 auseinandergezogen, Zwischenwerte gehen auch.
+
+Aufruf: `freecad.exe explosion.py`, nach `knauf.py`. Mit Oberfläche werden die Farben mitgespeichert.
 
 ## Zusammenbau und Zellenwechsel
 
