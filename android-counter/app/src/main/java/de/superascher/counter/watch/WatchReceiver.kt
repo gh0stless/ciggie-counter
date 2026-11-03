@@ -35,12 +35,14 @@ class WatchReceiver : BroadcastReceiver() {
 
     private fun reply(context: Context, cmd: String, id: String?) {
         val counter = Counter(Settings.load(context))
-        val today = counter.onDay(EntryStore.get(context).entries.value, counter.today())
+        val entries = EntryStore.get(context).entries.value
+        val today = counter.onDay(entries, counter.today())
         val dict = JSONArray()
         dict.put(item(KEY_CMD, cmd))
         if (id != null) dict.put(item(KEY_ID, id))
         dict.put(item(KEY_TODAY, today.size))
         dict.put(item(KEY_LAST, today.maxOrNull() ?: 0L))
+        dict.put(item(KEY_NEXT, counter.allowedFrom(entries) ?: 0L))
 
         context.sendBroadcast(Intent(ACTION_SEND).apply {
             putExtra("uuid", APP_UUID)
@@ -91,5 +93,7 @@ class WatchReceiver : BroadcastReceiver() {
         const val KEY_TIME = 2
         const val KEY_TODAY = 3
         const val KEY_LAST = 4
+        /** Nächste erlaubt ab (Unix-Sekunden), 0 = keine Pause eingestellt */
+        const val KEY_NEXT = 5
     }
 }

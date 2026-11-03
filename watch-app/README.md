@@ -35,6 +35,7 @@ PebbleKit-Dictionaries.
 | 2 | Zeitpunkt (Unix-Sekunden) |
 | 3 | Anzahl heute |
 | 4 | Zeitpunkt der letzten (Unix-Sekunden) |
+| 5 | Nächste erlaubt ab (Unix-Sekunden, 0 = keine Pause eingestellt) |
 
 Band → Handy
 
@@ -43,8 +44,16 @@ Band → Handy
 
 Handy → Band
 
-- `ack` + 1 + 3 (+ 4) – Eintrag übernommen (Duplikate per ID verwerfen, trotzdem quittieren)
-- `state` + 3 + 4 – aktueller Stand, Antwort auf `hello`
+- `ack` + 1 + 3 (+ 4, 5) – Eintrag übernommen (Duplikate per ID verwerfen, trotzdem quittieren)
+- `state` + 3 + 4 + 5 – aktueller Stand, Antwort auf `hello`
+
+## Ziffernblatt
+
+Die Band-App legt ihren Stand im systemweiten Zwischenspeicher ab
+(`hmFS.SysProSetChars('ciggie', 'Tag|heute|letzte|nächste')`, Tag als JJJJMMTT); das
+Ziffernblatt in [../watchface/](../watchface/) liest ihn. Er ist so aktuell wie die letzte
+Verbindung der Band-App: Was am Handy oder Butt Bin gezählt wird, sieht das Band erst nach
+dem nächsten Öffnen der Band-App.
 
 ## Hinweise
 

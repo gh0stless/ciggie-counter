@@ -17,6 +17,7 @@ const KEY_ID = 1
 const KEY_TIME = 2
 const KEY_TODAY = 3
 const KEY_LAST = 4
+const KEY_NEXT = 5
 
 let state
 let countText
@@ -39,6 +40,8 @@ function render() {
   const link = isReady() ? '●' : '○'
   const pending = state.pending.length ? '  ↑' + state.pending.length : ''
   statusText.setProperty(hmUI.prop.TEXT, link + pending)
+  // Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands)
+  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next].join('|'))
 }
 
 function flush() {
@@ -53,6 +56,8 @@ function stamp() {
   state.pending.push({ id: newId(), t })
   state.today += 1
   state.last = t
+  // bis das Handy quittiert: Pause so lang wie die letzte bekannte
+  if (state.gap > 0) state.next = t + state.gap
   save(state)
   try {
     vibrate.stop()
@@ -84,6 +89,10 @@ function onData(values) {
     }
     if (typeof values[KEY_LAST] === 'number' && values[KEY_LAST] > state.last) {
       state.last = values[KEY_LAST]
+    }
+    if (typeof values[KEY_NEXT] === 'number') {
+      state.next = values[KEY_NEXT]
+      state.gap = state.next > state.last ? state.next - state.last : 0
     }
     save(state)
   }
