@@ -24,6 +24,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.superascher.counter.R
 import de.superascher.counter.data.EntryStore
 import de.superascher.counter.data.Settings
+import de.superascher.counter.logic.Counter
 import de.superascher.counter.reminder.Reminders
 
 private const val SPLASH_MS = 2000L
@@ -120,7 +122,9 @@ private fun AppTheme(content: @Composable () -> Unit) {
 private fun AppScreen() {
     val context = LocalContext.current
     val entries by EntryStore.get(context).entries.collectAsStateWithLifecycle()
-    var settings by remember { mutableStateOf(Settings.load(context)) }
+    // auch der Abgleich kann Einstellungen ändern (Regeln von anderen Geräten): dann neu laden
+    val settingsVersion by Settings.changes.collectAsStateWithLifecycle()
+    var settings by remember(settingsVersion) { mutableStateOf(Settings.load(context)) }
     var tab by remember { mutableIntStateOf(0) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -144,7 +148,11 @@ private fun AppScreen() {
         when (tab) {
             0 -> HomeScreen(entries, settings, modifier, onOpenAshtray = { tab = 2 })
             1 -> StatsScreen(entries, settings, modifier)
-            else -> SettingsScreen(settings, modifier) { updated ->
+            else -> key(settingsVersion) { SettingsScreen(settings, modifier) { saved ->
+                // Regeln geändert: ab jetzt gilt dieser Stand auch für die anderen Geräte
+                val updated = saved.copy(
+                    rulesUpdatedAt = if (saved.sameRules(settings)) settings.rulesUpdatedAt else Counter.nowSeconds(),
+                )
                 // Andere Nextcloud oder anderer Nutzer: beim nächsten Abgleich den Server-Stand komplett übernehmen
                 if (updated.syncTarget != settings.syncTarget || updated.haUrl.trim().trimEnd('/') != settings.haUrl ||
                     updated.ncUrl.trim().trimEnd('/') != settings.ncUrl || updated.ncUser.trim() != settings.ncUser) {
@@ -154,7 +162,7 @@ private fun AppScreen() {
                 settings = updated
                 Reminders.reschedule(context)
                 de.superascher.counter.ashtray.Background.schedule(context) // startet ggf. auch die Nextcloud-Übertragung
-            }
+            } }
         }
     }
 }

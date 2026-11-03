@@ -85,6 +85,11 @@
                 Minuten zwischen Zigaretten
                 <input type="number" id="cigcounter-setting-fixed-interval" step="1" min="1" inputmode="numeric">
             </label>
+
+            <label class="cigcounter-radio-label">
+                <input type="radio" name="cigcounter-interval-mode" id="cigcounter-mode-off" value="off">
+                Keine Pausen vorgeben
+            </label>
         </div>
 
         <hr class="cigcounter-settings-divider">

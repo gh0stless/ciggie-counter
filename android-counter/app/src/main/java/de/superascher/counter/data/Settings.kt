@@ -3,6 +3,9 @@ package de.superascher.counter.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /** Einstellungen, Bedeutung wie in der Nextcloud-App (nextcloud-app/PROJEKT.md §6). */
 data class Settings(
@@ -38,7 +41,21 @@ data class Settings(
     val haAlsoNotify: Boolean = false,
     /** Stand fürs Ciggie-Counter-Ziffernblatt über den Wetter-Kanal von Gadgetbridge (ersetzt das Wetter) */
     val watchfaceWeather: Boolean = false,
+    /**
+     * Letzte Änderung der Regeln (Unix-Sekunden, 0 = nie), für den Abgleich mit Nextcloud:
+     * es gilt die jüngste Änderung, egal auf welchem Gerät.
+     */
+    val rulesUpdatedAt: Long = 0,
 ) {
+    /**
+     * Die Regeln, die auf allen Geräten gleich sein sollen (Kosten, Tageswechsel, Pausen,
+     * Takt der Zähl-Erinnerung). Wie gemeldet wird (Benachrichtigung, Ansage), bleibt pro Gerät.
+     */
+    fun sameRules(o: Settings): Boolean =
+        costPerCigarette == o.costPerCigarette && dayStartHour == o.dayStartHour && intervalMode == o.intervalMode &&
+            dailyTarget == o.dailyTarget && wakeHours == o.wakeHours && fixedIntervalMinutes == o.fixedIntervalMinutes &&
+            countCheckMinutes == o.countCheckMinutes
+
     /** Abgleich eingeschaltet: das gewählte Ziel ist vollständig eingetragen */
     val syncEnabled: Boolean
         get() = if (syncTarget == SYNC_HOME_ASSISTANT) validUrl(haUrl) && haToken.isNotEmpty()
@@ -55,6 +72,11 @@ data class Settings(
         /** Nur http:// oder https:// mit Hostnamen (fängt Tippfehler wie "htttps://" ab). */
         fun validUrl(url: String): Boolean =
             Regex("^https?://[^/\\s]+.*").matches(url.trim())
+
+        private val _changes = MutableStateFlow(0)
+
+        /** Zählt jedes Speichern hoch, auch durch den Abgleich: geöffnete Ansichten laden dann neu. */
+        val changes: StateFlow<Int> = _changes.asStateFlow()
 
         private fun prefs(context: Context): SharedPreferences =
             context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -82,6 +104,7 @@ data class Settings(
                 haToken = getString("ha_token", "") ?: "",
                 haAlsoNotify = getBoolean("ha_also_notify", false),
                 watchfaceWeather = getBoolean("watchface_weather", false),
+                rulesUpdatedAt = getLong("rules_updated_at", 0),
             )
         }
 
@@ -109,7 +132,8 @@ data class Settings(
             putString("ha_token", s.haToken.trim())
             putBoolean("ha_also_notify", s.haAlsoNotify)
             putBoolean("watchface_weather", s.watchfaceWeather)
-        }
+            putLong("rules_updated_at", s.rulesUpdatedAt)
+        }.also { _changes.value += 1 }
     }
 }
 

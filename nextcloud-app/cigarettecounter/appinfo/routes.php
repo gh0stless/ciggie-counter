@@ -99,5 +99,15 @@ return [
             'url' => '/api/v2/entries',
             'verb' => 'POST',
         ],
+        [
+            'name' => 'api#rulesV2',
+            'url' => '/api/v2/settings',
+            'verb' => 'GET',
+        ],
+        [
+            'name' => 'api#pushRulesV2',
+            'url' => '/api/v2/settings',
+            'verb' => 'POST',
+        ],
     ],
 ];

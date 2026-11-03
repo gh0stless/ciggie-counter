@@ -69,6 +69,7 @@ object Nextcloud {
         val settings = Settings.load(context)
         if (!settings.syncEnabled) return context.getString(R.string.nc_not_configured)
         syncDeviceState(context, settings)
+        syncRules(context, settings)
         return syncV2(context, settings)
             ?: if (settings.syncTarget == Settings.SYNC_HOME_ASSISTANT) throw IOException(context.getString(R.string.ha_integration_missing))
             else syncLegacy(context, settings)
@@ -149,6 +150,46 @@ object Nextcloud {
             sent++
         }
         return sent
+    }
+
+    /**
+     * Regeln (Settings.sameRules) mit Nextcloud abgleichen (ab Server-App 0.11.0): die jüngste
+     * Änderung gilt. Home Assistant als Ziel kennt das noch nicht; ältere Server: nichts tun.
+     */
+    private fun syncRules(context: Context, settings: Settings) {
+        if (settings.syncTarget != Settings.SYNC_NEXTCLOUD) return
+        val server = try {
+            JSONObject(request(context, settings, "GET", "/api/v2/settings", null))
+        } catch (e: NotFound) {
+            return
+        }
+        val serverAt = server.optLong("updatedAt")
+        if (serverAt > settings.rulesUpdatedAt) {
+            fun double(key: String) = if (server.isNull(key)) null else server.getDouble(key)
+            fun int(key: String) = if (server.isNull(key)) null else server.getInt(key)
+            Settings.save(context, settings.copy(
+                costPerCigarette = double("costPerCigarette"),
+                dayStartHour = int("dayStartHour") ?: 0,
+                intervalMode = server.optString("intervalMode", "computed"),
+                dailyTarget = int("dailyTarget"),
+                wakeHours = double("wakeHours") ?: 18.0,
+                fixedIntervalMinutes = int("fixedIntervalMinutes"),
+                countCheckMinutes = int("countCheckIntervalMinutes") ?: 10,
+                rulesUpdatedAt = serverAt,
+            ))
+            Reminders.reschedule(context)
+        } else if (settings.rulesUpdatedAt > serverAt) {
+            val body = JSONObject()
+                .put("updatedAt", settings.rulesUpdatedAt)
+                .put("costPerCigarette", settings.costPerCigarette ?: JSONObject.NULL)
+                .put("dayStartHour", settings.dayStartHour)
+                .put("intervalMode", settings.intervalMode)
+                .put("dailyTarget", settings.dailyTarget ?: JSONObject.NULL)
+                .put("wakeHours", settings.wakeHours)
+                .put("fixedIntervalMinutes", settings.fixedIntervalMinutes ?: JSONObject.NULL)
+                .put("countCheckIntervalMinutes", settings.countCheckMinutes)
+            request(context, settings, "POST", "/api/v2/settings", body.toString(), json = true)
+        }
     }
 
     /** Batterie des Butt Bin melden, Stumm-Schalter holen (ab Server-App 0.9.10). */

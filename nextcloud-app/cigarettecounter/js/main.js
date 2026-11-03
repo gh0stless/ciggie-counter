@@ -19,6 +19,7 @@
     var settingWakeHoursInput = document.getElementById('cigcounter-setting-wake-hours');
     var modeComputedRadio = document.getElementById('cigcounter-mode-computed');
     var modeFixedRadio = document.getElementById('cigcounter-mode-fixed');
+    var modeOffRadio = document.getElementById('cigcounter-mode-off');
     var settingFixedIntervalInput = document.getElementById('cigcounter-setting-fixed-interval');
     var computedIntervalEl = document.getElementById('cigcounter-computed-interval');
     var pushEnableBtn = document.getElementById('cigcounter-push-enable');
@@ -317,6 +318,8 @@
                     : '→ noch kein Wert (Ziel eintragen und speichern)';
                 if (data.intervalMode === 'fixed') {
                     modeFixedRadio.checked = true;
+                } else if (data.intervalMode === 'off') {
+                    modeOffRadio.checked = true;
                 } else {
                     modeComputedRadio.checked = true;
                 }
@@ -324,7 +327,7 @@
     }
 
     function saveSettings() {
-        var mode = modeFixedRadio.checked ? 'fixed' : 'computed';
+        var mode = modeFixedRadio.checked ? 'fixed' : (modeOffRadio.checked ? 'off' : 'computed');
         var params = new URLSearchParams();
         params.set('costPerCigarette', settingCostInput.value);
         params.set('dailyTarget', settingTargetInput.value);

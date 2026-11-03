@@ -352,9 +352,13 @@ class EntryService {
     /**
      * 'computed' (aus Tagesmenge / Wachzeit-Fenster) oder 'fixed' (fest vorgegebene Minutenzahl).
      */
+    /** 'computed' (aus Tagesmenge), 'fixed' (feste Minuten) oder 'off' (keine Pausen) */
     public function getIntervalMode(string $uid): string {
-        $raw = $this->config->getUserValue($uid, 'cigarettecounter', 'interval_mode', 'computed');
-        return $raw === 'fixed' ? 'fixed' : 'computed';
+        return self::normalizeMode($this->config->getUserValue($uid, 'cigarettecounter', 'interval_mode', 'computed'));
+    }
+
+    private static function normalizeMode(?string $mode): string {
+        return in_array($mode, ['fixed', 'off'], true) ? $mode : 'computed';
     }
 
     public function getFixedIntervalMinutes(string $uid): ?int {
@@ -397,7 +401,7 @@ class EntryService {
             $this->config->deleteUserValue($uid, 'cigarettecounter', 'daily_target');
         }
 
-        $this->config->setUserValue($uid, 'cigarettecounter', 'interval_mode', $intervalMode === 'fixed' ? 'fixed' : 'computed');
+        $this->config->setUserValue($uid, 'cigarettecounter', 'interval_mode', self::normalizeMode($intervalMode));
 
         if ($fixedIntervalMinutes !== null && $fixedIntervalMinutes !== '') {
             $this->config->setUserValue($uid, 'cigarettecounter', 'fixed_interval_minutes', (string)(int)$fixedIntervalMinutes);
@@ -420,6 +424,57 @@ class EntryService {
         }
 
         $this->config->setUserValue($uid, 'cigarettecounter', 'next_allowed_reminder_enabled', $nextAllowedReminderEnabled === '1' ? '1' : '0');
+        // Regeln im Browser gespeichert: gelten jetzt für alle Geräte
+        $this->config->setUserValue($uid, 'cigarettecounter', 'rules_updated_at', (string)time());
+    }
+
+    /**
+     * Regeln für den Abgleich zwischen Geräten (ApiController::rulesV2).
+     *
+     * @return array<string, mixed>
+     */
+    public function getRules(string $uid): array {
+        return [
+            'updatedAt' => (int)$this->config->getUserValue($uid, 'cigarettecounter', 'rules_updated_at', '0'),
+            'costPerCigarette' => $this->getCostPerCigarette($uid),
+            'dayStartHour' => $this->getDayStartHour($uid),
+            'intervalMode' => $this->getIntervalMode($uid),
+            'dailyTarget' => $this->getDailyTarget($uid),
+            'wakeHours' => $this->getWakeHours($uid),
+            'fixedIntervalMinutes' => $this->getFixedIntervalMinutes($uid),
+            'countCheckIntervalMinutes' => $this->getCountCheckIntervalMinutes($uid),
+        ];
+    }
+
+    /**
+     * Regeln eines Geräts übernehmen, wenn sie jünger sind als die gespeicherten.
+     * Fehlende oder leere Werte heißen "nicht gesetzt" (wie im Browser-Formular).
+     *
+     * @param array<string, mixed> $rules
+     */
+    public function mergeRules(string $uid, array $rules): bool {
+        $at = (int)$rules['updatedAt'];
+        if ($at <= (int)$this->config->getUserValue($uid, 'cigarettecounter', 'rules_updated_at', '0')) {
+            return false;
+        }
+        $set = function (string $key, $value, callable $cast) use ($uid): void {
+            if ($value === null || $value === '') {
+                $this->config->deleteUserValue($uid, 'cigarettecounter', $key);
+            } else {
+                $this->config->setUserValue($uid, 'cigarettecounter', $key, (string)$cast($value));
+            }
+        };
+        $hour = $rules['dayStartHour'] ?? null;
+        $set('day_start_hour', is_numeric($hour) && (int)$hour >= 0 && (int)$hour <= 23 ? $hour : null, 'intval');
+        $set('cost_per_cigarette', $rules['costPerCigarette'] ?? null, 'floatval');
+        $set('daily_target', $rules['dailyTarget'] ?? null, 'intval');
+        $set('wake_hours', $rules['wakeHours'] ?? null, 'floatval');
+        $set('fixed_interval_minutes', $rules['fixedIntervalMinutes'] ?? null, 'intval');
+        $set('count_check_interval_minutes', $rules['countCheckIntervalMinutes'] ?? null, 'intval');
+        $this->config->setUserValue($uid, 'cigarettecounter', 'interval_mode', self::normalizeMode($rules['intervalMode'] ?? null));
+        // Zeit des Absenders, damit Geräte mit leicht abweichender Uhr sich nicht gegenseitig überholen
+        $this->config->setUserValue($uid, 'cigarettecounter', 'rules_updated_at', (string)$at);
+        return true;
     }
 
     /**
@@ -432,6 +487,9 @@ class EntryService {
      * Zigarette des Tages gilt der statische Ausgangswert (Wachzeit/Ziel).
      */
     public function getIntervalMinutes(string $uid): ?float {
+        if ($this->getIntervalMode($uid) === 'off') {
+            return null;
+        }
         if ($this->getIntervalMode($uid) === 'fixed') {
             $fixed = $this->getFixedIntervalMinutes($uid);
             return ($fixed !== null && $fixed > 0) ? (float)$fixed : null;

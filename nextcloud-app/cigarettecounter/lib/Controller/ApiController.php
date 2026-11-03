@@ -168,6 +168,32 @@ class ApiController extends Controller {
     }
 
     /**
+     * Abgleich der Regeln (Kosten, Tageswechsel, Pausen, Takt der Zähl-Erinnerung) zwischen
+     * Geräten. Wie gemeldet wird (Push, HA, Handy), bleibt pro Gerät und gehört nicht dazu.
+     * Antwort mit "updatedAt" (Unix-Sekunden, 0 = nie geändert); es gilt die jüngste Änderung.
+     *
+     * @NoAdminRequired
+     */
+    public function rulesV2(): JSONResponse {
+        return new JSONResponse($this->entryService->getRules($this->userId));
+    }
+
+    /**
+     * JSON wie bei GET plus "updatedAt" des Absenders. Ältere Stände als der des Servers werden
+     * nicht übernommen; die Antwort ist immer der gültige Stand.
+     *
+     * @NoAdminRequired
+     */
+    public function pushRulesV2(): JSONResponse {
+        $rules = $this->request->getParams();
+        if (!isset($rules['updatedAt']) || !is_numeric($rules['updatedAt'])) {
+            return new JSONResponse(['error' => 'updatedAt fehlt'], 400);
+        }
+        $this->entryService->mergeRules($this->userId, $rules);
+        return new JSONResponse($this->entryService->getRules($this->userId));
+    }
+
+    /**
      * @NoAdminRequired
      */
     public function resetAll(): JSONResponse {

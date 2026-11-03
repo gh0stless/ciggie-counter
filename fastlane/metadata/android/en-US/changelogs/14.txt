@@ -1,0 +1,1 @@
+- New: with Nextcloud (server app 0.11.0 or newer), the rules – cost, start of day, breaks, count reminder interval – are the same on all devices; the latest change wins
