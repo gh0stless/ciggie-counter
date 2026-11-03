@@ -23,6 +23,10 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- Ziffernblatt-Stand über den Wetter-Kanal: Gadgetbridge finden -->
+        <intent>
+            <action android:name="nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER" />
+        </intent>
     </queries>
 
     <application

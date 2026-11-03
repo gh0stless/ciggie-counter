@@ -58,6 +58,9 @@
     <string name="section_reminders">Erinnerungen</string>
     <string name="reminder_next_allowed">„Du darfst wieder“</string>
     <string name="reminder_count_check">„Hast du alle gezählt?“</string>
+    <string name="section_watch">Uhr</string>
+    <string name="watchface_weather">Ziffernblatt aktuell halten</string>
+    <string name="watchface_weather_hint">Für das Ciggie-Counter-Ziffernblatt auf dem Amazfit Band 7 mit Gadgetbridge: Nach jeder Änderung geht der Stand über den Wetter-Kanal von Gadgetbridge ans Band – so ist das Ziffernblatt auch aktuell, wenn am Handy oder am Butt Bin gezählt wird. Das ersetzt das Wetter auf dem Band; mit einer Wetter-App ausgeschaltet lassen.</string>
     <string name="speak_count">Jede Eingabe ansagen</string>
     <string name="speak_count_hint">Das Handy sagt nach jeder Eingabe „Zigarette Nummer 12 gezählt.“, auch für den Butt Bin. Lautstärke = Medienlautstärke.</string>
     <string name="speech_counted">Zigarette Nummer %d gezählt.</string>

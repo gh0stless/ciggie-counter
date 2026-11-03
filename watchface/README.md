@@ -6,9 +6,10 @@ dazu die Tagesmenge. Im Always-on-Display bleiben Uhrzeit und Pause.
 Ziel: Amazfit Band 7 (Zepp OS 1.0, 194 × 368). Die Werte stammen aus der Band-App
 [../watch-app/](../watch-app/), die sie im systemweiten Zwischenspeicher ablegt
 (`hmFS.SysProGetChars('ciggie')`). Ein Ziffernblatt darf auf Zepp OS 1.0 nicht selbst mit
-dem Handy sprechen; der Stand ist daher so aktuell wie die letzte Verbindung der Band-App.
-Nach einem Neustart des Bandes ist der Zwischenspeicher leer, bis die Band-App einmal
-geöffnet wird.
+dem Handy sprechen. Zusätzlich schickt die Ciggie-App ihren Stand über den Wetter-Kanal von
+Gadgetbridge (Einstellung „Ziffernblatt aktuell halten“), dann ist das Ziffernblatt auch nach
+Zählen am Handy oder Butt Bin sofort aktuell; es nimmt den neueren der beiden Stände
+(Details in [../watch-app/README.md](../watch-app/README.md#ziffernblatt)).
 
 ## Bauen
 

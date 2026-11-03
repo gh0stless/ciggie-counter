@@ -97,6 +97,7 @@ object Reminders {
         } else {
             cancelAlarm(context, ACTION_COUNT_CHECK)
         }
+        de.superascher.counter.watch.WatchFace.push(context)
     }
 
     fun createChannel(context: Context) {

@@ -36,6 +36,8 @@ data class Settings(
     val haToken: String = "",
     /** Beim Abgleich mit Nextcloud: Einträge und Stumm-Schalter zusätzlich sofort an Home Assistant (für die Ansage) */
     val haAlsoNotify: Boolean = false,
+    /** Stand fürs Ciggie-Counter-Ziffernblatt über den Wetter-Kanal von Gadgetbridge (ersetzt das Wetter) */
+    val watchfaceWeather: Boolean = false,
 ) {
     /** Abgleich eingeschaltet: das gewählte Ziel ist vollständig eingetragen */
     val syncEnabled: Boolean
@@ -79,6 +81,7 @@ data class Settings(
                 haUrl = getString("ha_url", "") ?: "",
                 haToken = getString("ha_token", "") ?: "",
                 haAlsoNotify = getBoolean("ha_also_notify", false),
+                watchfaceWeather = getBoolean("watchface_weather", false),
             )
         }
 
@@ -105,6 +108,7 @@ data class Settings(
             putString("ha_url", s.haUrl.trim().trimEnd('/'))
             putString("ha_token", s.haToken.trim())
             putBoolean("ha_also_notify", s.haAlsoNotify)
+            putBoolean("watchface_weather", s.watchfaceWeather)
         }
     }
 }
@@ -186,6 +190,11 @@ class AppState(context: Context) {
     var haLastNotify: Long
         get() = sp.getLong("ha_last_notify", 0)
         set(v) = sp.edit { putLong("ha_last_notify", v) }
+
+    /** Zuletzt übers Wetter ans Ziffernblatt gesendeter Stand (ohne Zeitpunkt) */
+    var watchfaceSent: String
+        get() = sp.getString("watchface_sent", "") ?: ""
+        set(v) = sp.edit { putString("watchface_sent", v) }
 
     var haNotifyStatus: String
         get() = sp.getString("ha_notify_status", "") ?: ""

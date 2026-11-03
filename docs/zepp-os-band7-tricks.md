@@ -70,6 +70,15 @@ Umgesetzt als `localDate()` in `watch-app/lib/store.js`.
 
 ## Ziffernblatt
 
+- **Handy → Ziffernblatt ohne offene App: Wetter-Kanal.** Eine Android-App schickt
+  `nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER` mit Extra `WeatherJson`
+  (`{"timestamp", "location", "currentTemp" in Kelvin, …}`) gezielt an Gadgetbridges
+  `GenericWeatherReceiver`. Gadgetbridge setzt den Ort sofort am Band (Zepp OS:
+  `CMD_SET_DEFAULT_LOCATION` mit dem Ortsnamen), das Band holt dann das Wetter per HTTP.
+  Das Ziffernblatt liest den Ortsnamen unverändert über
+  `hmSensor.createSensor(hmSensor.id.WEATHER).getForecastWeather().cityName`. Am Band
+  bestätigt 03.11.2026; belegt das Wetter.
+
 - Aktualisieren: `clock.addEventListener(clock.event.MINUTEEND, update)` plus
   `hmUI.createWidget(hmUI.widget.WIDGET_DELEGATE, { resume_call: update })` für das Aufwecken.
 - Sensoren: `hmSensor.id.BATTERY` (`current`), `STEP` (`current`), `HEART` (`last`),

@@ -19,8 +19,8 @@ android {
         applicationId = "de.crazymidi.ciggiecounter"
         minSdk = 33 // Bluetooth-GATT-APIs mit Wertübergabe, Benachrichtigungs-Berechtigung
         targetSdk = 37
-        versionCode = 12
-        versionName = "1.0.11"
+        versionCode = 13
+        versionName = "1.0.12"
     }
 
     signingConfigs {

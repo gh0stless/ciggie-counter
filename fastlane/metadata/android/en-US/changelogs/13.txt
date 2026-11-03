@@ -1,0 +1,1 @@
+- New: keep the Ciggie Counter watchface on the Amazfit Band 7 up to date, also when counting on the phone or the Butt Bin (via Gadgetbridge's weather channel)

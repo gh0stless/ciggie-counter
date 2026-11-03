@@ -1,6 +1,6 @@
 // Ciggie-Counter-Ziffernblatt: Uhrzeit, Datum, Akku, Schritte, Puls, Stress, Schlaf und die Pause bis zur nächsten.
-// Den Stand legt die Band-App im systemweiten Zwischenspeicher ab ('Tag|heute|letzte|nächste',
-// siehe watch-app/README.md); hier wird er nur gelesen und jede Minute neu gerechnet.
+// Den Stand liefern die Band-App (systemweiter Zwischenspeicher) und das Handy (Wetter-Kanal),
+// siehe readShared() und watch-app/README.md; hier wird er nur gelesen und jede Minute neu gerechnet.
 
 // Palette der Projekt-Flagge
 const ESPRESSO = 0x2d0800
@@ -24,6 +24,7 @@ let steps
 let heart
 let stress
 let sleep
+let weather
 let timeText
 let dateText
 let infoText
@@ -45,14 +46,29 @@ function hhmm(seconds) {
   return pad(Math.floor(t / 3600)) + ':' + pad(Math.floor(t / 60) % 60)
 }
 
-function readShared() {
-  let raw = ''
-  try {
-    raw = hmFS.SysProGetChars('ciggie') || ''
-  } catch (e) {}
-  const parts = raw.split('|').map(Number)
+// 'Tag|heute|letzte|nächste|Zeitpunkt' → Objekt (ältere Band-App ohne Zeitpunkt: 0)
+function parseState(raw) {
+  const parts = String(raw || '').split('|').map(Number)
   if (parts.length < 4 || parts.some(isNaN)) return null
-  return { day: parts[0], today: parts[1], last: parts[2], next: parts[3] }
+  return { day: parts[0], today: parts[1], last: parts[2], next: parts[3], at: parts[4] || 0 }
+}
+
+// Zwei Quellen: die Band-App (systemweiter Zwischenspeicher) und das Handy über den
+// Wetter-Kanal von Gadgetbridge (Ortsname 'CC|…', kommt auch bei geschlossener Band-App).
+// Es gilt die neuere.
+function readShared() {
+  let app = null
+  let phone = null
+  try {
+    app = parseState(hmFS.SysProGetChars('ciggie'))
+  } catch (e) {}
+  try {
+    const city = String(weather.getForecastWeather().cityName || '')
+    if (city.indexOf('CC|') === 0) phone = parseState(city.slice(3))
+  } catch (e) {}
+  if (!app) return phone
+  if (!phone) return app
+  return phone.at > app.at ? phone : app
 }
 
 function updateCiggie() {
@@ -180,6 +196,9 @@ WatchFace({
     } catch (e) {}
     try {
       sleep = hmSensor.createSensor(hmSensor.id.SLEEP)
+    } catch (e) {}
+    try {
+      weather = hmSensor.createSensor(hmSensor.id.WEATHER)
     } catch (e) {}
     // Sensoren nur hier und beim Aufwecken lesen: eigene Ereignis-Listener auf Puls/Stress
     // brachten das Band 7 (Firmware 1.11) zum Absturz

@@ -86,6 +86,7 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
     var haUrl by remember { mutableStateOf(initial.haUrl) }
     var haToken by remember { mutableStateOf(initial.haToken) }
     var haAlsoNotify by remember { mutableStateOf(initial.haAlsoNotify) }
+    var watchfaceWeather by remember { mutableStateOf(initial.watchfaceWeather) }
     var saved by remember { mutableStateOf(false) }
 
     val calendarPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -180,6 +181,10 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
             if (haAlsoNotify) HomeAssistantSection(haUrl, haToken, { haUrl = it }, { haToken = it }, notifyOnly = true)
         }
 
+        Section(stringResource(R.string.section_watch))
+        SwitchRow(stringResource(R.string.watchface_weather), watchfaceWeather) { watchfaceWeather = it }
+        Hint(stringResource(R.string.watchface_weather_hint))
+
         Button(onClick = {
             onSave(Settings(
                 costPerCigarette = num(cost),
@@ -202,6 +207,7 @@ fun SettingsScreen(initial: Settings, modifier: Modifier, onSave: (Settings) -> 
                 haUrl = haUrl,
                 haToken = haToken,
                 haAlsoNotify = haAlsoNotify,
+                watchfaceWeather = watchfaceWeather,
             ))
             saved = true
         }, Modifier.fillMaxWidth()) { Text(stringResource(if (saved) R.string.saved else R.string.save)) }

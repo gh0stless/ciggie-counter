@@ -64,6 +64,9 @@
     <string name="section_reminders">Reminders</string>
     <string name="reminder_next_allowed">“You may smoke again”</string>
     <string name="reminder_count_check">“Did you count them all?”</string>
+    <string name="section_watch">Watch</string>
+    <string name="watchface_weather">Keep the watchface up to date</string>
+    <string name="watchface_weather_hint">For the Ciggie Counter watchface on an Amazfit Band 7 with Gadgetbridge: after every change the state goes to the band through Gadgetbridge\'s weather channel, so the watchface is current even when counting on the phone or the Butt Bin. This replaces the weather on the band – leave it off if you use a weather app.</string>
     <string name="speak_count">Announce every entry</string>
     <string name="speak_count_hint">The phone says “Cigarette number 12 counted.” after each entry, also for the Butt Bin. Uses the media volume.</string>
     <!-- Sprache der Ansage siehe Speech.kt -->

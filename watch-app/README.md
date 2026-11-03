@@ -55,11 +55,18 @@ ohne Quittung nach 8 Sekunden. Unquittiertes bleibt vorgemerkt und wird später 
 
 ## Ziffernblatt
 
-Die Band-App legt ihren Stand im systemweiten Zwischenspeicher ab
-(`hmFS.SysProSetChars('ciggie', 'Tag|heute|letzte|nächste')`, Tag als JJJJMMTT); das
-Ziffernblatt in [../watchface/](../watchface/) liest ihn. Er ist so aktuell wie die letzte
-Verbindung der Band-App: Was am Handy oder Butt Bin gezählt wird, sieht das Band erst nach
-dem nächsten Öffnen der Band-App.
+Das Ziffernblatt in [../watchface/](../watchface/) bekommt den Stand aus zwei Quellen und
+nimmt den neueren (Zeitpunkt am Ende):
+
+- Band-App: systemweiter Zwischenspeicher,
+  `hmFS.SysProSetChars('ciggie', 'Tag|heute|letzte|nächste|Zeitpunkt')`, Tag als JJJJMMTT.
+- Handy über den **Wetter-Kanal** von Gadgetbridge (Einstellung „Ziffernblatt aktuell
+  halten“): Die Ciggie-App schickt nach jeder Änderung
+  `nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER` mit dem Ortsnamen
+  `CC|Tag|heute|letzte|nächste|Zeitpunkt`; Gadgetbridge gibt den Ortsnamen sofort ans Band,
+  das Ziffernblatt liest ihn über `hmSensor.id.WEATHER`. So ist es auch aktuell, wenn am
+  Handy oder am Butt Bin gezählt wird und die Band-App zu ist. Das Wetter des Bandes ist
+  damit belegt.
 
 ## Hinweise
 

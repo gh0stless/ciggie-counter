@@ -14,9 +14,10 @@ export const KEY_TODAY = 3
 export const KEY_LAST = 4
 export const KEY_NEXT = 5
 
-// Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands)
+// Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands).
+// Der Zeitpunkt am Ende entscheidet gegen den Stand, den das Handy übers Wetter schickt.
 export function share(state) {
-  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next].join('|'))
+  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next, now()].join('|'))
 }
 
 // Eine Zigarette zählen; Ergebnis: ihre Eintrags-ID
