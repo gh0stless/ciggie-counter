@@ -16,6 +16,7 @@ beim Löten gern wegspringen. Zum Hochladen in den Reichelt-Warenkorb:
 | Kondensator 100 nF 0603 | C3, C8, C9 | [WAL 0603B104K500](https://www.reichelt.de/de/de/shop/produkt/smd-kerko_0603_100_nf_50v_10_x7r_mlcc-346769) | Walsin, X7R 50 V | 3 | 40 | 0,02 € |
 | Kondensator 10 µF 0603 | C2 | [CL10A106KQ8NNNC](https://www.reichelt.de/de/de/shop/produkt/mlcc_0603_10_f_6_3v_x5r_-10_-429034) | Samsung, X5R 6,3 V | 1 | 15 | 0,10 € |
 | Kondensator 100 µF 1206 | C1 | [GRM31CR60J107M](https://www.reichelt.de/de/de/shop/produkt/mlcc_1206_100_f_6_3_v_-20_x5r-409218) | Murata, X5R 6,3 V | 1 | 12 | 0,13 € |
+| Knopfzelle CR2450 | Halter im Unterteil | CR 2450 VAR 4X (4er-Pack) | Varta Lithium 3 V | 1 | 3 Packs = 12 | |
 
 Zusammen etwa 9 € plus Versand.
 
@@ -31,7 +32,7 @@ Zusammen etwa 9 € plus Versand.
   Pogo-Klemme 4-polig: bei AliExpress bestellt.
 - **Nylon-Schraube M2** (6–8 mm) für das Loch über der Antenne: Reichelt hat keine. Ein Sortiment
   bei AliExpress kostet etwa 2 €. Metall nicht nehmen, das verstimmt die Antenne.
-- **Knopfzelle CR2450** und **Litze** (dünn, sehr flexibel, z. B. 0,14 mm²) für Zelle und Button.
+- **Litze** (dünn, sehr flexibel, z. B. 0,14 mm²) für Zelle und Button.
 
 ## Warum diese Teile
 
