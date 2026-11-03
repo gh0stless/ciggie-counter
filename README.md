@@ -4,7 +4,7 @@ Count your cigarettes, see your patterns, pace yourself, without ads, accounts o
 
 <p>
   <img src="design/fotoshooting/01_held.jpg" width="49%" alt="Butt Bin: a spin ashtray with a red and black knob on its plunger, an arcade button on top and a glowing ring in the middle">
-  <img src="design/fotoshooting/11_gruppe_drei.jpg" width="49%" alt="Three Butt Bin ashtrays with orange, red and blue knobs">
+  <img src="design/fotoshooting/15_vergleich_oben.jpg" width="49%" alt="Three Butt Bin colour schemes from above: red hood with black base, black hood with red base, all black with a red button">
 </p>
 
 *Butt Bin design renders: the counting knob slips over the plunger grip of a spin ashtray (not built yet).*
