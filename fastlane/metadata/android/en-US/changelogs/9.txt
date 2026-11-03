@@ -1,0 +1,1 @@
+- New: count on the wrist with an Amazfit Band 7 (Zepp OS) via Gadgetbridge

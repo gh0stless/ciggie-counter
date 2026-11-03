@@ -1,0 +1,1 @@
+- New: with Nextcloud, optionally also report entries to Home Assistant right away, so it announces at once

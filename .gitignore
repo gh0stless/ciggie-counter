@@ -57,6 +57,9 @@ design/KKK Flagge.jpg
 # eigenes Repo (gh0stless/ciggie-counter-ha)
 ciggie-counter-ha/
 
+# eigener Gadgetbridge-Fork (Zepp-OS-Mini-App-Messaging), eigenes Repo
+gadgetbridge/
+/*.log
 __pycache__/
 hardware/freecad/knauf.obj
 hardware/freecad/knauf.mtl

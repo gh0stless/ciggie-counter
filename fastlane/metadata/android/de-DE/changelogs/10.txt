@@ -1,0 +1,1 @@
+- Neu: Mit Nextcloud Einträge optional zusätzlich sofort an Home Assistant melden, damit es gleich ansagt

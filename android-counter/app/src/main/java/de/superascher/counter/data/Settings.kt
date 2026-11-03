@@ -34,11 +34,17 @@ data class Settings(
     /** Optional: Home Assistant mit der Integration ciggie_counter, Adresse und langlebiges Zugangstoken */
     val haUrl: String = "",
     val haToken: String = "",
+    /** Beim Abgleich mit Nextcloud: Einträge und Stumm-Schalter zusätzlich sofort an Home Assistant (für die Ansage) */
+    val haAlsoNotify: Boolean = false,
 ) {
     /** Abgleich eingeschaltet: das gewählte Ziel ist vollständig eingetragen */
     val syncEnabled: Boolean
         get() = if (syncTarget == SYNC_HOME_ASSISTANT) validUrl(haUrl) && haToken.isNotEmpty()
         else validUrl(ncUrl) && ncUser.isNotEmpty() && ncAppPassword.isNotEmpty()
+
+    /** Zusätzliche Meldung an Home Assistant eingeschaltet und vollständig eingetragen */
+    val haNotifyEnabled: Boolean
+        get() = syncTarget == SYNC_NEXTCLOUD && haAlsoNotify && validUrl(haUrl) && haToken.isNotEmpty()
 
     companion object {
         const val SYNC_NEXTCLOUD = "nextcloud"
@@ -72,6 +78,7 @@ data class Settings(
                 syncTarget = getString("sync_target", SYNC_NEXTCLOUD) ?: SYNC_NEXTCLOUD,
                 haUrl = getString("ha_url", "") ?: "",
                 haToken = getString("ha_token", "") ?: "",
+                haAlsoNotify = getBoolean("ha_also_notify", false),
             )
         }
 
@@ -97,6 +104,7 @@ data class Settings(
             putString("sync_target", s.syncTarget)
             putString("ha_url", s.haUrl.trim().trimEnd('/'))
             putString("ha_token", s.haToken.trim())
+            putBoolean("ha_also_notify", s.haAlsoNotify)
         }
     }
 }
@@ -173,4 +181,13 @@ class AppState(context: Context) {
     var ncStatus: String
         get() = sp.getString("nc_status", "") ?: ""
         set(v) = sp.edit { putString("nc_status", v) }
+
+    // Home Assistant zusätzlich zu Nextcloud (optional)
+    var haLastNotify: Long
+        get() = sp.getLong("ha_last_notify", 0)
+        set(v) = sp.edit { putLong("ha_last_notify", v) }
+
+    var haNotifyStatus: String
+        get() = sp.getString("ha_notify_status", "") ?: ""
+        set(v) = sp.edit { putString("ha_notify_status", v) }
 }

@@ -29,35 +29,48 @@ object Reminders {
 
     /**
      * Eine Zigarette zählen (Knopf, Nachtragen, Benachrichtigung, Butt Bin).
-     * Sprachansagen über Home Assistant macht die Nextcloud-App, wenn der Eintrag dort ankommt.
+     * Sprachansagen über Home Assistant macht dessen Integration, wenn der Eintrag dort ankommt
+     * (sofort mit [Settings.haAlsoNotify], sonst bei ihrem nächsten Abgleich mit Nextcloud).
      * [announce] = false, wenn der Aufrufer mehrere Einträge auf einmal bringt und selbst einmal ansagt.
      */
-    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true) {
-        val nc = Settings.load(context).syncEnabled
-        EntryStore.get(context).add(ts, source, forward = nc)
+    fun count(context: Context, ts: Long = Counter.nowSeconds(), source: String = "manual", announce: Boolean = true, id: String? = null) {
+        val settings = Settings.load(context)
+        val nc = settings.syncEnabled
+        val ha = settings.haNotifyEnabled
+        if (!EntryStore.get(context).add(ts, source, forward = nc, id = id, notifyHa = ha)) return
         if (nc) Nextcloud.kick(context)
+        if (ha) Nextcloud.kickHomeAssistant(context)
         // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
         AppState(context).lastCountCheckAt = Counter.nowSeconds()
         reschedule(context)
         if (announce) announceCount(context, ts)
     }
 
-    /** "Cigarette number 12 counted." auf dem Handy, nur für Einträge des heutigen Zähltags. */
+    /**
+     * "Cigarette number 12 counted." auf dem Handy, nur für Einträge des heutigen Zähltags.
+     * Bei "Alles stumm" oder "Nicht stören" nur ein kurzer Quittungston, damit man trotzdem merkt,
+     * dass gezählt wurde.
+     */
     fun announceCount(context: Context, ts: Long) {
         val settings = Settings.load(context)
-        if (!settings.speakCount || AppState(context).muted) return
+        val muted = AppState(context).muted
+        if (!settings.speakCount && !muted) return
         val counter = Counter(settings)
         val today = counter.today()
         if (counter.logicalDate(ts) != today) return
+        if (muted || Speech.isDoNotDisturb(context.applicationContext)) return Speech.ack(context)
         val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
         Speech.say(context, R.string.speech_counted, number)
     }
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
     fun delete(context: Context, ts: Long) {
-        val nc = Settings.load(context).syncEnabled
-        EntryStore.get(context).delete(ts, forward = nc)
+        val settings = Settings.load(context)
+        val nc = settings.syncEnabled
+        val ha = settings.haNotifyEnabled
+        EntryStore.get(context).delete(ts, forward = nc, notifyHa = ha)
         if (nc) Nextcloud.kick(context)
+        if (ha) Nextcloud.kickHomeAssistant(context)
         reschedule(context)
     }
 

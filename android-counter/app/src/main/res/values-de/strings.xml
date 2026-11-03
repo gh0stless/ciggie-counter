@@ -64,7 +64,7 @@
     <string name="dnd_hint">Für die Nacht: In Android einen Zeitplan für „Nicht stören“ (oder einen Modus wie „Schlafenszeit“) einrichten. Dann sind Benachrichtigungen stumm und auch die Ansagen der App schweigen.</string>
     <string name="dnd_button">„Nicht stören“ einrichten</string>
     <string name="mute_all">Alles stumm</string>
-    <string name="mute_all_hint">Keine Erinnerungen und keine Ansagen auf allen Geräten, bis du es wieder ausschaltest. Zählen geht weiter. Mit Nextcloud ist der Schalter gemeinsam: Nextcloud-App und Home Assistant können ihn auch umlegen.</string>
+    <string name="mute_all_hint">Keine Erinnerungen und keine Ansagen auf allen Geräten, bis du es wieder ausschaltest. Zählen geht weiter, das Handy quittiert es nur mit einem kurzen Ton. Mit Nextcloud ist der Schalter gemeinsam: Nextcloud-App und Home Assistant können ihn auch umlegen.</string>
     <string name="ashtray_battery">Batterie: %1$d %%</string>
     <string name="reminder_as_notification">Benachrichtigung</string>
     <string name="reminder_as_speech">Ansage</string>
@@ -111,6 +111,8 @@
     <string name="ha_token_hint">Token anlegen: Home Assistant → dein Profil → Sicherheit → „Langlebige Zugangstoken“.</string>
     <string name="ha_auth_rejected">Home Assistant hat das Token abgelehnt</string>
     <string name="ha_integration_missing">Integration „Ciggie Counter“ in Home Assistant nicht gefunden (HTTP 404)</string>
+    <string name="ha_also_notify">Zusätzlich sofort an Home Assistant melden</string>
+    <string name="ha_also_notify_hint">Für die Integration „Ciggie Counter“ (HACS) neben Nextcloud: Neue und gelöschte Einträge und der Stumm-Schalter gehen auch direkt an Home Assistant. Es sagt dann sofort an und rechnet seine Erinnerungen neu, statt erst bei seinem nächsten Abgleich mit Nextcloud. Den Stand holt das Gerät weiter von Nextcloud.</string>
     <string name="nc_hint">Für Nutzer einer eigenen Nextcloud mit der App „cigarettecounter“: Jeder Eintrag geht an den Server, ohne Netz wird er vorgemerkt und später nachgeschickt. Ab Server-App 0.9.3 übernimmt das Gerät außerdem den Stand vom Server – so lassen sich mehrere Geräte (z. B. Tablet) parallel nutzen. Achtung: Beim Einschalten ersetzt der Server-Stand die Einträge auf diesem Gerät. Den Butt Bin sollte nur ein Gerät abholen.</string>
     <string name="nc_server">Server, z. B. https://cloud.example.org</string>
     <string name="nc_user">Benutzer</string>

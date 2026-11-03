@@ -1,0 +1,13 @@
+{
+  "name": "ciggie-counter-watch",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ciggie Counter for Zepp OS watches",
+  "scripts": {
+    "build": "zeus build",
+    "postinstall": "node -e \"require('fs').cpSync('node_modules/@zeppos/zeus-cli/private-modules/zeppos-app-utils','node_modules/zeppos-app-utils',{recursive:true})\""
+  },
+  "devDependencies": {
+    "@zeppos/zeus-cli": "1.9.3"
+  }
+}
