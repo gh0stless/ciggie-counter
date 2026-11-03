@@ -36,6 +36,11 @@ anders vermerkt.
 - Gleiche App-ID = Update, die alte Fassung wird ersetzt.
 - Datei aufs Handy mit adb; in Git Bash `MSYS_NO_PATHCONV=1` setzen, sonst wird `/sdcard/…`
   in einen Windows-Pfad umgeschrieben.
+- **„Logdateien schreiben“ in Gadgetbridge ausgeschaltet lassen.** Solange es an war, startete
+  das Band 7 beim bloßen Tragen mehrmals neu; nach dem Abschalten nicht mehr (03.11.2026).
+  Die Ursache ist nicht geklärt. Zum Fehlersuchen nur kurz einschalten.
+- Nur **ein** Gadgetbridge darf mit dem Band verbunden sein. Hängen zwei dran (z. B. F-Droid-
+  Version und eigener Build), bekommt der eigene keine Aktivitätsdaten und zeigt das Band rot.
 
 ## Zeit: JavaScript rechnet in China-Zeit
 
