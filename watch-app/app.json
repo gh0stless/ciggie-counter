@@ -23,7 +23,7 @@
     "band7": {
       "module": {
         "page": {
-          "pages": ["page/index"]
+          "pages": ["page/index", "page/measure"]
         }
       },
       "designWidth": 194,

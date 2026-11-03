@@ -11,11 +11,12 @@ const ASCHE = 0xa1a1a1
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-// Band-App, per Doppeltipp auf den Ciggie-Kasten
+// Band-App: Doppeltipp auf den Ciggie-Kasten öffnet die Zählseite, Dreifachtipp die Mess-Seite
 const APP_ID = 1077701
-const DOUBLE_TAP_MS = 500
+const TAP_MS = 450
 
-let lastTap = 0
+let taps = 0
+let tapTimer = null
 
 let clock
 let battery
@@ -101,6 +102,10 @@ function stressValue() {
 function sleepValue() {
   if (!sleep) return '–'
   try {
+    // ohne updateInfo() bleibt der Wert auf dem Stand beim Laden des Ziffernblatts
+    sleep.updateInfo()
+  } catch (e) {}
+  try {
     const minutes = sleep.getTotalTime()
     return minutes > 0 ? Math.floor(minutes / 60) + ':' + pad(minutes % 60) : '–'
   } catch (e) {
@@ -117,16 +122,28 @@ function update() {
   updateCiggie()
 }
 
+function openApp(page) {
+  try {
+    hmApp.startApp({ appid: APP_ID, url: page })
+  } catch (e) {}
+}
+
+// Tipps zählen; TAP_MS nach dem letzten entscheiden (zwei = Zählen, drei = Messen)
 function onPanelTap() {
-  const t = Date.now()
-  if (t - lastTap < DOUBLE_TAP_MS) {
-    lastTap = 0
-    try {
-      hmApp.startApp({ appid: APP_ID, url: 'page/index' })
-    } catch (e) {}
-  } else {
-    lastTap = t
+  taps += 1
+  if (tapTimer) timer.stopTimer(tapTimer)
+  if (taps >= 3) {
+    tapTimer = null
+    taps = 0
+    openApp('page/measure')
+    return
   }
+  tapTimer = timer.createTimer(TAP_MS, TAP_MS, () => {
+    timer.stopTimer(tapTimer)
+    tapTimer = null
+    if (taps === 2) openApp('page/index')
+    taps = 0
+  })
 }
 
 function text(props, aod) {

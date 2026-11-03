@@ -29,7 +29,8 @@ function dayOf(seconds) {
 
 export function load() {
   // next: nächste erlaubt (Unix-Sekunden, 0 = keine Pause), gap: zuletzt bekannte Pausenlänge
-  const empty = { pending: [], today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0 }
+  // mpending: noch nicht quittierte Messungen, session: laufende Vorher-nachher-Messung
+  const empty = { pending: [], mpending: [], session: null, today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0 }
   const [stat, err] = hmFS.stat(FILE)
   if (err !== 0 || !stat.size) return empty
 

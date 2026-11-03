@@ -36,16 +36,30 @@ PebbleKit-Dictionaries.
 | 3 | Anzahl heute |
 | 4 | Zeitpunkt der letzten (Unix-Sekunden) |
 | 5 | Nächste erlaubt ab (Unix-Sekunden, 0 = keine Pause eingestellt) |
+| 6 | Messung: `before` oder `after` |
+| 7 | Puls (0 = nicht gemessen) |
+| 8 | Blutsauerstoff in % (0 = nicht gemessen) |
+| 9 | Stress 1–100 (0 = nicht gemessen) |
 
 Band → Handy
 
 - `hello` – App geöffnet, bitte Stand schicken
 - `entry` + 1 + 2 – eine Zigarette; wird wiederholt, bis sie quittiert ist
+- `measure` + 1 + 6 + 2 + 7 + 8 + 9 – Messung vor oder nach der Zigarette mit dieser
+  Eintrags-ID; wird wiederholt, bis sie quittiert ist
 
 Handy → Band
 
 - `ack` + 1 + 3 (+ 4, 5) – Eintrag übernommen (Duplikate per ID verwerfen, trotzdem quittieren)
 - `state` + 3 + 4 + 5 – aktueller Stand, Antwort auf `hello`
+- `mack` + 1 + 6 – Messung übernommen
+
+## Mess-Seite
+
+`page/measure` (Dreifachtipp aufs Ziffernblatt): misst beim Öffnen Puls und Blutsauerstoff
+nacheinander und nimmt den letzten Stresswert der Firmware dazu (kurzes Vibrieren am Anfang und Ende, Bildschirm bleibt an), zählt dann
+die Zigarette („Jetzt rauchen“). Beim nächsten Öffnen innerhalb von 3 Stunden, oder über den
+Knopf „Nachher messen“, folgt die zweite Messung und der Vergleich vorher → nachher.
 
 ## Ziffernblatt
 

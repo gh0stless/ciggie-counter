@@ -1,0 +1,1 @@
+- New: measure pulse, blood oxygen and stress before and after a cigarette with the Amazfit Band 7

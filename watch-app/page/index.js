@@ -1,5 +1,6 @@
-import { connect, disconnect, isReady, sendDict } from '../lib/link'
-import { load, save, now, newId, rollDay, localDate } from '../lib/store'
+import { connect, disconnect, isReady } from '../lib/link'
+import { load, localDate } from '../lib/store'
+import { APP_ID, addEntry, flush, hello, handleData, share } from '../lib/sync'
 
 // Palette der Projekt-Flagge
 const ESPRESSO = 0x2d0800
@@ -8,16 +9,6 @@ const ROAST = 0x470d02
 const FILTER = 0xf9a948
 const PAPIER = 0xffffff
 const ASCHE = 0xa1a1a1
-
-const APP_ID = 1077701
-
-// Schlüssel im PebbleKit-Dictionary (siehe watch-app/README.md)
-const KEY_CMD = 0
-const KEY_ID = 1
-const KEY_TIME = 2
-const KEY_TODAY = 3
-const KEY_LAST = 4
-const KEY_NEXT = 5
 
 let state
 let countText
@@ -40,62 +31,28 @@ function render() {
   const link = isReady() ? '●' : '○'
   const pending = state.pending.length ? '  ↑' + state.pending.length : ''
   statusText.setProperty(hmUI.prop.TEXT, link + pending)
-  // Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands)
-  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next].join('|'))
-}
-
-function flush() {
-  for (const entry of state.pending) {
-    sendDict({ [KEY_CMD]: 'entry', [KEY_ID]: entry.id, [KEY_TIME]: entry.t })
-  }
+  share(state)
 }
 
 function stamp() {
-  const t = now()
-  rollDay(state)
-  state.pending.push({ id: newId(), t })
-  state.today += 1
-  state.last = t
-  // bis das Handy quittiert: Pause so lang wie die letzte bekannte
-  if (state.gap > 0) state.next = t + state.gap
-  save(state)
+  addEntry(state)
   try {
     vibrate.stop()
     vibrate.scene = 25
     vibrate.start()
   } catch (e) {}
-  if (isReady()) flush()
+  if (isReady()) flush(state)
   render()
 }
 
 function onReady() {
-  sendDict({ [KEY_CMD]: 'hello' })
-  flush()
+  hello()
+  flush(state)
   render()
 }
 
 function onData(values) {
-  const cmd = values[KEY_CMD]
-  if (cmd === 'ack') {
-    const id = values[KEY_ID]
-    state.pending = state.pending.filter((e) => e.id !== id)
-  }
-  if (cmd === 'ack' || cmd === 'state') {
-    // Das Handy kennt alle Quellen (Butt Bin, App, Nextcloud) – seine Zahl gilt,
-    // plus was hier noch unterwegs ist
-    if (typeof values[KEY_TODAY] === 'number') {
-      rollDay(state)
-      state.today = values[KEY_TODAY] + state.pending.length
-    }
-    if (typeof values[KEY_LAST] === 'number' && values[KEY_LAST] > state.last) {
-      state.last = values[KEY_LAST]
-    }
-    if (typeof values[KEY_NEXT] === 'number') {
-      state.next = values[KEY_NEXT]
-      state.gap = state.next > state.last ? state.next - state.last : 0
-    }
-    save(state)
-  }
+  handleData(state, values)
   render()
 }
 
@@ -135,9 +92,9 @@ Page({
     render()
     connect(APP_ID, onReady, onData)
 
-    // Unbestätigte Einträge regelmäßig erneut senden
+    // Unbestätigte Einträge und Messungen regelmäßig erneut senden
     retryTimer = timer.createTimer(15000, 15000, () => {
-      if (isReady() && state.pending.length) flush()
+      if (isReady() && (state.pending.length || state.mpending.length)) flush(state)
       render()
     })
   },

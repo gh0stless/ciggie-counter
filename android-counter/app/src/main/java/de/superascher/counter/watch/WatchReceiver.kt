@@ -30,6 +30,14 @@ class WatchReceiver : BroadcastReceiver() {
                 reply(context, "ack", id)
             }
             "hello" -> reply(context, "state", null)
+            "measure" -> {
+                val id = values[KEY_ID] as? String ?: return
+                val phase = values[KEY_PHASE] as? String ?: return
+                fun num(key: Int) = (values[key] as? Number)?.toInt() ?: 0
+                val ts = (values[KEY_TIME] as? Number)?.toLong() ?: return
+                EntryStore.get(context).addMeasurement(id, phase, ts, num(KEY_HR), num(KEY_SPO2), num(KEY_STRESS))
+                replyMeasured(context, id, phase)
+            }
         }
     }
 
@@ -44,6 +52,15 @@ class WatchReceiver : BroadcastReceiver() {
         dict.put(item(KEY_LAST, today.maxOrNull() ?: 0L))
         dict.put(item(KEY_NEXT, counter.allowedFrom(entries) ?: 0L))
 
+        context.sendBroadcast(Intent(ACTION_SEND).apply {
+            putExtra("uuid", APP_UUID)
+            putExtra("transaction_id", -1)
+            putExtra("msg_data", dict.toString())
+        })
+    }
+
+    private fun replyMeasured(context: Context, id: String, phase: String) {
+        val dict = JSONArray().put(item(KEY_CMD, "mack")).put(item(KEY_ID, id)).put(item(KEY_PHASE, phase))
         context.sendBroadcast(Intent(ACTION_SEND).apply {
             putExtra("uuid", APP_UUID)
             putExtra("transaction_id", -1)
@@ -95,5 +112,10 @@ class WatchReceiver : BroadcastReceiver() {
         const val KEY_LAST = 4
         /** Nächste erlaubt ab (Unix-Sekunden), 0 = keine Pause eingestellt */
         const val KEY_NEXT = 5
+        /** Messung: "before" / "after", Puls, Blutsauerstoff (%), Stress; 0 = nicht gemessen */
+        const val KEY_PHASE = 6
+        const val KEY_HR = 7
+        const val KEY_SPO2 = 8
+        const val KEY_STRESS = 9
     }
 }

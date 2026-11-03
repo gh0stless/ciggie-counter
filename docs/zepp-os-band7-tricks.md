@@ -90,10 +90,13 @@ Ausprobiert mit einer Probe-App am 03.11.2026. Puls-, Blutsauerstoff- und Stress
 - **Blutsauerstoff** (`hmSensor.id.SPO2`): Rote LED leuchtet 15–20 s, nach etwa 14 s steht ein
   neuer Wert in `current`. Fertig ist die Messung, wenn sich `time` ändert; `retcode` blieb
   dabei unverändert 2 und taugt nicht als Fertig-Meldung.
-- **Stress** (`hmSensor.id.STRESS`): Nach `start()` springen `current` und `time` auf 0, die
-  Messung läuft. Dauer noch nicht gemessen; am Band selbst meist 1–2 Minuten.
-- **Puls** (`hmSensor.id.HEART`): `start()` liefert laufend `current`, `last` ist der letzte
-  feste Wert; daneben `today` und `period`.
+- **Stress** (`hmSensor.id.STRESS`): **nicht per `start()` messen.** Nach `start()` springen
+  `current` und `time` auf 0; nach gut 2 Minuten ohne Ergebnis startete das Band neu. Stress
+  errechnet die Firmware über längere Zeit (Herzratenvariabilität); nur `current` lesen
+  (0 = gerade kein Wert).
+- **Puls** (`hmSensor.id.HEART`): Nach `start()` misst das Band (grüne LED), aber `current`
+  bleibt ohne Event-Listener 0. Die fertige Messung steht in `last`: warten, bis sich `last`
+  ändert (etwa 12 s), sonst den bisherigen `last` als jüngsten Wert nehmen.
 - Nach der Messung und in `onDestroy` immer `stop()` aufrufen, sonst misst das Band weiter.
 - Bildschirm während der Messung anlassen: `hmSetting.setBrightScreen(Sekunden)`, danach
   `hmSetting.setBrightScreenCancel()` (laut Doku, noch nicht am Band ausprobiert).
