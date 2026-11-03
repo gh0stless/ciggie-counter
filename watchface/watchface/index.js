@@ -11,6 +11,12 @@ const ASCHE = 0xa1a1a1
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
+// Band-App, per Doppeltipp auf den Ciggie-Kasten
+const APP_ID = 1077701
+const DOUBLE_TAP_MS = 500
+
+let lastTap = 0
+
 let clock
 let battery
 let steps
@@ -111,6 +117,18 @@ function update() {
   updateCiggie()
 }
 
+function onPanelTap() {
+  const t = Date.now()
+  if (t - lastTap < DOUBLE_TAP_MS) {
+    lastTap = 0
+    try {
+      hmApp.startApp({ appid: APP_ID, url: 'page/index' })
+    } catch (e) {}
+  } else {
+    lastTap = t
+  }
+}
+
 function text(props, aod) {
   return hmUI.createWidget(hmUI.widget.TEXT, Object.assign({
     x: 0, w: 194, text: '',
@@ -132,12 +150,16 @@ WatchFace({
     healthText = text({ y: 146, h: 24, text_size: 20, color: ASCHE })
     sleepText = text({ y: 170, h: 24, text_size: 20, color: ASCHE })
 
-    hmUI.createWidget(hmUI.widget.FILL_RECT, {
+    const panel = hmUI.createWidget(hmUI.widget.FILL_RECT, {
       x: 12, y: 196, w: 170, h: 150, radius: 24, color: KAFFEE, show_level: hmUI.show_level.ONLY_NORMAL,
     })
     pauseText = text({ y: 206, h: 60, text_size: 48, color: FILTER }, true)
     nextText = text({ y: 268, h: 32, text_size: 24, color: PAPIER }, true)
     todayText = text({ y: 302, h: 32, text_size: 22, color: ASCHE })
+    // Tipps auf Kasten und Texte (eine unsichtbare Fläche darüber kann Zepp OS 1.0 nicht: alpha wird ignoriert)
+    for (const widget of [panel, pauseText, nextText, todayText]) {
+      widget.addEventListener(hmUI.event.CLICK_UP, onPanelTap)
+    }
 
     clock = hmSensor.createSensor(hmSensor.id.TIME)
     battery = hmSensor.createSensor(hmSensor.id.BATTERY)

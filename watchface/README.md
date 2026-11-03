@@ -21,4 +21,6 @@ npm run build
 
 `dist/*.zab` in Gadgetbridge über den Datei-Installer aufs Band, dann am Band auswählen.
 
+Doppeltipp auf den Ciggie-Kasten öffnet die Band-App.
+
 Texte vorerst nur deutsch.
