@@ -58,7 +58,8 @@ class EntryStore private constructor(context: Context) :
             db.execSQL("ALTER TABLE entries ADD COLUMN ha_dirty INTEGER NOT NULL DEFAULT 0")
         }
         if (oldVersion < 5) {
-            // Messungen der Uhr vor/nach einer Zigarette; Werte 0 = nicht gemessen
+            // Messungen der Uhr vor/nach einer Zigarette (Band 7, wieder entfernt); die Tabelle
+            // bleibt, weil sich die Datenbankversion nicht zurücknehmen lässt
             db.execSQL(
                 "CREATE TABLE measurements (entry_id TEXT NOT NULL, phase TEXT NOT NULL, ts INTEGER NOT NULL, " +
                     "hr INTEGER NOT NULL, spo2 INTEGER NOT NULL, stress INTEGER NOT NULL, PRIMARY KEY (entry_id, phase))"
@@ -92,19 +93,6 @@ class EntryStore private constructor(context: Context) :
         }
         _entries.value = load()
         return true
-    }
-
-    /** Messung der Uhr ([phase] "before" oder "after"); eine Wiederholung überschreibt nichts. */
-    @Synchronized
-    fun addMeasurement(entryId: String, phase: String, ts: Long, hr: Int, spo2: Int, stress: Int) {
-        writableDatabase.insertWithOnConflict("measurements", null, ContentValues().apply {
-            put("entry_id", entryId)
-            put("phase", phase)
-            put("ts", ts)
-            put("hr", hr)
-            put("spo2", spo2)
-            put("stress", stress)
-        }, SQLiteDatabase.CONFLICT_IGNORE)
     }
 
     /** Auch gelöschte Einträge zählen als bekannt, damit eine Wiederholung sie nicht zurückholt. */

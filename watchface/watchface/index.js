@@ -11,7 +11,7 @@ const ASCHE = 0xa1a1a1
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-// Band-App: Doppeltipp auf den Ciggie-Kasten zählt sofort, Dreifachtipp öffnet die Mess-Seite
+// Band-App: Doppeltipp auf den Ciggie-Kasten zählt sofort
 const APP_ID = 1077701
 const TAP_MS = 450
 
@@ -101,10 +101,7 @@ function stressValue() {
 // Schlaf der letzten Nacht in Stunden:Minuten
 function sleepValue() {
   if (!sleep) return '–'
-  try {
-    // ohne updateInfo() bleibt der Wert auf dem Stand beim Laden des Ziffernblatts
-    sleep.updateInfo()
-  } catch (e) {}
+  // kein sleep.updateInfo(): jede Minute aufgerufen, startete das Band 7 beim Tragen neu
   try {
     const minutes = sleep.getTotalTime()
     return minutes > 0 ? Math.floor(minutes / 60) + ':' + pad(minutes % 60) : '–'
@@ -128,16 +125,10 @@ function openApp(page, param) {
   } catch (e) {}
 }
 
-// Tipps zählen; TAP_MS nach dem letzten entscheiden (zwei = eine zählen, drei = messen)
+// Tipps zählen; TAP_MS nach dem letzten entscheiden (zwei = eine zählen)
 function onPanelTap() {
   taps += 1
   if (tapTimer) timer.stopTimer(tapTimer)
-  if (taps >= 3) {
-    tapTimer = null
-    taps = 0
-    openApp('page/measure')
-    return
-  }
   tapTimer = timer.createTimer(TAP_MS, TAP_MS, () => {
     timer.stopTimer(tapTimer)
     tapTimer = null

@@ -1,1 +1,1 @@
-- New: measure pulse, blood oxygen and stress before and after a cigarette with the Amazfit Band 7
+- New: count with a double tap on the Ciggie Counter watchface of the Amazfit Band 7

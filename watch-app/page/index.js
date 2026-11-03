@@ -114,9 +114,9 @@ Page({
       goBack(8000)
     }
 
-    // Unbestätigte Einträge und Messungen regelmäßig erneut senden
+    // Unbestätigte Einträge regelmäßig erneut senden
     retryTimer = timer.createTimer(15000, 15000, () => {
-      if (isReady() && (state.pending.length || state.mpending.length)) flush(state)
+      if (isReady() && state.pending.length) flush(state)
       render()
     })
   },
