@@ -39,6 +39,7 @@ anders vermerkt.
 - **„Logdateien schreiben“ in Gadgetbridge ausgeschaltet lassen.** Solange es an war, startete
   das Band 7 beim bloßen Tragen mehrmals neu; nach dem Abschalten nicht mehr (03.11.2026).
   Die Ursache ist nicht geklärt. Zum Fehlersuchen nur kurz einschalten.
+- Der Schalter **„Mini-app messages via PebbleKit“** (Geräteeinstellungen → Verbindung) kann beim Neueinrichten des Bandes verloren gehen. Merkmal im Protokoll: „No listener for data from mini-app“; die Band-App schickt dann ihre Einträge endlos erneut.
 - Nur **ein** Gadgetbridge darf mit dem Band verbunden sein. Hängen zwei dran (z. B. F-Droid-
   Version und eigener Build), bekommt der eigene keine Aktivitätsdaten und zeigt das Band rot.
 
