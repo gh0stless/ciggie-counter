@@ -119,7 +119,7 @@
         <hr class="cigcounter-settings-divider">
 
         <div class="cigcounter-promo">
-            <img src="<?php p(\OC::$server->getURLGenerator()->linkToRoute('cigarettecounter.page.buttBin')); ?>" alt="Butt Bin: Drehaschenbecher mit Knauf, Leuchtring und Arcade-Knopf" width="96" height="96">
+            <img src="<?php p(\OCP\Server::get(\OCP\IURLGenerator::class)->linkToRoute('cigarettecounter.page.buttBin')); ?>" alt="Butt Bin: Drehaschenbecher mit Knauf, Leuchtring und Arcade-Knopf" width="96" height="96">
             <div>
                 <strong>Butt Bin</strong> – der Aschenbecher, der selbst zählt: Kippe ausdrücken, Knauf drücken, gezählt. Die Android-App holt die Einträge per Bluetooth ab.
                 <a href="https://crazy-midi.de" target="_blank" rel="noopener">Mehr auf crazy-midi.de</a>
