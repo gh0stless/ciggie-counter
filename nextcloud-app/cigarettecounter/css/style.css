@@ -203,6 +203,24 @@ body {
     max-width: none;
 }
 
+.cigcounter-promo {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.cigcounter-promo img {
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.cigcounter-promo a {
+    display: block;
+    margin-top: 4px;
+    text-decoration: underline;
+}
+
 .cigcounter-push-status {
     font-size: 0.85rem;
     opacity: 0.7;

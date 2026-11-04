@@ -20,6 +20,11 @@ return [
             'verb' => 'GET',
         ],
         [
+            'name' => 'page#buttBin',
+            'url' => '/img/butt-bin',
+            'verb' => 'GET',
+        ],
+        [
             'name' => 'page#icon',
             'url' => '/icon/{size}',
             'verb' => 'GET',

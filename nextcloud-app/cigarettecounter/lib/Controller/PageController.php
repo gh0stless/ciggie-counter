@@ -76,6 +76,20 @@ class PageController extends Controller {
     }
 
     /**
+     * Bild für den Butt-Bin-Hinweis in den Einstellungen (Apache liefert App-Dateien nicht direkt aus).
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     */
+    public function buttBin(): DataDisplayResponse {
+        $content = file_get_contents(__DIR__ . '/../../img/butt-bin.jpg');
+        return new DataDisplayResponse($content, Http::STATUS_OK, [
+            'Content-Type' => 'image/jpeg',
+            'Cache-Control' => 'max-age=604800',
+        ]);
+    }
+
+    /**
      * @PublicPage
      * @NoCSRFRequired
      */
