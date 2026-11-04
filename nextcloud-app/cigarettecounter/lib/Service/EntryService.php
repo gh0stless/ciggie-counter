@@ -537,10 +537,47 @@ class EntryService {
         if ($intervalMinutes === null || empty($entries)) {
             return null;
         }
-        $last = end($entries);
-        $next = new \DateTime($last);
+        $last = new \DateTime(end($entries));
+        if ($this->getIntervalMode($uid) === 'computed') {
+            $allowed = $this->computedAllowedFrom($uid, $entries, $last);
+            if ($allowed !== null) {
+                return $allowed->format('c');
+            }
+        }
+        $next = clone $last;
         $next->modify('+' . (int)round($intervalMinutes * 60) . ' seconds');
         return $next->format('c');
+    }
+
+    /**
+     * Im 'computed'-Modus wird die Pause mit der Zeit kürzer (die Restzeit schrumpft), "letzte +
+     * aktuelle Pause" wandert also. Erlaubt ist ab dem Schnittpunkt next(t) = t:
+     * t = (letzte * Rest + Tagesende) / (Rest + 1). Fester Zeitpunkt, wie in Android und HA;
+     * so meldet auch der PushReminderJob genau einmal.
+     */
+    private function computedAllowedFrom(string $uid, array $entries, \DateTime $last): ?\DateTime {
+        $target = $this->getDailyTarget($uid);
+        if ($target === null || $target <= 0) {
+            return null;
+        }
+        $wakeSeconds = (int)($this->getWakeHours($uid) * 3600);
+        $dayStartHour = $this->getDayStartHour($uid);
+        $tz = $this->getUserTimeZone($uid);
+        $today = $this->currentLogicalDate($dayStartHour, $tz);
+        $todayEntries = array_values(array_filter(
+            $entries,
+            fn (string $ts) => $this->logicalDate($ts, $dayStartHour, $tz) === $today
+        ));
+        if (empty($todayEntries)) {
+            return (clone $last)->modify('+' . intdiv($wakeSeconds, $target) . ' seconds');
+        }
+        $remaining = max($target - count($todayEntries), 1);
+        $dayEnd = (new \DateTime($todayEntries[0]))->getTimestamp() + $wakeSeconds;
+        if ($dayEnd <= time()) {
+            return (clone $last)->modify('+' . intdiv(60, $remaining) . ' seconds');
+        }
+        $at = intdiv($last->getTimestamp() * $remaining + $dayEnd, $remaining + 1);
+        return (new \DateTime('@' . $at))->setTimezone($tz);
     }
 
     private function loadNotifyState(string $uid): array {

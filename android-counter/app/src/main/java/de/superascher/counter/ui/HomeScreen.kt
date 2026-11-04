@@ -151,7 +151,8 @@ fun HomeScreen(entries: List<Long>, settings: Settings, modifier: Modifier, onOp
 @Composable
 private fun PacingInfo(counter: Counter, entries: List<Long>, now: Long) {
     val interval = counter.intervalMinutes(entries, now) ?: return
-    val next = counter.nextAllowedAt(entries, now)
+    // wie Erinnerung und Uhr: der Zeitpunkt, ab dem es wirklich erlaubt ist (nicht letzte + aktuelle Pause)
+    val next = counter.allowedFrom(entries, now)
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             when {
