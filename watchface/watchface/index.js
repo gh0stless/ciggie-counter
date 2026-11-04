@@ -50,29 +50,37 @@ function hhmm(seconds) {
 function parseState(raw) {
   const parts = String(raw || '').split('|').map(Number)
   if (parts.length < 4 || parts.some(isNaN)) return null
-  return { day: parts[0], today: parts[1], last: parts[2], next: parts[3], at: parts[4] || 0 }
+  return { day: parts[0], today: parts[1], last: parts[2], next: parts[3], at: parts[4] || 0, dayStart: parts[5] || 0 }
 }
+
+// Stand des Handys aus dem Wetter: das Wetter-Objekt ist groß (ganze Vorhersage), daher
+// nur beim Aufwecken und sonst höchstens alle 5 Minuten lesen, nicht jede Minute
+const WEATHER_EVERY_MS = 5 * 60 * 1000
+let phone = null
+let phoneReadAt = 0
 
 // Zwei Quellen: die Band-App (systemweiter Zwischenspeicher) und das Handy über den
 // Wetter-Kanal von Gadgetbridge (Ortsname 'CC|…', kommt auch bei geschlossener Band-App).
 // Es gilt die neuere.
-function readShared() {
+function readShared(fresh) {
   let app = null
-  let phone = null
   try {
     app = parseState(hmFS.SysProGetChars('ciggie'))
   } catch (e) {}
-  try {
-    const city = String(weather.getForecastWeather().cityName || '')
-    if (city.indexOf('CC|') === 0) phone = parseState(city.slice(3))
-  } catch (e) {}
+  if (fresh || Date.now() - phoneReadAt >= WEATHER_EVERY_MS) {
+    phoneReadAt = Date.now()
+    try {
+      const city = String(weather.getForecastWeather().cityName || '')
+      phone = city.indexOf('CC|') === 0 ? parseState(city.slice(3)) : null
+    } catch (e) {}
+  }
   if (!app) return phone
   if (!phone) return app
   return phone.at > app.at ? phone : app
 }
 
-function updateCiggie() {
-  const shared = readShared()
+function updateCiggie(fresh) {
+  const shared = readShared(fresh)
   if (!shared) {
     // Band neu gestartet oder Band-App noch nie geöffnet
     pauseText.setProperty(hmUI.prop.TEXT, '–')
@@ -80,7 +88,10 @@ function updateCiggie() {
     todayText.setProperty(hmUI.prop.TEXT, '')
     return
   }
-  const day = clock.year * 10000 + clock.month * 100 + clock.day
+  // Zähltag wie in der App: vor dem Tageswechsel zählt zum Vortag
+  let date = new Date(Date.UTC(clock.year, clock.month - 1, clock.day))
+  if (clock.hour < shared.dayStart) date = new Date(date.getTime() - 86400000)
+  const day = date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate()
   const today = shared.day === day ? shared.today : 0
   todayText.setProperty(hmUI.prop.TEXT, 'heute ' + today)
 
@@ -126,13 +137,14 @@ function sleepValue() {
   }
 }
 
-function update() {
+// fresh: beim Aufwecken auch den Stand des Handys neu lesen
+function update(fresh) {
   timeText.setProperty(hmUI.prop.TEXT, pad(clock.hour) + ':' + pad(clock.minute))
   dateText.setProperty(hmUI.prop.TEXT, WEEKDAYS[(clock.week + 6) % 7] + ' ' + pad(clock.day) + '.' + pad(clock.month) + '.')
   infoText.setProperty(hmUI.prop.TEXT, battery.current + ' %   ' + steps.current + ' Schritte')
   healthText.setProperty(hmUI.prop.TEXT, 'Puls ' + heartValue() + '   Stress ' + stressValue())
   sleepText.setProperty(hmUI.prop.TEXT, 'Schlaf ' + sleepValue())
-  updateCiggie()
+  updateCiggie(fresh === true)
 }
 
 function openApp(page, param) {
@@ -203,7 +215,7 @@ WatchFace({
     // Sensoren nur hier und beim Aufwecken lesen: eigene Ereignis-Listener auf Puls/Stress
     // brachten das Band 7 (Firmware 1.11) zum Absturz
     clock.addEventListener(clock.event.MINUTEEND, update)
-    hmUI.createWidget(hmUI.widget.WIDGET_DELEGATE, { resume_call: update })
+    hmUI.createWidget(hmUI.widget.WIDGET_DELEGATE, { resume_call: () => update(true) })
     update()
   },
 })

@@ -22,14 +22,22 @@ export function localDate(seconds) {
   return new Date((seconds + offset()) * 1000)
 }
 
+// Zähltag wie in der App: vor dem Tageswechsel (Stunde, vom Handy) zählt zum Vortag
+let dayStartHour = 0
+
+export function setDayStart(hour) {
+  dayStartHour = hour >= 0 && hour <= 23 ? hour : 0
+}
+
 function dayOf(seconds) {
-  const d = localDate(seconds)
+  const d = localDate(seconds - dayStartHour * 3600)
   return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
 }
 
 export function load() {
   // next: nächste erlaubt (Unix-Sekunden, 0 = keine Pause), gap: zuletzt bekannte Pausenlänge
-  const empty = { pending: [], today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0 }
+  // dayStart: Tageswechsel-Stunde der App (kommt mit jeder Antwort des Handys)
+  const empty = { pending: [], today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0, dayStart: 0 }
   const [stat, err] = hmFS.stat(FILE)
   if (err !== 0 || !stat.size) return empty
 
@@ -43,6 +51,7 @@ export function load() {
   for (let i = 0; i < bytes.length; i++) text += String.fromCharCode(bytes[i])
   try {
     const state = JSON.parse(text)
+    setDayStart(state.dayStart || 0)
     return rollDay(Object.assign(empty, state))
   } catch (e) {
     return empty

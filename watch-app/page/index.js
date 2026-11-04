@@ -79,8 +79,9 @@ Page({
 
     hmUI.createWidget(hmUI.widget.FILL_RECT, { x: 0, y: 0, w: 194, h: 368, color: ESPRESSO })
 
+    // unter dem Knopf: oben verdeckt der App-Name des Bandes die Zeile
     statusText = hmUI.createWidget(hmUI.widget.TEXT, {
-      x: 0, y: 14, w: 194, h: 28,
+      x: 0, y: 338, w: 194, h: 26,
       text: '', text_size: 20, color: ASCHE,
       align_h: hmUI.align.CENTER_H, align_v: hmUI.align.CENTER_V
     })

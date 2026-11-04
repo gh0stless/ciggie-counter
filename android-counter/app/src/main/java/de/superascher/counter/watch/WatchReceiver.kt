@@ -43,6 +43,7 @@ class WatchReceiver : BroadcastReceiver() {
         dict.put(item(KEY_TODAY, today.size))
         dict.put(item(KEY_LAST, today.maxOrNull() ?: 0L))
         dict.put(item(KEY_NEXT, counter.allowedFrom(entries) ?: 0L))
+        dict.put(item(KEY_DAY_START, Settings.load(context).dayStartHour))
 
         context.sendBroadcast(Intent(ACTION_SEND).apply {
             putExtra("uuid", APP_UUID)
@@ -95,5 +96,7 @@ class WatchReceiver : BroadcastReceiver() {
         const val KEY_LAST = 4
         /** Nächste erlaubt ab (Unix-Sekunden), 0 = keine Pause eingestellt */
         const val KEY_NEXT = 5
+        /** Tageswechsel-Stunde der App, damit Band und Ziffernblatt denselben Zähltag nehmen */
+        const val KEY_DAY_START = 6
     }
 }

@@ -36,6 +36,7 @@ PebbleKit-Dictionaries.
 | 3 | Anzahl heute |
 | 4 | Zeitpunkt der letzten (Unix-Sekunden) |
 | 5 | Nächste erlaubt ab (Unix-Sekunden, 0 = keine Pause eingestellt) |
+| 6 | Tageswechsel-Stunde der App (0–23): vorher zählt zum Vortag |
 
 Band → Handy
 
@@ -44,8 +45,8 @@ Band → Handy
 
 Handy → Band
 
-- `ack` + 1 + 3 (+ 4, 5) – Eintrag übernommen (Duplikate per ID verwerfen, trotzdem quittieren)
-- `state` + 3 + 4 + 5 – aktueller Stand, Antwort auf `hello`
+- `ack` + 1 + 3 (+ 4, 5, 6) – Eintrag übernommen (Duplikate per ID verwerfen, trotzdem quittieren)
+- `state` + 3 + 4 + 5 + 6 – aktueller Stand, Antwort auf `hello`
 
 ## Schnellzählen
 
@@ -59,11 +60,12 @@ Das Ziffernblatt in [../watchface/](../watchface/) bekommt den Stand aus zwei Qu
 nimmt den neueren (Zeitpunkt am Ende):
 
 - Band-App: systemweiter Zwischenspeicher,
-  `hmFS.SysProSetChars('ciggie', 'Tag|heute|letzte|nächste|Zeitpunkt')`, Tag als JJJJMMTT.
+  `hmFS.SysProSetChars('ciggie', 'Tag|heute|letzte|nächste|Zeitpunkt|Tageswechsel')`, Tag als
+  JJJJMMTT nach dem Zähltag der App (vor der Tageswechsel-Stunde zählt zum Vortag).
 - Handy über den **Wetter-Kanal** von Gadgetbridge (Einstellung „Ziffernblatt aktuell
   halten“): Die Ciggie-App schickt nach jeder Änderung
   `nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER` mit dem Ortsnamen
-  `CC|Tag|heute|letzte|nächste|Zeitpunkt`; Gadgetbridge gibt den Ortsnamen sofort ans Band,
+  `CC|Tag|heute|letzte|nächste|Zeitpunkt|Tageswechsel`; Gadgetbridge gibt den Ortsnamen sofort ans Band,
   das Ziffernblatt liest ihn über `hmSensor.id.WEATHER`. So ist es auch aktuell, wenn am
   Handy oder am Butt Bin gezählt wird und die Band-App zu ist. Das Wetter des Bandes ist
   damit belegt.

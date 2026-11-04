@@ -2,7 +2,7 @@
 // Einträge bleiben in state.pending, bis das Handy sie quittiert.
 
 import { sendDict } from './link'
-import { save, now, newId, rollDay } from './store'
+import { save, now, newId, rollDay, setDayStart } from './store'
 
 export const APP_ID = 1077701
 
@@ -13,11 +13,12 @@ export const KEY_TIME = 2
 export const KEY_TODAY = 3
 export const KEY_LAST = 4
 export const KEY_NEXT = 5
+export const KEY_DAY_START = 6
 
 // Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands).
 // Der Zeitpunkt am Ende entscheidet gegen den Stand, den das Handy übers Wetter schickt.
 export function share(state) {
-  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next, now()].join('|'))
+  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next, now(), state.dayStart].join('|'))
 }
 
 // Eine Zigarette zählen; Ergebnis: ihre Eintrags-ID
@@ -52,6 +53,10 @@ export function handleData(state, values) {
     state.pending = state.pending.filter((e) => e.id !== id)
   }
   if (cmd === 'ack' || cmd === 'state') {
+    if (typeof values[KEY_DAY_START] === 'number') {
+      state.dayStart = values[KEY_DAY_START]
+      setDayStart(state.dayStart)
+    }
     // Das Handy kennt alle Quellen (Butt Bin, App, Nextcloud) – seine Zahl gilt,
     // plus was hier noch unterwegs ist
     if (typeof values[KEY_TODAY] === 'number') {
