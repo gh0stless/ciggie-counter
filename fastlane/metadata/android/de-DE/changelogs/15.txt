@@ -1,0 +1,1 @@
+- Korrekturen: Die Uhr nimmt nur noch Nachrichten von Gadgetbridge an, mehrere Uhr-Einträge auf einmal werden einmal angesagt, Butt-Bin-Abholungen bleiben bei „Alles stumm“ und „Nicht stören“ still, ein fehlgeschlagener Regel-Abgleich hält den Abgleich der Einträge nicht mehr auf

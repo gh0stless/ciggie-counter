@@ -53,13 +53,16 @@ class PushReminderJob extends TimedJob {
                 continue;
             }
 
-            if ($this->entryService->getLastNotifiedFor($uid) === $nextAllowedAt) {
+            // Einmal pro Pause: an der letzten Zigarette festmachen, nicht am Zeitpunkt
+            // (der springt z. B., wenn die Wachzeit endet oder der Zähltag wechselt)
+            $last = (string)end($entries);
+            if ($this->entryService->getLastNotifiedFor($uid) === $last) {
                 continue;
             }
 
-            // Erst merken, dann senden: hängt HA oder der Push-Dienst, soll
-            // der nächste Cron-Lauf nicht noch einmal ansagen.
-            $this->entryService->setLastNotifiedFor($uid, $nextAllowedAt);
+            // Erst merken, dann senden: hängt der Push-Dienst, soll
+            // der nächste Cron-Lauf nicht noch einmal melden.
+            $this->entryService->setLastNotifiedFor($uid, $last);
             // Stumm: Erinnerung gilt als erledigt, kommt also nach dem Einschalten nicht nach
             if ($this->entryService->isMuted($uid)) {
                 continue;

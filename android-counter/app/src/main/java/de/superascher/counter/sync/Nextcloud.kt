@@ -69,7 +69,8 @@ object Nextcloud {
         val settings = Settings.load(context)
         if (!settings.syncEnabled) return context.getString(R.string.nc_not_configured)
         syncDeviceState(context, settings)
-        syncRules(context, settings)
+        // ein Fehler beim Regel-Abgleich darf den Abgleich der Einträge nicht aufhalten
+        runCatching { syncRules(context, settings) }
         return syncV2(context, settings)
             ?: if (settings.syncTarget == Settings.SYNC_HOME_ASSISTANT) throw IOException(context.getString(R.string.ha_integration_missing))
             else syncLegacy(context, settings)
@@ -166,7 +167,10 @@ object Nextcloud {
         if (serverAt > settings.rulesUpdatedAt) {
             fun double(key: String) = if (server.isNull(key)) null else server.getDouble(key)
             fun int(key: String) = if (server.isNull(key)) null else server.getInt(key)
-            Settings.save(context, settings.copy(
+            // frisch laden: der Nutzer kann während der Anfragen gespeichert haben
+            val current = Settings.load(context)
+            if (current.rulesUpdatedAt >= serverAt) return
+            Settings.save(context, current.copy(
                 costPerCigarette = double("costPerCigarette"),
                 dayStartHour = int("dayStartHour") ?: 0,
                 intervalMode = server.optString("intervalMode", "computed"),
@@ -175,7 +179,7 @@ object Nextcloud {
                 fixedIntervalMinutes = int("fixedIntervalMinutes"),
                 countCheckMinutes = int("countCheckIntervalMinutes") ?: 10,
                 rulesUpdatedAt = serverAt,
-            ))
+            ), remote = true)
             Reminders.reschedule(context)
         } else if (settings.rulesUpdatedAt > serverAt) {
             val body = JSONObject()

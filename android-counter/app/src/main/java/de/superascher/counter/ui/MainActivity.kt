@@ -69,6 +69,7 @@ class MainActivity : ComponentActivity() {
         if (settings.syncEnabled) de.superascher.counter.sync.Nextcloud.kick(this)
         // Liegengebliebenes (Home Assistant war nicht erreichbar) nachschicken
         if (settings.haNotifyEnabled) de.superascher.counter.sync.Nextcloud.kickHomeAssistant(this)
+        de.superascher.counter.watch.WatchFace.push(this, force = true)
     }
 }
 
@@ -158,9 +159,11 @@ private fun AppScreen() {
                     updated.ncUrl.trim().trimEnd('/') != settings.ncUrl || updated.ncUser.trim() != settings.ncUser) {
                     de.superascher.counter.data.AppState(context).syncRev = -1
                 }
+                val watchfaceTurnedOn = updated.watchfaceWeather && !settings.watchfaceWeather
                 Settings.save(context, updated)
                 settings = updated
                 Reminders.reschedule(context)
+                if (watchfaceTurnedOn) de.superascher.counter.watch.WatchFace.push(context, force = true)
                 de.superascher.counter.ashtray.Background.schedule(context) // startet ggf. auch die Nextcloud-Übertragung
             } }
         }

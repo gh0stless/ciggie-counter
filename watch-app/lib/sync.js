@@ -16,9 +16,10 @@ export const KEY_NEXT = 5
 export const KEY_DAY_START = 6
 
 // Für das Ziffernblatt: systemweiter Zwischenspeicher (bis zum Neustart des Bands).
-// Der Zeitpunkt am Ende entscheidet gegen den Stand, den das Handy übers Wetter schickt.
+// state.at (wann der Stand entstand: Zählen hier oder Antwort des Handys) entscheidet gegen den
+// Stand, den das Handy übers Wetter schickt; nicht der Zeitpunkt des Zeichnens.
 export function share(state) {
-  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next, now(), state.dayStart].join('|'))
+  hmFS.SysProSetChars('ciggie', [state.day, state.today, state.last, state.next, state.at || 0, state.dayStart].join('|'))
 }
 
 // Eine Zigarette zählen; Ergebnis: ihre Eintrags-ID
@@ -29,6 +30,7 @@ export function addEntry(state) {
   state.pending.push({ id, t })
   state.today += 1
   state.last = t
+  state.at = t
   // bis das Handy quittiert: Pause so lang wie die letzte bekannte
   if (state.gap > 0) state.next = t + state.gap
   save(state)
@@ -53,6 +55,7 @@ export function handleData(state, values) {
     state.pending = state.pending.filter((e) => e.id !== id)
   }
   if (cmd === 'ack' || cmd === 'state') {
+    state.at = now()
     if (typeof values[KEY_DAY_START] === 'number') {
       state.dayStart = values[KEY_DAY_START]
       setDayStart(state.dayStart)

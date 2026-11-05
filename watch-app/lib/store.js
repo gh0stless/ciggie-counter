@@ -37,7 +37,8 @@ function dayOf(seconds) {
 export function load() {
   // next: nächste erlaubt (Unix-Sekunden, 0 = keine Pause), gap: zuletzt bekannte Pausenlänge
   // dayStart: Tageswechsel-Stunde der App (kommt mit jeder Antwort des Handys)
-  const empty = { pending: [], today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0, dayStart: 0 }
+  // at: wann dieser Stand entstand (fürs Ziffernblatt, gegen den Stand per Wetter)
+  const empty = { pending: [], today: 0, day: dayOf(now()), last: 0, next: 0, gap: 0, dayStart: 0, at: 0 }
   const [stat, err] = hmFS.stat(FILE)
   if (err !== 0 || !stat.size) return empty
 

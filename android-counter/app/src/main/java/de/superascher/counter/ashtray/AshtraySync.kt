@@ -78,7 +78,7 @@ object AshtraySync {
         }
         state.ashtrayNextSeq = maxOf(state.ashtrayNextSeq, result.count)
         // Mehrere Einträge auf einmal: nur einmal ansagen, mit dem Stand nach dem neuesten
-        latest?.let { Reminders.announceCount(context, it) }
+        latest?.let { Reminders.announceCount(context, it, background = true) }
         return buildString {
             val res = context.resources
             append(if (added == 0) context.getString(R.string.ashtray_nothing_new) else res.getQuantityString(R.plurals.ashtray_added, added, added))

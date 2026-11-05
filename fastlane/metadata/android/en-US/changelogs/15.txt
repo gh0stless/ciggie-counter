@@ -1,0 +1,1 @@
+- Fixes: the watch only accepts messages from Gadgetbridge, several watch entries at once are announced once, Butt Bin pick-ups stay silent while muted or in Do Not Disturb, a failing rules sync no longer stops the entry sync

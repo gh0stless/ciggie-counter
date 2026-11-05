@@ -19,8 +19,12 @@ import org.json.JSONObject
 object WatchFace {
     private const val ACTION_WEATHER = "nodomain.freeyourgadget.gadgetbridge.ACTION_GENERIC_WEATHER"
 
-    /** Nach jeder Änderung aufrufen; sendet nur, wenn sich der Stand geändert hat. */
-    fun push(context: Context) {
+    /**
+     * Nach jeder Änderung aufrufen; sendet nur, wenn sich der Stand geändert hat.
+     * [force]: trotzdem senden (Schalter eingeschaltet, App geöffnet: Gadgetbridge oder das Band
+     * können den Stand inzwischen verloren haben).
+     */
+    fun push(context: Context, force: Boolean = false) {
         val settings = Settings.load(context)
         if (!settings.watchfaceWeather) return
         val counter = Counter(settings)
@@ -32,7 +36,7 @@ object WatchFace {
         val state = "$counts|${settings.dayStartHour}"
 
         val appState = AppState(context)
-        if (state == appState.watchfaceSent) return
+        if (!force && state == appState.watchfaceSent) return
         val now = Counter.nowSeconds()
         val weather = JSONObject()
             .put("timestamp", now)

@@ -383,6 +383,7 @@ class EntryService {
         ?string $nextAllowedReminderEnabled = null,
         ?string $dayStartHour = null
     ): void {
+        $rulesBefore = $this->getRules($uid);
         if ($dayStartHour !== null && $dayStartHour !== '' && (int)$dayStartHour >= 0 && (int)$dayStartHour <= 23) {
             $this->config->setUserValue($uid, 'cigarettecounter', 'day_start_hour', (string)(int)$dayStartHour);
         } else {
@@ -424,8 +425,15 @@ class EntryService {
         }
 
         $this->config->setUserValue($uid, 'cigarettecounter', 'next_allowed_reminder_enabled', $nextAllowedReminderEnabled === '1' ? '1' : '0');
-        // Regeln im Browser gespeichert: gelten jetzt für alle Geräte
-        $this->config->setUserValue($uid, 'cigarettecounter', 'rules_updated_at', (string)time());
+        // Regeln im Browser geändert: gelten jetzt für alle Geräte. Nur bei echter Änderung (nicht,
+        // wenn nur ein Push-Schalter umgelegt wurde), und nie älter als der gespeicherte Stand,
+        // der von einem Gerät mit leicht vorgehender Uhr stammen kann.
+        $rulesAfter = $this->getRules($uid);
+        unset($rulesBefore['updatedAt'], $rulesAfter['updatedAt']);
+        if ($rulesBefore != $rulesAfter) {
+            $stored = (int)$this->config->getUserValue($uid, 'cigarettecounter', 'rules_updated_at', '0');
+            $this->config->setUserValue($uid, 'cigarettecounter', 'rules_updated_at', (string)max(time(), $stored + 1));
+        }
     }
 
     /**
@@ -552,8 +560,7 @@ class EntryService {
     /**
      * Im 'computed'-Modus wird die Pause mit der Zeit kürzer (die Restzeit schrumpft), "letzte +
      * aktuelle Pause" wandert also. Erlaubt ist ab dem Schnittpunkt next(t) = t:
-     * t = (letzte * Rest + Tagesende) / (Rest + 1). Fester Zeitpunkt, wie in Android und HA;
-     * so meldet auch der PushReminderJob genau einmal.
+     * t = (letzte * Rest + Tagesende) / (Rest + 1). Fester Zeitpunkt, wie in Android und HA.
      */
     private function computedAllowedFrom(string $uid, array $entries, \DateTime $last): ?\DateTime {
         $target = $this->getDailyTarget($uid);
@@ -607,17 +614,16 @@ class EntryService {
     }
 
     /**
-     * Merkt sich, für welchen "nextAllowedAt"-Zeitpunkt zuletzt eine
-     * Push-Erinnerung verschickt wurde, damit der stündliche Job nicht bei
-     * jedem Lauf erneut pusht.
+     * Merkt sich, nach welcher Zigarette (Zeitstempel der letzten) zuletzt eine
+     * Push-Erinnerung verschickt wurde, damit der Job pro Pause nur einmal pusht.
      */
     public function getLastNotifiedFor(string $uid): ?string {
         return $this->loadNotifyState($uid)['lastNotifiedFor'] ?? null;
     }
 
-    public function setLastNotifiedFor(string $uid, string $nextAllowedAt): void {
+    public function setLastNotifiedFor(string $uid, string $lastEntry): void {
         $state = $this->loadNotifyState($uid);
-        $state['lastNotifiedFor'] = $nextAllowedAt;
+        $state['lastNotifiedFor'] = $lastEntry;
         $this->saveNotifyState($uid, $state);
     }
 

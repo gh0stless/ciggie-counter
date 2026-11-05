@@ -75,7 +75,7 @@ data class Settings(
 
         private val _changes = MutableStateFlow(0)
 
-        /** Zählt jedes Speichern hoch, auch durch den Abgleich: geöffnete Ansichten laden dann neu. */
+        /** Zählt hoch, wenn der Abgleich Einstellungen ändert: geöffnete Ansichten laden dann neu. */
         val changes: StateFlow<Int> = _changes.asStateFlow()
 
         private fun prefs(context: Context): SharedPreferences =
@@ -108,7 +108,8 @@ data class Settings(
             )
         }
 
-        fun save(context: Context, s: Settings) = prefs(context).edit {
+        /** [remote]: Änderung durch den Abgleich (nicht vom Nutzer), geöffnete Ansichten laden neu. */
+        fun save(context: Context, s: Settings, remote: Boolean = false) = prefs(context).edit {
             putString("cost", s.costPerCigarette?.toString())
             putInt("day_start_hour", s.dayStartHour.coerceIn(0, 23))
             putString("interval_mode", s.intervalMode)
@@ -133,7 +134,7 @@ data class Settings(
             putBoolean("ha_also_notify", s.haAlsoNotify)
             putBoolean("watchface_weather", s.watchfaceWeather)
             putLong("rules_updated_at", s.rulesUpdatedAt)
-        }.also { _changes.value += 1 }
+        }.also { if (remote) _changes.value += 1 }
     }
 }
 
