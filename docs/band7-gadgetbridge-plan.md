@@ -1,5 +1,15 @@
 # Zepp-OS-Uhren als Eingabegerät – Plan
 
+> **Stand 05.11.2026 – umgesetzt und am Band 7 im Einsatz:** Gadgetbridge-Fork mit
+> Mini-App-Messaging und PebbleKit-Fassade (P1, P3), Band-App mit Zählen, Puffer und
+> Doppeltipp-Schnellzählen (P6), Ciggie-Counter-Empfänger (P7), Ziffernblatt mit Pause und
+> Tagesmenge (P6b), Stand fürs Ziffernblatt auch über den Wetter-Kanal von Gadgetbridge.
+> **Verworfen:** Messung von Puls/Blutsauerstoff vor/nach dem Rauchen (zurückgebaut,
+> Andreas braucht sie nicht). **Offen:** Upstream-Beitrag (Codeberg #3266, Konto fehlt),
+> Doppel-Quittungen der Fassade aufräumen, Side Service (P2/P4/P5), HA-Watch-App (eigenes
+> Projekt). Erfahrungen und Fallstricke: [zepp-os-band7-tricks.md](zepp-os-band7-tricks.md).
+> Der Rest dieses Dokuments ist der ursprüngliche Plan.
+
 Stand: 01.11.2026 · Ziel: Amazfit Band 7 (und andere Zepp-OS-Uhren) als weiteres
 Eingabegerät für Ciggie Counter – über Gadgetbridge, ohne Zepp-App, ohne Cloud.
 

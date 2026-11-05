@@ -4,11 +4,11 @@ Arbeitsliste für die Veröffentlichung. Öffentlicher Entwicklername überall: 
 
 | Kanal | Stand |
 |---|---|
-| GitHub Releases | v1.0.4 veröffentlicht (01.11.2026, signierte APK) |
+| GitHub Releases | v1.0.4 veröffentlicht (01.11.2026, signierte APK); Stand im Repo 1.0.13 (05.11.2026), Releases 1.0.5–1.0.13 nach der Testphase |
 | IzzyOnDroid | Metadaten, Screenshots und Icon liegen in `fastlane/`; Antrag stellen (Schritt 2) |
-| Home Assistant | Integration `ciggie_counter` im eigenen Repo gh0stless/ciggie-counter-ha, v0.1.0, über HACS als benutzerdefiniertes Repository installierbar; Aufnahme in die HACS-Standardliste per PR an hacs/default möglich (alle Prüfungen grün). Blueprints (TTS/Telegram, Assist/Telegram) mit Import-Knopf liegen im Integrations-Repo; die alten Webhook-/Paket-Dateien sind entfernt |
+| Home Assistant | Integration `ciggie_counter` im eigenen Repo gh0stless/ciggie-counter-ha, v0.3.1 (Release 04.11.2026), über HACS als benutzerdefiniertes Repository installierbar; Aufnahme in die HACS-Standardliste per PR an hacs/default möglich (alle Prüfungen grün). Blueprints (TTS/Telegram, Assist/Telegram) mit Import-Knopf liegen im Integrations-Repo; die alten Webhook-/Paket-Dateien sind entfernt |
 | F-Droid (Haupt-Repo) | vorbereitet, siehe unten |
-| Nextcloud App Store | vorbereitet, siehe unten |
+| Nextcloud App Store | vorbereitet, siehe unten; produktiv läuft 0.11.2 |
 | Google Play | zurückgestellt, siehe unten |
 
 ## 1. GitHub-Release
