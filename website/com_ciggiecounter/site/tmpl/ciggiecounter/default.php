@@ -71,11 +71,24 @@ $copy = [
         'devices'     => [
             ['nextcloud-1.jpg', 'Nextcloud-App', true, 'Eigene Web-App für deine Nextcloud, auch als PWA. Sie ist die Drehscheibe für mehrere Geräte und kann über Home Assistant Ansagen machen.'],
             ['', 'Home Assistant', true, 'Integration über HACS: Sensoren fürs Dashboard, Zählen per Knopf oder Sprachbefehl, Ansagen über deine Lautsprecher. Sie zählt auch ganz ohne Nextcloud.'],
-            ['', 'Amazfit Band 7', false, 'Zählen am Handgelenk, Ziffernblatt mit Pause und Tagesmenge. Läuft schon im Alltag, braucht aber noch eine angepasste Gadgetbridge-Version.'],
+            ['', 'Amazfit Band 7', false, 'Zählen am Handgelenk, Ziffernblatt mit Pause und Tagesmenge. Mehr dazu unten.'],
             ['', 'Butt Bin', false, 'Der Aschenbecher, der mitzählt. Mehr dazu gleich unten.'],
         ],
         'tag_ok'      => 'fertig',
         'tag_dev'     => 'in Arbeit',
+
+        'band_kicker' => 'Am Handgelenk · experimentell',
+        'band_h2'     => 'Amazfit Band 7: ein Blick genügt',
+        'band_intro'  => 'Ein günstiges Fitnessband wird zur Fernbedienung für Ciggie Counter. Das eigene Ziffernblatt zeigt, wie lange die Pause noch dauert, und gezählt wird direkt am Handgelenk.',
+        'band_list'   => [
+            'Ziffernblatt mit Countdown, Uhrzeit der nächsten und Tagesmenge',
+            'Doppeltipp aufs Ziffernblatt zählt eine Zigarette',
+            'Band-App mit großem +1-Knopf; ohne Verbindung wird vorgemerkt und später nachgeholt',
+            'Dazu Akku, Schritte, Puls, Stress und Schlaf',
+            'Verbindung über Gadgetbridge: ohne Hersteller-App, ohne Hersteller-Cloud',
+        ],
+        'band_note'   => 'Noch experimentell: Das Band braucht eine angepasste Gadgetbridge-Version, die noch nicht veröffentlicht ist.',
+        'alt_band'    => 'Amazfit Band 7 am Handgelenk mit dem Ciggie-Counter-Ziffernblatt: 35 Minuten Pause, nächste ab 07:43, heute 6',
 
         'bin_kicker'  => 'Hardware · Prototyp',
         'bin_h2'      => 'Butt Bin: der Aschenbecher, der mitzählt',
@@ -149,11 +162,24 @@ $copy = [
         'devices'     => [
             ['nextcloud-1.jpg', 'Nextcloud app', true, 'A web app for your own Nextcloud, also as a PWA. It is the hub for several devices and can make announcements through Home Assistant.'],
             ['', 'Home Assistant', true, 'Integration via HACS: sensors for your dashboard, count with any button or voice command, announcements on your speakers. It also counts without Nextcloud.'],
-            ['', 'Amazfit Band 7', false, 'Count on your wrist, a watch face with break and daily count. Already in daily use, but it still needs a modified Gadgetbridge build.'],
+            ['', 'Amazfit Band 7', false, 'Count on your wrist, a watch face with break and daily count. More below.'],
             ['', 'Butt Bin', false, 'The ashtray that counts along. More about it below.'],
         ],
         'tag_ok'      => 'ready',
         'tag_dev'     => 'in progress',
+
+        'band_kicker' => 'On your wrist · experimental',
+        'band_h2'     => 'Amazfit Band 7: one glance is enough',
+        'band_intro'  => 'A cheap fitness band becomes a remote control for Ciggie Counter. Its own watch face shows how long the break still lasts, and you count right on your wrist.',
+        'band_list'   => [
+            "Watch face with countdown, time of the next one and today's count",
+            'Double-tap the watch face to count a cigarette',
+            'Band app with a big +1 button; without a connection entries are queued and sent later',
+            'Plus battery, steps, heart rate, stress and sleep',
+            'Connected via Gadgetbridge: no vendor app, no vendor cloud',
+        ],
+        'band_note'   => 'Still experimental: the band needs a modified Gadgetbridge build that is not published yet.',
+        'alt_band'    => 'Amazfit Band 7 on a wrist with the Ciggie Counter watch face: 35 minutes break, next one from 07:43, 6 today',
 
         'bin_kicker'  => 'Hardware · prototype',
         'bin_h2'      => 'Butt Bin: the ashtray that counts along',
@@ -296,7 +322,24 @@ $e = static function (string $s): string {
   </div>
 </section>
 
-<section class="cc-section" id="butt-bin">
+<section class="cc-section" id="band7">
+  <div class="cc-wrap">
+    <div class="cc-bin-grid cc-band-grid">
+      <div>
+        <span class="cc-kicker"><?php echo $e($t['band_kicker']); ?></span>
+        <h2><?php echo $e($t['band_h2']); ?></h2>
+        <p class="cc-intro" style="margin-bottom:18px"><?php echo $e($t['band_intro']); ?></p>
+        <ul class="cc-bin-list">
+          <?php foreach ($t['band_list'] as $li) : ?><li><?php echo $e($li); ?></li><?php endforeach; ?>
+        </ul>
+        <p class="cc-small"><?php echo $e($t['band_note']); ?></p>
+      </div>
+      <div class="cc-band-photo"><img src="<?php echo $img; ?>band7-watchface.jpg" width="780" height="880" alt="<?php echo $e($t['alt_band']); ?>" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section class="cc-section alt" id="butt-bin">
   <div class="cc-wrap">
     <div class="cc-bin-grid">
       <div class="cc-bin-photo"><img src="<?php echo $img; ?>buttbin-hero.jpg" width="736" height="900" alt="<?php echo $e($t['alt_bin']); ?>" loading="lazy"></div>
@@ -315,7 +358,7 @@ $e = static function (string $s): string {
   </div>
 </section>
 
-<section class="cc-section alt">
+<section class="cc-section">
   <div class="cc-wrap">
     <span class="cc-kicker"><?php echo $e($t['dl_kicker']); ?></span>
     <h2><?php echo $e($t['dl_h2']); ?></h2>

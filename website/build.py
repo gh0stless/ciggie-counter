@@ -16,6 +16,7 @@ IMG = os.path.join(COM, 'media', 'img')
 # Ziel-Name: (Quelle, größte Kante)
 IMAGES = {
     'buttbin-hero.jpg': ('design/fotoshooting/01_held.jpg', 900),
+    'band7-watchface.jpg': ('design/band7/watchface.jpg', 900),
     'buttbin-colours.jpg': ('design/fotoshooting/15_vergleich_oben.jpg', 1400),
 }
 for lang in ('de', 'en'):
