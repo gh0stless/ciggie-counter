@@ -23,6 +23,10 @@ let syncOnly = false
 let backTimer = null
 // Zahl vom Handy bestätigt? Bis dahin mit "?" (eigener, evtl. veralteter Stand)
 let confirmed = false
+// Verbunden, aber keine Antwort vom Handy: meist ist in Gadgetbridge der Schalter
+// "Mini-app messages via PebbleKit" aus (geht beim Neukoppeln verloren)
+let waitingSince = 0
+const NO_REPLY_MS = 20000
 
 function goBack(delay) {
   if (backTimer) timer.stopTimer(backTimer)
@@ -46,7 +50,9 @@ function render() {
   lastText.setProperty(hmUI.prop.TEXT, hhmm(state.last))
   const link = isReady() ? '●' : '○'
   const pending = state.pending.length ? '  ↑' + state.pending.length : ''
-  statusText.setProperty(hmUI.prop.TEXT, link + pending)
+  const silent = isReady() && waitingSince && (!confirmed || state.pending.length) &&
+    Date.now() - waitingSince > NO_REPLY_MS
+  statusText.setProperty(hmUI.prop.TEXT, silent ? 'Handy antwortet nicht' : link + pending)
   share(state)
 }
 
@@ -62,6 +68,7 @@ function stamp() {
 }
 
 function onReady() {
+  waitingSince = Date.now()
   hello()
   flush(state)
   render()
@@ -70,6 +77,7 @@ function onReady() {
 function onData(values) {
   handleData(state, values)
   confirmed = true
+  waitingSince = Date.now()
   render()
   if ((quick || syncOnly) && !state.pending.length) goBack(1500)
 }
