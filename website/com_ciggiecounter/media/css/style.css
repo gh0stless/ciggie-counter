@@ -401,6 +401,42 @@ body.com-ciggiecounter #sp-main-body {
     margin-top: 10px;
 }
 
+/* butt bin specs */
+.cc-specs {
+    margin-top: 32px;
+    background: var(--espresso);
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+    padding: 24px 26px;
+}
+.cc-specs h3 {
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+}
+.cc-specs dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 8px 24px;
+    margin: 0;
+}
+.cc-specs dt {
+    color: var(--filter);
+    font-weight: 700;
+}
+.cc-specs dd {
+    margin: 0;
+    color: var(--ink-dim);
+}
+@media (max-width: 560px) {
+    .cc-specs dl {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+    .cc-specs dd {
+        margin-bottom: 10px;
+    }
+}
+
 /* band 7 */
 .cc-band-grid {
     grid-template-columns: 1.1fr 0.9fr;

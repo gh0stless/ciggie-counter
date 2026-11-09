@@ -26,7 +26,7 @@ class HtmlView extends BaseHtmlView
         $document->getWebAssetManager()->registerAndUseStyle(
             'com_ciggiecounter.style',
             'media/com_ciggiecounter/css/style.css',
-            ['version' => '1.0.4']
+            ['version' => '1.0.6']
         );
 
         parent::display($tpl);
