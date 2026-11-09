@@ -5,7 +5,7 @@
 	<creationDate>2026-11</creationDate>
 	<copyright>(C) 2026 crazy-midi.de</copyright>
 	<license>GPL-3.0-or-later</license>
-	<version>1.0.6</version>
+	<version>1.0.7</version>
 	<description>COM_CIGGIECOUNTER_XML_DESCRIPTION</description>
 
 	<namespace path="src">CrazyMidi\Component\Ciggiecounter</namespace>

@@ -112,7 +112,7 @@ $copy = [
             ['Leuchtring', 'Sechs LEDs auf drei dimmbaren Kanälen für ein Lauflicht'],
             ['Speicher', 'Ringpuffer im Flash, jeder Eintrag mit Zeitstempel'],
             ['Platine', 'Rund, 34 mm, zweilagig (KiCad); programmiert wird über Pogo-Pins'],
-            ['Erweiterung', 'Anschlüsse für I²C (z. B. Luftsensor), einen zweiten Taster und eine Pumpe für einen Duftsprüher'],
+            ['Erweiterung', 'Vorbereitet für künftige Ausbaustufen: I²C-Anschluss für Umweltsensoren (z. B. Luftqualität, Temperatur, Luftfeuchte) oder ein kleines Display, dazu ein zweiter Taster und ein Ausgang für eine Pumpe (Duftsprüher)'],
             ['Firmware', 'Eigene Firmware auf Basis des Telink-SDK, Tiefschlaf zwischen den Ereignissen'],
         ],
 
@@ -214,7 +214,7 @@ $copy = [
             ['Light ring', 'Six LEDs on three dimmable channels for a running light'],
             ['Storage', 'Ring buffer in flash, every entry with a timestamp'],
             ['Board', 'Round, 34 mm, two layers (KiCad); programmed via pogo pins'],
-            ['Expansion', 'Pads for I²C (e.g. an air sensor), a second button and a pump for a scent sprayer'],
+            ['Expansion', 'Prepared for future extensions: an I²C port for environmental sensors (e.g. air quality, temperature, humidity) or a small display, plus a second button and an output for a pump (scent sprayer)'],
             ['Firmware', 'Own firmware based on the Telink SDK, deep sleep between events'],
         ],
 
