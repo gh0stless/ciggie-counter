@@ -382,6 +382,7 @@ $e = static function (string $s): string {
       <dl>
         <?php foreach ($t['bin_tech'] as [$k, $v]) : ?><dt><?php echo $e($k); ?></dt><dd><?php echo $e($v); ?></dd><?php endforeach; ?>
       </dl>
+      <p class="cc-smoke">Smoke smart! ^^</p>
     </div>
   </div>
 </section>

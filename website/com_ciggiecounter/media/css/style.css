@@ -437,6 +437,14 @@ body.com-ciggiecounter #sp-main-body {
     }
 }
 
+.cc-page .cc-smoke {
+    margin: 18px 0 0;
+    color: var(--filter);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: right;
+}
+
 /* band 7 */
 .cc-band-grid {
     grid-template-columns: 1.1fr 0.9fr;
