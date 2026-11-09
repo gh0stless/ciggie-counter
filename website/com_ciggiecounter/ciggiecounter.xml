@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade">
+	<name>com_ciggiecounter</name>
+	<author>gh0stless (crazy-midi.de)</author>
+	<creationDate>2026-11</creationDate>
+	<copyright>(C) 2026 crazy-midi.de</copyright>
+	<license>GPL-3.0-or-later</license>
+	<version>1.0.3</version>
+	<description>COM_CIGGIECOUNTER_XML_DESCRIPTION</description>
+
+	<namespace path="src">CrazyMidi\Component\Ciggiecounter</namespace>
+
+	<files folder="site">
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<folder>language</folder>
+		<filename>metadata.xml</filename>
+	</files>
+	<languages folder="site/language">
+		<language tag="de-DE">de-DE/de-DE.com_ciggiecounter.ini</language>
+		<language tag="en-GB">en-GB/en-GB.com_ciggiecounter.ini</language>
+	</languages>
+
+	<media destination="com_ciggiecounter" folder="media">
+		<folder>css</folder>
+		<folder>img</folder>
+	</media>
+
+	<administration>
+		<menu>COM_CIGGIECOUNTER</menu>
+		<files folder="admin">
+			<folder>services</folder>
+			<folder>src</folder>
+			<folder>tmpl</folder>
+			<folder>language</folder>
+		</files>
+		<languages folder="admin/language">
+			<language tag="de-DE">de-DE/de-DE.com_ciggiecounter.ini</language>
+			<language tag="de-DE">de-DE/de-DE.com_ciggiecounter.sys.ini</language>
+			<language tag="en-GB">en-GB/en-GB.com_ciggiecounter.ini</language>
+			<language tag="en-GB">en-GB/en-GB.com_ciggiecounter.sys.ini</language>
+		</languages>
+	</administration>
+</extension>
