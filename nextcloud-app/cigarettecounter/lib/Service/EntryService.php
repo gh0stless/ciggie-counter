@@ -530,8 +530,8 @@ class EntryService {
         $dayEnd = (clone $dayStart)->modify('+' . (int)$wakeSeconds . ' seconds');
         $remainingSeconds = $dayEnd->getTimestamp() - time();
         if ($remainingSeconds <= 0) {
-            // Wachzeit-Fenster rechnerisch schon vorbei, trotzdem sinnvoll spreizen.
-            $remainingSeconds = 60;
+            // Wachzeit vorbei: Grund-Pause statt immer kürzerer Pausen
+            return ($wakeSeconds / $target) / 60;
         }
 
         return ($remainingSeconds / $remaining) / 60;
@@ -578,11 +578,12 @@ class EntryService {
         if (empty($todayEntries)) {
             return (clone $last)->modify('+' . intdiv($wakeSeconds, $target) . ' seconds');
         }
-        $remaining = max($target - count($todayEntries), 1);
         $dayEnd = (new \DateTime($todayEntries[0]))->getTimestamp() + $wakeSeconds;
-        if ($dayEnd <= time()) {
-            return (clone $last)->modify('+' . intdiv(60, $remaining) . ' seconds');
+        if ($last->getTimestamp() >= $dayEnd) {
+            // nach dem Ende der Wachzeit geraucht: Grund-Pause
+            return (clone $last)->modify('+' . intdiv($wakeSeconds, $target) . ' seconds');
         }
+        $remaining = max($target - count($todayEntries), 1);
         $at = intdiv($last->getTimestamp() * $remaining + $dayEnd, $remaining + 1);
         return (new \DateTime('@' . $at))->setTimezone($tz);
     }

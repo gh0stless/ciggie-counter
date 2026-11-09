@@ -16,9 +16,13 @@ let lastText
 let statusText
 let vibrate
 let retryTimer
-// Schnellzählen vom Ziffernblatt (Doppeltipp): zählen, quittieren lassen, zurück
+// Vom Ziffernblatt geöffnet: 'count' (Doppeltipp: zählen, quittieren lassen, zurück) oder
+// 'sync' (nach einem Neustart des Bandes: nur den Stand vom Handy holen, zurück)
 let quick = false
+let syncOnly = false
 let backTimer = null
+// Zahl vom Handy bestätigt? Bis dahin mit "?" (eigener, evtl. veralteter Stand)
+let confirmed = false
 
 function goBack(delay) {
   if (backTimer) timer.stopTimer(backTimer)
@@ -38,7 +42,7 @@ function hhmm(seconds) {
 }
 
 function render() {
-  countText.setProperty(hmUI.prop.TEXT, String(state.today))
+  countText.setProperty(hmUI.prop.TEXT, state.today + (confirmed ? '' : '?'))
   lastText.setProperty(hmUI.prop.TEXT, hhmm(state.last))
   const link = isReady() ? '●' : '○'
   const pending = state.pending.length ? '  ↑' + state.pending.length : ''
@@ -65,13 +69,15 @@ function onReady() {
 
 function onData(values) {
   handleData(state, values)
+  confirmed = true
   render()
-  if (quick && !state.pending.length) goBack(1500)
+  if ((quick || syncOnly) && !state.pending.length) goBack(1500)
 }
 
 Page({
   onInit(param) {
     quick = param === 'count'
+    syncOnly = param === 'sync'
   },
 
   build() {
@@ -111,7 +117,9 @@ Page({
     connect(APP_ID, onReady, onData)
     if (quick) {
       stamp()
-      // ohne Quittung trotzdem zurück; der Eintrag bleibt vorgemerkt
+    }
+    if (quick || syncOnly) {
+      // ohne Antwort trotzdem zurück; Einträge bleiben vorgemerkt
       goBack(8000)
     }
 

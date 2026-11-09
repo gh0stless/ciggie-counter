@@ -161,7 +161,8 @@ class ApiController extends Controller {
         if ($result['added'] !== []) {
             $newest = max(array_map(fn (string $ts) => (new \DateTimeImmutable($ts))->getTimestamp(), $result['added']));
             if ($newest >= time() - 10 * 60) {
-                $this->entryService->setLastCountCheckAt($this->userId, (new \DateTime())->format('c'));
+                // Takt ab der Zeit der Zigarette, wie auf Handy und in Home Assistant
+                $this->entryService->setLastCountCheckAt($this->userId, (new \DateTime('@' . $newest))->format('c'));
             }
         }
         return new JSONResponse(['rev' => $result['rev'], 'accepted' => $result['accepted']]);

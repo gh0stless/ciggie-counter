@@ -63,8 +63,9 @@ class Counter(
         // Bei erreichtem Ziel mit Rest 1 weiterrechnen, damit immer ein Intervall angezeigt wird
         val remaining = max(target - todayEntries.size, 1)
         val dayEnd = todayEntries.first() + wakeSeconds.toLong()
-        val remainingSeconds = (dayEnd - now).takeIf { it > 0 } ?: 60
-        return remainingSeconds.toDouble() / remaining / 60
+        // Wachzeit vorbei: Grund-Pause statt immer kürzerer Pausen
+        if (dayEnd <= now) return wakeSeconds / target / 60
+        return (dayEnd - now).toDouble() / remaining / 60
     }
 
     /** Zeitpunkt (Unix-Sekunden), ab dem die nächste Zigarette "erlaubt" ist, null = kein Pacing. */
@@ -87,9 +88,10 @@ class Counter(
         val todayEntries = onDay(entries, today(now))
         if (todayEntries.isEmpty()) return last + wakeSeconds / target
 
-        val remaining = max(target - todayEntries.size, 1)
+        // nach dem Ende der Wachzeit geraucht: Grund-Pause (Wachzeit ÷ Ziel), nicht fast sofort
         val dayEnd = todayEntries.first() + wakeSeconds
-        if (dayEnd <= now) return last + 60L / remaining
+        if (last >= dayEnd) return last + wakeSeconds / target
+        val remaining = max(target - todayEntries.size, 1)
         return (last * remaining + dayEnd) / (remaining + 1)
     }
 

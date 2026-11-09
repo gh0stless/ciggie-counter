@@ -26,6 +26,15 @@ object Reminders {
     private const val ACTION_NEXT_ALLOWED = "de.superascher.counter.NEXT_ALLOWED"
     private const val ACTION_COUNT_CHECK = "de.superascher.counter.COUNT_CHECK"
     const val ACTION_COUNT = "de.superascher.counter.COUNT"
+    const val ACTION_ANNOUNCE = "de.superascher.counter.ANNOUNCE"
+    private const val EXTRA_TS = "ts"
+
+    /**
+     * Gemeinsame Ansage-Zeit: Zigarette + diese Sekunden. Home Assistant (Blueprint
+     * ciggie_counter_announce) wartet bis zum selben Zeitpunkt, so sprechen Handy und Lautsprecher
+     * gleichzeitig, obwohl der Eintrag dort einige Sekunden später ankommt.
+     */
+    const val ANNOUNCE_DELAY_SECONDS = 20L
 
     /**
      * Eine Zigarette zählen (Knopf, Nachtragen, Benachrichtigung, Butt Bin).
@@ -40,10 +49,21 @@ object Reminders {
         if (!EntryStore.get(context).add(ts, source, forward = nc, id = id, notifyHa = ha)) return
         if (nc) Nextcloud.kick(context)
         if (ha) Nextcloud.kickHomeAssistant(context)
-        // Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Takt beginnt neu
-        AppState(context).lastCountCheckAt = Counter.nowSeconds()
-        reschedule(context)
+        counted(context, listOf(ts))
         if (announce) announceCount(context, ts)
+    }
+
+    /**
+     * Wer gerade zählt, braucht keine "Alle gezählt?"-Erinnerung: Der Takt beginnt mit der Zeit der
+     * Zigarette neu (nicht mit dem Moment, in dem dieses Gerät davon erfährt), so laufen Handy,
+     * Home Assistant und Nextcloud gleich. Auch für Einträge, die der Abgleich bringt; nachgetragene
+     * (älter als 10 Minuten) setzen nichts zurück.
+     */
+    fun counted(context: Context, timestamps: List<Long>) {
+        val fresh = timestamps.filter { it >= Counter.nowSeconds() - 10 * 60 }.maxOrNull()
+        val state = AppState(context)
+        if (fresh != null && fresh > state.lastCountCheckAt) state.lastCountCheckAt = fresh
+        reschedule(context)
     }
 
     /**
@@ -62,9 +82,34 @@ object Reminders {
             if (!background) Speech.ack(context)
             return
         }
-        val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
-        Speech.say(context, R.string.speech_counted, number)
+        // zur gemeinsamen Ansage-Zeit; schon vorbei (spät abgeholt) oder kein genauer Wecker: gleich
+        val at = ts + ANNOUNCE_DELAY_SECONDS
+        val am = context.getSystemService(AlarmManager::class.java)
+        if (at > Counter.nowSeconds() && am.canScheduleExactAlarms()) {
+            // ein Wecker für alle: mehrere Einträge kurz hintereinander werden eine Ansage (die letzte)
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at * 1000, announcePending(context, ts))
+        } else {
+            speakCount(context, ts)
+        }
     }
+
+    /** "Cigarette number 12 counted." jetzt (Wecker der gemeinsamen Ansage-Zeit) */
+    internal fun speakCount(context: Context, ts: Long, onDone: () -> Unit = {}) {
+        val settings = Settings.load(context)
+        val counter = Counter(settings)
+        val today = counter.today()
+        if (counter.logicalDate(ts) != today || AppState(context).muted) return onDone()
+        val number = counter.onDay(EntryStore.get(context).entries.value, today).count { it <= ts }
+        Speech.say(context, R.string.speech_counted, number, onDone = onDone)
+    }
+
+    private fun announcePending(context: Context, ts: Long) = PendingIntent.getBroadcast(
+        context, ACTION_ANNOUNCE.hashCode(),
+        Intent(context, ReminderReceiver::class.java).setAction(ACTION_ANNOUNCE).putExtra(EXTRA_TS, ts),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
+    internal fun announceTs(intent: Intent): Long = intent.getLongExtra(EXTRA_TS, 0L)
 
     /** Einen Eintrag löschen, bei eingeschalteter Nextcloud auch dort. */
     fun delete(context: Context, ts: Long) {
@@ -192,6 +237,10 @@ class ReminderReceiver : BroadcastReceiver() {
                 de.superascher.counter.ashtray.Presence.register(context)
             }
             de.superascher.counter.ashtray.Presence.ACTION_REFRESH -> de.superascher.counter.ashtray.Presence.register(context)
+            Reminders.ACTION_ANNOUNCE -> {
+                val pending = goAsync()
+                Reminders.speakCount(context, Reminders.announceTs(intent)) { pending.finish() }
+            }
             null -> Unit
             else -> {
                 // Stumm-Abfrage (Netz) und Ansage laufen asynchron: Prozess wach halten, bis beides fertig ist

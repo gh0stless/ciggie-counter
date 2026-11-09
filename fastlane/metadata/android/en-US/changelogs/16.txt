@@ -1,0 +1,1 @@
+- New: counted cigarettes are announced at a shared time (20 s after counting), together with Home Assistant; after the waking time the basic break applies instead of one-minute breaks; the count reminder interval starts at the cigarette's time on all devices

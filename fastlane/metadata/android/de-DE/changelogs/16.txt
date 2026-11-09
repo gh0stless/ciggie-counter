@@ -1,0 +1,1 @@
+- Neu: Gezählte Zigaretten werden zu einer gemeinsamen Zeit angesagt (20 s nach dem Zählen), gleichzeitig mit Home Assistant; nach Ende der Wachzeit gilt die Grund-Pause statt Ein-Minuten-Pausen; der Takt für „Alle gezählt?“ beginnt auf allen Geräten mit der Zeit der Zigarette

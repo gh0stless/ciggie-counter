@@ -2,6 +2,8 @@ package de.superascher.counter.watch
 
 import android.content.Context
 import android.content.Intent
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import de.superascher.counter.data.AppState
 import de.superascher.counter.data.EntryStore
 import de.superascher.counter.data.Settings
@@ -53,5 +55,13 @@ object WatchFace {
             context.sendBroadcast(Intent(intent).setClassName(r.activityInfo.packageName, r.activityInfo.name))
         }
         if (receivers.isNotEmpty()) appState.watchfaceSent = state
+    }
+}
+
+/** Alle 15 Minuten: Stand erneut schicken, auch ohne Änderung (das Band kann ihn verloren haben). */
+class WatchFaceWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
+    override fun doWork(): Result {
+        WatchFace.push(applicationContext, force = true)
+        return Result.success()
     }
 }

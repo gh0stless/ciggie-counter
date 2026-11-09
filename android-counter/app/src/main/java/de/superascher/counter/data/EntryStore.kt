@@ -216,10 +216,12 @@ class EntryStore private constructor(context: Context) :
     /**
      * Abgleich v2, Änderungen vom Server übernehmen: unbekannte Einträge anlegen, Löschmarken
      * anwenden (gelöscht bleibt gelöscht). Eigene, noch nicht gemeldete Änderungen bleiben.
+     * Ergebnis: Zeitstempel der neu angelegten Einträge.
      */
     @Synchronized
-    fun mergeFromServer(records: List<Record>) {
-        if (records.isEmpty()) return
+    fun mergeFromServer(records: List<Record>): List<Long> {
+        if (records.isEmpty()) return emptyList()
+        val added = mutableListOf<Long>()
         writableDatabase.run {
             beginTransaction()
             try {
@@ -234,6 +236,7 @@ class EntryStore private constructor(context: Context) :
                             put("ts", r.ts)
                             put("source", r.source)
                         })
+                        added += r.ts
                     }
                 }
                 setTransactionSuccessful()
@@ -242,6 +245,7 @@ class EntryStore private constructor(context: Context) :
             }
         }
         _entries.value = load()
+        return added
     }
 
     /** Einmaliger Umstieg auf v2: lokalen Stand komplett durch den Server-Stand (mit IDs) ersetzen. */

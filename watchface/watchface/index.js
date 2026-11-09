@@ -82,9 +82,9 @@ function readShared(fresh) {
 function updateCiggie(fresh) {
   const shared = readShared(fresh)
   if (!shared) {
-    // Band neu gestartet oder Band-App noch nie geöffnet
-    pauseText.setProperty(hmUI.prop.TEXT, '–')
-    nextText.setProperty(hmUI.prop.TEXT, 'Ciggie-App öffnen')
+    // Band neu gestartet und noch nichts vom Handy: lieber "?" als eine falsche Zahl
+    pauseText.setProperty(hmUI.prop.TEXT, '?')
+    nextText.setProperty(hmUI.prop.TEXT, 'Stand wird geholt')
     todayText.setProperty(hmUI.prop.TEXT, '')
     return
   }
@@ -145,6 +145,25 @@ function update(fresh) {
   healthText.setProperty(hmUI.prop.TEXT, 'Puls ' + heartValue() + '   Stress ' + stressValue())
   sleepText.setProperty(hmUI.prop.TEXT, 'Schlaf ' + sleepValue())
   updateCiggie(fresh === true)
+}
+
+// Neustart des Bandes erkennen: der systemweite Zwischenspeicher ist danach leer. Dann einmal
+// (pro Neustart) die Band-App kurz öffnen, die den Stand vom Handy holt und zurückspringt.
+function afterReboot() {
+  let app = ''
+  let asked = ''
+  try {
+    app = hmFS.SysProGetChars('ciggie') || ''
+    asked = hmFS.SysProGetChars('ciggie_boot') || ''
+  } catch (e) {
+    return
+  }
+  if (app || asked) return
+  hmFS.SysProSetChars('ciggie_boot', '1')
+  const once = timer.createTimer(3000, 3000, () => {
+    timer.stopTimer(once)
+    openApp('page/index', 'sync')
+  })
 }
 
 function openApp(page, param) {
@@ -214,6 +233,7 @@ WatchFace({
     } catch (e) {}
     // Sensoren nur hier und beim Aufwecken lesen: eigene Ereignis-Listener auf Puls/Stress
     // brachten das Band 7 (Firmware 1.11) zum Absturz
+    afterReboot()
     clock.addEventListener(clock.event.MINUTEEND, update)
     hmUI.createWidget(hmUI.widget.WIDGET_DELEGATE, { resume_call: () => update(true) })
     update()

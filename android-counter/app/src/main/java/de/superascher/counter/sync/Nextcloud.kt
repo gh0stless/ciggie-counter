@@ -125,7 +125,7 @@ object Nextcloud {
                 sent = dirty.size
             }
             val changes = getV2(context, settings, state.syncRev) ?: return null
-            store.mergeFromServer(changes.records)
+            Reminders.counted(context, store.mergeFromServer(changes.records))
             state.syncRev = changes.rev
         }
         store.clearOps() // im v2-Betrieb erledigt

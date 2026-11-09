@@ -118,6 +118,15 @@ object Background {
         } else {
             wm.cancelUniqueWork("ashtray")
         }
+        // Ziffernblatt: Stand regelmäßig neu schicken (Band neu gestartet, Gadgetbridge neu verbunden)
+        if (de.superascher.counter.data.Settings.load(context).watchfaceWeather) {
+            wm.enqueueUniquePeriodicWork(
+                "watchface", ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequestBuilder<de.superascher.counter.watch.WatchFaceWorker>(15, TimeUnit.MINUTES).build(),
+            )
+        } else {
+            wm.cancelUniqueWork("watchface")
+        }
         Presence.register(context)
         if (de.superascher.counter.data.Settings.load(context).syncEnabled) {
             de.superascher.counter.sync.Nextcloud.kick(context)
